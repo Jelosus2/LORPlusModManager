@@ -1,0 +1,11 @@
+{
+  "extends": "@tsconfig/node24",
+  "include": ["src/app/**/*", "src/shared/**/*"],
+  "exclude": ["src/app/preload.ts"],
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node", "electron"],
+    "experimentalDecorators": true
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "extends": "@tsconfig/node24",
+  "include": ["src/app/preload.ts"],
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node10",
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node", "electron"],
+    "noEmit": false,
+    "ignoreDeprecations": "6.0"
+  }
+}

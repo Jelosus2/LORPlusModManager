@@ -1,0 +1,51 @@
+{
+  "name": "LORPlusModManager",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "imports": {
+    "#*": {
+      "types": "./src/app/*",
+      "default": "./dist/app/*"
+    }
+  },
+  "description": "Mod manager for the game Last Origin R+",
+  "main": "dist/app/index.js",
+  "scripts": {
+    "dev:ui": "vite",
+    "dev:electron": "pnpm build:electron && electron .",
+    "build:ui": "vite build",
+    "build:electron": "tsc -p tsconfig.preload.json && tsc -p tsconfig.app.json",
+    "build": "pnpm build:ui && pnpm build:electron",
+    "dist": "pnpm build && electron-builder --win --publish never",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.9.0",
+      "onFail": "download"
+    }
+  },
+  "dependencies": {
+    "pinia": "^3.0.4",
+    "vue": "^3.5.39"
+  },
+  "devDependencies": {
+    "@tsconfig/node24": "^24.0.4",
+    "@types/node": "^26.0.1",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vue/eslint-config-typescript": "^14.9.0",
+    "@vue/tsconfig": "^0.9.1",
+    "electron": "^42.5.1",
+    "electron-builder": "^26.15.3",
+    "eslint": "^10.6.0",
+    "eslint-plugin-vue": "^10.9.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.0",
+    "vue-tsc": "^3.3.5"
+  }
+}
