@@ -2,48 +2,52 @@ import { app, BrowserWindow, Menu } from "electron";
 
 export type WindowFactory = () => Promise<BrowserWindow>;
 
-let mainWindow: BrowserWindow | null = null;
+export class AppLifecycle {
+    private static mainWindow: BrowserWindow | null = null;
 
-export function registerAppLifecycle(createMainWindow: WindowFactory) {
-    const hasSingleInstanceLock = app.requestSingleInstanceLock();
-    if (!hasSingleInstanceLock) {
-        app.quit();
-        return;
+    static registerAppLifecycle(createMainWindow: WindowFactory) {
+        const hasSingleInstanceLock = app.requestSingleInstanceLock();
+        if (!hasSingleInstanceLock)
+        {
+            app.quit();
+            return;
+        }
+
+        app.on("second-instance", () => {
+            AppLifecycle.showMainWindow();
+        });
+
+        app.whenReady().then(async () => {
+            if (app.isPackaged)
+                Menu.setApplicationMenu(null);
+
+            AppLifecycle.mainWindow = await createMainWindow();
+
+            app.on("activate", async () => {
+                if (BrowserWindow.getAllWindows().length === 0)
+                {
+                    AppLifecycle.mainWindow = await createMainWindow();
+                    return;
+                }
+
+                AppLifecycle.showMainWindow();
+            });
+        });
+
+        app.on("window-all-closed", () => {
+            app.quit();
+        });
     }
 
-    app.on("second-instance", () => {
-        showMainWindow();
-    });
+    private static showMainWindow() {
+        const window = AppLifecycle.mainWindow ?? BrowserWindow.getAllWindows()[0];
 
-    app.whenReady().then(async () => {
-        if (app.isPackaged)
-            Menu.setApplicationMenu(null);
+        if (!window || window.isDestroyed())
+            return;
 
-        mainWindow = await createMainWindow();
+        if (window.isMinimized())
+            window.restore();
 
-        app.on("activate", async () => {
-            if (BrowserWindow.getAllWindows().length === 0) {
-                mainWindow = await createMainWindow();
-                return;
-            }
-
-            showMainWindow();
-        });
-    });
-
-    app.on("window-all-closed", () => {
-        app.quit();
-    });
-}
-
-function showMainWindow() {
-    const window = mainWindow ?? BrowserWindow.getAllWindows()[0];
-
-    if (!window || window.isDestroyed())
-        return;
-
-    if (window.isMinimized())
-        window.restore();
-
-    window.show();
+        window.show();
+    }
 }

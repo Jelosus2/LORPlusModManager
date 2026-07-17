@@ -1,4 +1,5 @@
-import { registerAppLifecycle } from "#lifecycle/appLifecycle.js";
-import { createMainWindow } from "#windows/mainWindow.js";
+import { AppLifecycle } from "#lifecycle/AppLifecycle.js";
+import { MainWindow } from "#windows/MainWindow.js";
+import "#ipc/controllers/index.js";
 
-registerAppLifecycle(createMainWindow);
+AppLifecycle.registerAppLifecycle(MainWindow.createMainWindow);

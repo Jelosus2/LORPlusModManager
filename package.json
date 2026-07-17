@@ -27,16 +27,20 @@
     "packageManager": {
       "name": "pnpm",
       "version": "^11.9.0",
-      "onFail": "download"
+      "onFail": "ignore"
     }
   },
   "dependencies": {
+    "fs-extra": "^11.3.6",
     "pinia": "^3.0.4",
-    "vue": "^3.5.39"
+    "vue": "^3.5.39",
+    "winreg": "^1.2.5"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.4",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^26.0.1",
+    "@types/winreg": "^1.2.36",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/tsconfig": "^0.9.1",
