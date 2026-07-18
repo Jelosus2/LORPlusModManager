@@ -1,12 +1,15 @@
 import type { GameLocationResult } from "../../../shared/setup.js";
 import type { IpcMainInvokeEvent } from "electron";
 
+import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { GameRegistry } from "#game/GameRegistry.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
 import { BrowserWindow, dialog } from "electron";
 import fse from "fs-extra";
 
 export class SetupController {
+    private readonly settingsRepository = new SettingsRepository();
+
     @IpcHelper.IpcHandle("setup:game-location")
     async setupGameLocation(event: IpcMainInvokeEvent, manualSetup: boolean): Promise<GameLocationResult> {
         const executableFileName = await GameRegistry.getExecutableFileName() ?? "LAST ORIGIN R+.exe";
@@ -29,7 +32,7 @@ export class SetupController {
             if (!isValidInstallationPath)
                 return { success: false, message: "The selected location doesn't contain the game executable.", path: "" };
 
-            return { success: true, message: "", path: installationPath };
+            return this.saveGameLocation(installationPath);
         }
 
         const installationPath = await GameRegistry.getInstallPath();
@@ -40,6 +43,16 @@ export class SetupController {
         if (!isValidInstallationPath)
             return { success: false, message: "Game path detected but the game executable is missing", path: "" };
 
-        return { success: true, message: "", path: installationPath };
+        return this.saveGameLocation(installationPath);
+    }
+
+    private saveGameLocation(gameLocation: string): GameLocationResult {
+        this.settingsRepository.setGameLocation(gameLocation);
+
+        return {
+            success: true,
+            message: "",
+            path: gameLocation
+        };
     }
 }

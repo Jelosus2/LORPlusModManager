@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { app } from "electron";
 import path from "node:path";
 
 export class Paths {
@@ -10,5 +11,13 @@ export class Paths {
 
     static getRendererHtmlPath() {
         return path.join(Paths.appBaseDir, "..", "index.html");
+    }
+
+    static getDatabasePath() {
+        return path.join(app.getPath("userData"), "data.db");
+    }
+
+    static getPluginDownloadCachePath() {
+        return path.join(app.getPath("userData"), "downloads", "LOPlugin+");
     }
 }

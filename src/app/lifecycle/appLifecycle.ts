@@ -1,3 +1,4 @@
+import { AppDatabase } from "#database/AppDatabase.js";
 import { app, BrowserWindow, Menu } from "electron";
 
 export type WindowFactory = () => Promise<BrowserWindow>;
@@ -21,6 +22,7 @@ export class AppLifecycle {
             if (app.isPackaged)
                 Menu.setApplicationMenu(null);
 
+            AppDatabase.initialize();
             AppLifecycle.mainWindow = await createMainWindow();
 
             app.on("activate", async () => {
@@ -36,6 +38,10 @@ export class AppLifecycle {
 
         app.on("window-all-closed", () => {
             app.quit();
+        });
+
+        app.on("before-quit", () => {
+            AppDatabase.close();
         });
     }
 
