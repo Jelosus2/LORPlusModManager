@@ -16,7 +16,8 @@ const modManagerApi: IpcApi = {
         return () => {
             ipcRenderer.removeListener("plugin:install-progress", listener);
         };
-    }
+    },
+    getSetupState: () => ipcRenderer.invoke("setup:get-state")
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

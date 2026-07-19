@@ -8,8 +8,20 @@ import { ref } from "vue";
 
 type SetupStep = "location" | "plugin";
 
-const currentStep = ref<SetupStep>("location");
-const locationPath = ref("No location selected");
+const props = withDefaults(defineProps<{
+    initialGameLocation: string | null,
+    initialStep: SetupStep
+}>(), {
+    initialGameLocation: null,
+    initialStep: "location"
+});
+
+const emit = defineEmits<{
+    completed: [];
+}>();
+
+const currentStep = ref<SetupStep>(props.initialStep);
+const locationPath = ref(props.initialGameLocation ?? "No location selected");
 const installationStatus = ref("");
 const installationProgress = ref<number | null>(null);
 const isInstalling = ref(false);
@@ -74,6 +86,8 @@ async function installLOPlugin() {
 
         installationStatus.value = `LOPlugin+ ${result.version} installed`;
         installationProgress.value = 100;
+
+        emit("completed");
     }
     catch (error)
     {

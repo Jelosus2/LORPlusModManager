@@ -1,10 +1,11 @@
-import type { GameLocationResult } from "../../../shared/setup.js";
+import type { GameLocationResult, SetupState } from "../../../shared/setup.js";
 import type { IpcMainInvokeEvent } from "electron";
 
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { GameRegistry } from "#game/GameRegistry.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
 import { BrowserWindow, dialog } from "electron";
+import path from "node:path";
 import fse from "fs-extra";
 
 export class SetupController {
@@ -46,6 +47,30 @@ export class SetupController {
         return this.saveGameLocation(installationPath);
     }
 
+    @IpcHelper.IpcHandle("setup:get-state")
+    async getSetupState(): Promise<SetupState> {
+        const gameLocation = this.settingsRepository.getGameLocation();
+        const pluginVersion = this.settingsRepository.getLOPluginVersion();
+
+        if (!gameLocation)
+            return this.incompleteSetup();
+
+        const executableFileName = await GameRegistry.getExecutableFileName() ?? "LAST ORIGIN R+.exe";
+        const gameLocationIsValid = await fse.exists(path.join(gameLocation, executableFileName));
+
+        if (!gameLocationIsValid)
+            return this.incompleteSetup();
+
+        const pluginPath = path.join(gameLocation, "BepInEx", "plugins", "LOPlugin+", "LOPlugin+.dll");
+        const pluginIsInstalled = Boolean(pluginVersion && await fse.exists(pluginPath));
+
+        return {
+            isComplete: pluginIsInstalled,
+            gameLocation,
+            pluginVersion: pluginIsInstalled ? pluginVersion : null
+        };
+    }
+
     private saveGameLocation(gameLocation: string): GameLocationResult {
         this.settingsRepository.setGameLocation(gameLocation);
 
@@ -53,6 +78,14 @@ export class SetupController {
             success: true,
             message: "",
             path: gameLocation
+        };
+    }
+
+    private incompleteSetup(): SetupState {
+        return {
+            isComplete: false,
+            gameLocation: null,
+            pluginVersion: null
         };
     }
 }
