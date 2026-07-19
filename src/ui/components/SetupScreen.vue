@@ -10,9 +10,9 @@ type SetupStep = "location" | "plugin";
 
 const currentStep = ref<SetupStep>("location");
 const locationPath = ref("No location selected");
-const downloadStatus = ref("");
-const downloadProgress = ref<number | null>(null);
-const isDownloading = ref(false);
+const installationStatus = ref("");
+const installationProgress = ref<number | null>(null);
+const isInstalling = ref(false);
 const errorMessage = ref("");
 
 let isProcessing = false;
@@ -24,7 +24,8 @@ async function setupGameLocation(manualSetup = false) {
     isProcessing = true;
     errorMessage.value = "";
 
-    try {
+    try
+    {
         const result = await window.app.setupGameLocation(manualSetup);
 
         if (!result.success)
@@ -34,48 +35,57 @@ async function setupGameLocation(manualSetup = false) {
         }
 
         locationPath.value = result.path;
-    } catch (error) {
+    }
+    catch (error)
+    {
         console.error("Failed to set the game location:", error);
         errorMessage.value = "Something went wrong while locating the game.";
-    } finally {
+    }
+    finally
+    {
         isProcessing = false;
     }
 }
 
-async function downloadLOPlugin() {
-    if (isDownloading.value)
+async function installLOPlugin() {
+    if (isInstalling.value)
         return;
 
-    isDownloading.value = true;
+    isInstalling.value = true;
     errorMessage.value = "";
-    downloadStatus.value = "Preparing download...";
-    downloadProgress.value = 0;
+    installationStatus.value = "Preparing installation...";
+    installationProgress.value = 0;
 
-    const removeProgressListener = window.app.onLOPluginDownloadProgress((progress) => {
-        downloadStatus.value = progress.status;
-        downloadProgress.value = progress.progress;
+    const removeProgressListener = window.app.onLOPluginInstallProgress((progress) => {
+        installationStatus.value = progress.status;
+        installationProgress.value = progress.progress;
     });
 
-    try {
-        const result = await window.app.downloadLOPlugin();
+    try
+    {
+        const result = await window.app.installLOPlugin();
 
         if (!result.success)
         {
             errorMessage.value = result.message;
-            downloadProgress.value = null;
+            installationProgress.value = null;
             return;
         }
 
-        downloadStatus.value = `LOPlugin+ ${result.version} downloaded`;
-        downloadProgress.value = 100;
-    } catch (error) {
-        console.error("Failed to download LOPlugin+:", error);
+        installationStatus.value = `LOPlugin+ ${result.version} installed`;
+        installationProgress.value = 100;
+    }
+    catch (error)
+    {
+        console.error("Failed to install LOPlugin+:", error);
 
-        errorMessage.value = "Something went wrong while downloading LOPlugin+.";
-        downloadProgress.value = null;
-    } finally {
+        errorMessage.value = "Something went wrong while installing LOPlugin+.";
+        installationProgress.value = null;
+    }
+    finally
+    {
         removeProgressListener();
-        isDownloading.value = false;
+        isInstalling.value = false;
     }
 }
 
@@ -163,17 +173,17 @@ function goToPluginStep() {
                 <h1 id="plugin-title">Install LOPlugin+</h1>
                 <p class="setup-description">
                     LOPlugin+ allows the mod manager to work with Last Origin R+.
-                    Download it now to finish preparing your game for mods.
+                    Install it now to finish preparing your game for mods.
                 </p>
 
                 <div
-                    v-if="downloadProgress !== null"
+                    v-if="installationProgress !== null"
                     class="download-progress"
                     aria-live="polite"
                 >
                     <div class="download-progress-header">
-                        <span>{{ downloadStatus }}</span>
-                        <span>{{ Math.round(downloadProgress) }}%</span>
+                        <span>{{ installationStatus }}</span>
+                        <span>{{ Math.round(installationProgress) }}%</span>
                     </div>
                     <div
                         class="download-progress-track"
@@ -181,11 +191,11 @@ function goToPluginStep() {
                         aria-label="LOPlugin+ download progress"
                         aria-valuemin="0"
                         aria-valuemax="100"
-                        :aria-valuenow="downloadProgress"
+                        :aria-valuenow="installationProgress"
                     >
                         <div
                             class="download-progress-fill"
-                            :style="{ width: `${downloadProgress}%` }"
+                            :style="{ width: `${installationProgress}%` }"
                         ></div>
                     </div>
                 </div>
@@ -203,15 +213,15 @@ function goToPluginStep() {
                     <button
                         class="button button--primary"
                         type="button"
-                        :disabled="isDownloading || downloadProgress === 100"
-                        @click="downloadLOPlugin"
+                        :disabled="isInstalling || installationProgress === 100"
+                        @click="installLOPlugin"
                     >
                         {{
-                            downloadProgress === 100
-                                ? "Downloaded"
-                                : isDownloading
-                                    ? "Downloading..."
-                                    : "Download LOPlugin+"
+                            installationProgress === 100
+                                ? "Installed"
+                                : isInstalling
+                                    ? "Installing..."
+                                    : "Install LOPlugin+"
                         }}
                     </button>
                 </div>

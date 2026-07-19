@@ -1,40 +1,59 @@
-import type { PluginDownloadResult } from "../../../shared/plugin.js";
+import type { PluginInstallResult, PluginProgress } from "../../../shared/plugin.js";
 import type { IpcMainInvokeEvent } from "electron";
 
-import { LOPluginDownloader } from "#download/LOPluginDownloader.js";
+import { LOPluginDownloader } from "#plugin/LOPluginDownloader.js";
+import { LOPluginInstaller } from "#plugin/LOPluginInstaller.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
 
 export class PluginController {
     private readonly downloader = new LOPluginDownloader();
-    private isDownloading = false;
+    private readonly installer = new LOPluginInstaller();
+    private isInstalling = false;
 
-    @IpcHelper.IpcHandle("plugin:download")
-    async downloadPlugin(event: IpcMainInvokeEvent): Promise<PluginDownloadResult> {
-        if (this.isDownloading)
-            return { success: false, message: "LOPlugin+ is already being downloaded." };
+    @IpcHelper.IpcHandle("plugin:install")
+    async installPlugin(event: IpcMainInvokeEvent): Promise<PluginInstallResult> {
+        if (this.isInstalling)
+            return { success: false, message: "LOPlugin+ is already being installed." };
 
-        this.isDownloading = true;
+        this.isInstalling = true;
 
-        try {
+        const sendProgress = (progress: PluginProgress) => {
+            if (!event.sender.isDestroyed())
+                event.sender.send("plugin:install-progress", progress);
+        };
+
+        try
+        {
             const release = await this.downloader.download((progress) => {
-                if (event.sender.isDestroyed())
-                    return;
+                sendProgress({
+                    ...progress,
+                    progress: progress.progress * 0.7
+                });
+            });
 
-                event.sender.send("plugin:download-progress", progress);
+            await this.installer.install(release, (progress) => {
+                sendProgress({
+                    ...progress,
+                    progress: 70 + progress.progress * 0.3
+                });
             });
 
             return { success: true, message: "", version: release.version };
-        } catch (error) {
-            console.error("Failed to download LOPlugin+:", error);
+        }
+        catch (error)
+        {
+            console.error("Failed to install LOPlugin+:", error);
 
             return {
                 success: false,
                 message: error instanceof Error
                     ? error.message
-                    : "An unexpected download error occurred."
+                    : "An unexpected installation error occurred."
             };
-        } finally {
-            this.isDownloading = false;
+        }
+        finally
+        {
+            this.isInstalling = false;
         }
     }
 }

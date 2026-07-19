@@ -20,7 +20,8 @@ export class Migrations {
         if (currentVersion > Migrations.migrations.length)
             throw new Error("The database was created by a newer application version.");
 
-        for (let i = currentVersion; i < Migrations.migrations.length; i++) {
+        for (let i = currentVersion; i < Migrations.migrations.length; i++)
+        {
             const migration = Migrations.migrations[i];
 
             database.transaction(() => {

@@ -1,7 +1,7 @@
-import type { PluginDownloadProgress } from "../../shared/plugin.js";
+import type { PluginProgress } from "../../shared/plugin.js";
 
-import { Paths } from "#utils/Paths.js";
 import { createHash } from "node:crypto";
+import { Paths } from "#utils/Paths.js";
 import fsp from "node:fs/promises";
 import path from "node:path";
 import fse from "fs-extra";
@@ -29,7 +29,7 @@ export type DownloadedPluginRelease = {
     files: string[];
 };
 
-export type ProgressCallback = (progress: PluginDownloadProgress) => void;
+export type ProgressCallback = (progress: PluginProgress) => void;
 
 export class LOPluginDownloader {
     private readonly REPOSITORY = "Jelosus2/LOPluginPlus-Releases";
@@ -38,7 +38,7 @@ export class LOPluginDownloader {
 
     async download(reportProgress: ProgressCallback): Promise<DownloadedPluginRelease> {
         reportProgress({
-            status: "Checking the latest LOPlugin+ release…",
+            status: "Checking the latest LOPlugin+ release...",
             progress: 0,
             downloadedBytes: 0,
             totalBytes: 0
@@ -68,8 +68,10 @@ export class LOPluginDownloader {
         let downloadedBytes = 0;
         let lastProgressEvent = 0;
 
-        try {
-            for (let i = 0; i < assets.length; i++) {
+        try
+        {
+            for (let i = 0; i < assets.length; i++)
+            {
                 const { asset, checksum } = assets[i];
 
                 const status = `Downloading ${asset.name} (${i + 1}/${assets.length})`;
@@ -118,7 +120,9 @@ export class LOPluginDownloader {
                 directory: downloadDirectory,
                 files: [...manifest.files]
             };
-        } catch (error) {
+        }
+        catch (error)
+        {
             await fse.rm(downloadDirectory, { recursive: true, force: true });
             throw error;
         }
@@ -213,7 +217,8 @@ export class LOPluginDownloader {
 
         const files = [...new Set(manifest.files)];
 
-        for (const fileName of files) {
+        for (const fileName of files)
+        {
             if (path.basename(fileName) !== fileName || !fileName.toLowerCase().endsWith(".zip"))
                 throw new Error(`Expected ${this.MANIFEST_NAME} to be a zip.`);
 
@@ -273,8 +278,10 @@ export class LOPluginDownloader {
 
         let receivedBytes = 0;
 
-        try {
-            while (true) {
+        try
+        {
+            while (true)
+            {
                 const { done, value } = await reader.read();
 
                 if (done)
@@ -283,7 +290,8 @@ export class LOPluginDownloader {
                 const chunk = Buffer.from(value);
                 let offset = 0;
 
-                while (offset < chunk.length) {
+                while (offset < chunk.length)
+                {
                     const { bytesWritten } = await file.write(chunk, offset, chunk.length - offset, null);
                     if (bytesWritten === 0)
                         throw new Error(`Failed to write ${asset.name}.`);
@@ -296,10 +304,14 @@ export class LOPluginDownloader {
                 receivedBytes += chunk.length;
                 onChunk(chunk.length);
             }
-        } catch (error) {
+        }
+        catch (error)
+        {
             await reader.cancel(error).catch(() => undefined);
             throw error;
-        } finally {
+        }
+        finally
+        {
             reader.releaseLock();
             await file.close();
         }

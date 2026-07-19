@@ -11,14 +11,17 @@ export class AppDatabase {
 
         const database = new Database(Paths.getDatabasePath());
 
-        try {
+        try
+        {
             database.pragma("journal_mode = WAL");
             database.pragma("foreign_keys = ON");
 
             Migrations.runMigrations(database);
 
             AppDatabase.database = database;
-        } catch (error) {
+        }
+        catch (error)
+        {
             database.close();
             throw error;
         }

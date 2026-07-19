@@ -1,11 +1,11 @@
-export type PluginDownloadProgress = {
+export type PluginProgress = {
     status: string;
     progress: number;
-    downloadedBytes: number;
-    totalBytes: number;
+    downloadedBytes?: number;
+    totalBytes?: number;
 };
 
-export type PluginDownloadResult = {
+export type PluginInstallResult = {
     success: boolean;
     message: string;
     version?: string;

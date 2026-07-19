@@ -23,7 +23,8 @@ export class IpcHelper {
     static registerIpcController(controller: object) {
         const routes = IpcHelper.routesByController.get(controller.constructor as (...args: unknown[]) => unknown) ?? [];
 
-        for (const route of routes) {
+        for (const route of routes)
+        {
             if (IpcHelper.registeredChannels.has(route.channel))
                 throw new Error(`IPC channel already registered: ${route.channel}`);
 
