@@ -27,4 +27,15 @@ export class Paths {
 
         return path.join(app.getPath("temp"), app.getName(), "LOPlugin+", version);
     }
+
+    static getBundledCharacterCatalogPath() {
+        if (app.isPackaged)
+            return path.join(process.resourcesPath, "data", "characters.json");
+
+        return path.join(app.getAppPath(), "src", "data", "characters.json");
+    }
+
+    static getCachedCharacterCatalogPath() {
+        return path.join(app.getPath("userData"), "catalogs", "characters.json");
+    }
 }

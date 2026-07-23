@@ -1,3 +1,14 @@
+<script setup lang="ts">
+import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
+import { onMounted } from "vue";
+
+const characterCatalog = useCharacterCatalogStore();
+
+onMounted(() => {
+    void characterCatalog.load();
+});
+</script>
+
 <template>
     <div class="app-shell">
         <aside class="sidebar">

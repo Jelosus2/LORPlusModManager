@@ -1,0 +1,234 @@
+import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js";
+
+import { Paths } from "./Paths.js";
+import fse from "fs-extra";
+
+type LoadedCatalog = {
+    filePath: string;
+    catalog: CharacterCatalog;
+};
+
+export class CharacterCatalogService {
+    private catalog: CharacterCatalog | null = null;
+    private loadingPromise: Promise<CharacterCatalog> | null = null;
+    private skinsById = new Map<string, readonly CharacterSkin[]>();
+    private skinsByCharacterName = new Map<string, readonly CharacterSkin[]>();
+    private skinsByAssetName = new Map<string, readonly CharacterSkin[]>();
+    private readonly EMPTY_RESULTS: readonly CharacterSkin[] = Object.freeze([]);
+    private readonly MAX_CATALOG_SIZE = 1 * 1024 ** 2;
+    private readonly MAX_CATALOG_ENTRIES = 2000;
+    private readonly MAX_ASSETS_PER_ENTRY = 10;
+
+    async getCatalog(): Promise<CharacterCatalog> {
+        if (this.catalog)
+            return this.catalog;
+
+        this.loadingPromise ??= this.loadCatalog();
+
+        try
+        {
+            this.catalog = await this.loadingPromise;
+            return this.catalog;
+        }
+        finally
+        {
+            this.loadingPromise = null;
+        }
+    }
+
+    async findBySkinId(skin2dId: string): Promise<readonly CharacterSkin[]> {
+        await this.getCatalog();
+
+        return this.skinsById.get(this.normalizeIndexKey(skin2dId)) ?? this.EMPTY_RESULTS;
+    }
+
+    async findByCharacterName(characterName: string): Promise<readonly CharacterSkin[]> {
+        await this.getCatalog();
+
+        return this.skinsByCharacterName.get(this.normalizeIndexKey(characterName)) ?? this.EMPTY_RESULTS;
+    }
+
+    async findByAssetName(assetName: string): Promise<readonly CharacterSkin[]> {
+        await this.getCatalog();
+
+        return this.skinsByAssetName.get(this.normalizeIndexKey(assetName)) ?? this.EMPTY_RESULTS;
+    }
+
+    private async loadCatalog(): Promise<CharacterCatalog> {
+        const candidatePaths = [
+            Paths.getBundledCharacterCatalogPath(),
+            Paths.getCachedCharacterCatalogPath()
+        ];
+
+        const validCatalogs: LoadedCatalog[] = [];
+        const failures: unknown[] = [];
+
+        for (const filePath of candidatePaths)
+        {
+            try
+            {
+                validCatalogs.push({
+                    filePath,
+                    catalog: await this.readCatalog(filePath)
+                });
+            }
+            catch (error)
+            {
+                if (error instanceof Error && "code" in error && error.code === "ENOENT")
+                    continue;
+
+                failures.push(error);
+                console.error(`Could not load character catalog from ${filePath}:`, error);
+            }
+        }
+
+        if (validCatalogs.length === 0)
+            throw new Error("No valid character catalog is available.", { cause: failures[0] });
+
+        validCatalogs.sort((left, right) =>
+            left.catalog.version.localeCompare(right.catalog.version, undefined, { numeric: true, sensitivity: "base" })
+        );
+
+        const selected = validCatalogs.at(-1)!;
+
+        this.buildIndexes(selected.catalog);
+        console.info(`Loaded character catalog ${selected.catalog.version} from ${selected.filePath}.`);
+
+        return selected.catalog;
+    }
+
+    private async readCatalog(filePath: string): Promise<CharacterCatalog> {
+        const stats = await fse.stat(filePath);
+
+        if (!stats.isFile())
+            throw new Error(`${filePath} is not a file.`);
+        if (stats.size > this.MAX_CATALOG_SIZE)
+            throw new Error("The character catalog is too large.");
+
+        const contents = await fse.readFile(filePath, { encoding: "utf-8" });
+        let value: unknown;
+
+        try
+        {
+            value = JSON.parse(contents);
+        }
+        catch (error)
+        {
+            throw new Error("The character catalog contains invalid JSON.", { cause: error });
+        }
+
+        return this.parseCatalog(value);
+    }
+
+    private parseCatalog(value: unknown): CharacterCatalog {
+        if (!this.isRecord(value))
+            throw new Error("The character catalog is not an object.");
+
+        const version = this.readString(value.version, "catalog version", 10);
+
+        if (!Array.isArray(value.characters))
+            throw new Error("The catalog has no characters array.");
+        if (value.characters.length > this.MAX_CATALOG_ENTRIES)
+            throw new Error("The catalog contains too many entries.");
+
+        const characters = Object.freeze(value.characters.map((entry, index) => this.parseCharacterSkin(entry, index)));
+
+        return Object.freeze({
+            version,
+            characters
+        });
+    }
+
+    private parseCharacterSkin(value: unknown, index: number): CharacterSkin {
+        if (!this.isRecord(value))
+            throw new Error(`Character catalog entry ${index} is not an object.`);
+
+        const assetsValue = value.assets;
+
+        if (!Array.isArray(assetsValue) || assetsValue.length === 0)
+            throw new Error(`Character catalog entry ${index} has no assets.`);
+        if (assetsValue.length > this.MAX_ASSETS_PER_ENTRY)
+            throw new Error(`Character catalog entry ${index} has too many assets.`);
+
+        const assets = Object.freeze(
+            assetsValue.map((asset, assetIndex) => this.readFileName(asset, `entry ${index} asset ${assetIndex}`))
+        );
+
+        return Object.freeze({
+            skin2dId: this.readString(value.skin2dId, `entry ${index} skin2dId`),
+            characterName: this.readString(value.characterName, `entry ${index} characterName`),
+            skinName: this.readString(value.skinName, `entry ${index} skinName`),
+            iconFile: this.readFileName(value.iconFile, `entry ${index} iconFile`),
+            isSpineSkin: this.readBoolean(value.isSpineSkin, `entry ${index} isSpineSkin`),
+            isAnimatorSkin: this.readBoolean(value.isAnimatorSkin, `entry ${index} isAnimatorSkin`),
+            isStaticSkin: this.readBoolean(value.isStaticSkin, `entry ${index} isStaticSkin`),
+            assets
+        });
+    }
+
+    private buildIndexes(catalog: CharacterCatalog) {
+        this.skinsById = this.buildIndex(catalog.characters, (skin) => [skin.skin2dId]);
+        this.skinsByCharacterName = this.buildIndex(catalog.characters, (skin) => [skin.characterName]);
+        this.skinsByAssetName = this.buildIndex(catalog.characters, (skin) => skin.assets);
+    }
+
+    private buildIndex(
+        entries: readonly CharacterSkin[],
+        getKeys: (entry: CharacterSkin) => readonly string[]
+    ) {
+        const mutableIndex = new Map<string, CharacterSkin[]>();
+
+        for (const entry of entries)
+        {
+            for (const key of getKeys(entry))
+            {
+                const normalizedKey = this.normalizeIndexKey(key);
+                const bucket = mutableIndex.get(normalizedKey);
+
+                if (bucket)
+                    bucket.push(entry);
+                else
+                    mutableIndex.set(normalizedKey, [entry]);
+            }
+        }
+
+        const index = new Map<string, readonly CharacterSkin[]>();
+
+        for (const [key, entries] of mutableIndex)
+            index.set(key, Object.freeze(entries));
+
+        return index;
+    }
+
+    private normalizeIndexKey(value: string) {
+        return value.trim().toLowerCase();
+    }
+
+    private readString(value: unknown, fieldName: string, maxLength = 512) {
+        if (typeof value !== "string" || !value.trim() || value.length > maxLength)
+            throw new Error(`Invalid ${fieldName}.`);
+
+        return value;
+    }
+
+    private readFileName(value: unknown, fieldName: string) {
+        const fileName = this.readString(value, fieldName, 100);
+        if (fileName === "." || fileName === ".." || /[\\/\u0000]/.test(fileName))
+            throw new Error(`Invalid ${fieldName}.`);
+
+        return fileName;
+    }
+
+    private readBoolean(value: unknown, fieldName: string) {
+        if (typeof value !== "boolean")
+            throw new Error(`Invalid ${fieldName}.`);
+
+        return value;
+    }
+
+    private isRecord(value: unknown): value is Record<string, unknown> {
+        return Boolean(value && typeof value === "object" && !Array.isArray(value));
+    }
+}
+
+export const characterCatalog = new CharacterCatalogService();
