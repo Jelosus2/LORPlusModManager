@@ -25,24 +25,24 @@ export class SetupController {
             });
 
             if (result.canceled)
-                return { success: false, message: "The game location selection was canceled.", path: "" };
+                return this.setupGameLocationFailure("The game location selection was canceled.");
 
             const installationPath = result.filePaths[0];
 
             const isValidInstallationPath = (await fse.readdir(installationPath)).includes(executableFileName);
             if (!isValidInstallationPath)
-                return { success: false, message: "The selected location doesn't contain the game executable.", path: "" };
+                return this.setupGameLocationFailure("The selected location doesn't contain the game executable.");
 
             return this.saveGameLocation(installationPath);
         }
 
         const installationPath = await GameRegistry.getInstallPath();
         if (!installationPath || !await fse.exists(installationPath))
-            return { success: false, message: "Could not automatically discover the game location.", path: "" };
+            return this.setupGameLocationFailure("Could not automatically discover the game location.");
 
         const isValidInstallationPath = (await fse.readdir(installationPath)).includes(executableFileName);
         if (!isValidInstallationPath)
-            return { success: false, message: "Game path detected but the game executable is missing", path: "" };
+            return this.setupGameLocationFailure("Game path detected but the game executable is missing.");
 
         return this.saveGameLocation(installationPath);
     }
@@ -78,6 +78,14 @@ export class SetupController {
             success: true,
             message: "",
             path: gameLocation
+        };
+    }
+
+    private setupGameLocationFailure(message: string): GameLocationResult {
+        return {
+            success: false,
+            message,
+            path: ""
         };
     }
 

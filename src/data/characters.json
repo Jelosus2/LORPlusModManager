@@ -181,7 +181,7 @@
     {
       "skin2dId": "2DModel_BR_Io_NS2",
       "characterName": "A-6 Io",
-      "skinName": "HOT STEAM MILK!!: A shower gown for a warm milk bath",
+      "skinName": "HOT STEAM MILK!!: A Shower Gown For A Warm Milk Bath",
       "iconFile": "InvenIcon_BR_Io_NS2.png",
       "isSpineSkin": true,
       "isAnimatorSkin": false,
@@ -196,7 +196,7 @@
     {
       "skin2dId": "2DModel_BR_Io_NS2_Dam",
       "characterName": "A-6 Io",
-      "skinName": "HOT STEAM MILK!!: A shower gown for a warm milk bath (Damaged)",
+      "skinName": "HOT STEAM MILK!!: A Shower Gown For A Warm Milk Bath (Damaged)",
       "iconFile": "InvenIcon_BR_Io_NS2.png",
       "isSpineSkin": false,
       "isAnimatorSkin": false,
