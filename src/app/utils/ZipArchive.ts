@@ -13,6 +13,11 @@ export type ZipEntryInfo = {
     uncompressedSize: number;
 };
 
+export type ZipEntrySelection = {
+    entryPath: string;
+    outputName: string;
+};
+
 export type ZipExtractionLimits = {
     maxEntries: number;
     maxEntryUncompressedBytes: number;
@@ -142,6 +147,124 @@ export class ZipArchive {
                         });
                     }
                 );
+            }
+        }
+        catch (error)
+        {
+            await fse.rm(destinationRoot, { recursive: true, force: true });
+            throw error;
+        }
+    }
+
+    async extractSelectedEntries(
+        archivePath: string,
+        destinationDirectory: string,
+        selections: readonly ZipEntrySelection[],
+        password?: string,
+        limits: Partial<ZipExtractionLimits> = {}
+    ) {
+        if (selections.length === 0)
+            throw new Error("No ZIP entries were selected.");
+
+        const archive = await Open.file(archivePath);
+        const effectiveLimits = { ...this.DEFAULT_LIMITS, ...limits };
+
+        const entriesByPath = new Map<string, ZipFile>();
+
+        for (const entry of archive.files)
+        {
+            if (entry.type !== "File")
+                continue;
+
+            const normalizedPath = this.normalizeEntryPath(entry.path);
+            const key = normalizedPath.toLowerCase();
+
+            if (entriesByPath.has(key))
+                throw new Error(`The archive contains duplicate entries for ${normalizedPath}.`);
+
+            entriesByPath.set(key, entry);
+        }
+
+        const selectedEntries: Array<{
+            entry: ZipFile;
+            outputName: string;
+        }> = [];
+
+        const outputNames = new Set<string>();
+
+        for (const selection of selections)
+        {
+            const normalizedEntryPath = this.normalizeEntryPath(selection.entryPath);
+            const normalizedOutputName = this.normalizeEntryPath(selection.outputName);
+
+            if (normalizedOutputName.includes("/"))
+                throw new Error("Extracted asset names cannot contain directories.");
+
+            const outputKey = normalizedOutputName.toLowerCase();
+            if (outputNames.has(outputKey))
+                throw new Error(`Multiple entries target ${normalizedOutputName}.`);
+
+            const entry = entriesByPath.get(normalizedEntryPath.toLowerCase());
+            if (!entry)
+                throw new Error(`${normalizedEntryPath} is missing from the archive.`);
+
+            outputNames.add(outputKey);
+
+            selectedEntries.push({
+                entry,
+                outputName: normalizedOutputName
+            });
+        }
+
+        this.validateEntries(selectedEntries.map(({ entry }) => entry), effectiveLimits);
+
+        const destinationRoot = path.resolve(destinationDirectory);
+
+        await fse.ensureDir(path.dirname(destinationRoot));
+        await fse.mkdir(destinationRoot);
+
+        let totalExtractedBytes = 0;
+
+        try
+        {
+            for (const { entry, outputName } of selectedEntries)
+            {
+                const targetPath = this.resolveTargetPath(destinationRoot, outputName);
+                let extractedBytes = 0;
+
+                const sizeGuard = new Transform({
+                    transform(chunk, _encoding, callback) {
+                        const chunkSize = Buffer.isBuffer(chunk)
+                            ? chunk.length
+                            : Buffer.byteLength(chunk);
+
+                        extractedBytes += chunkSize;
+                        totalExtractedBytes += chunkSize;
+
+                        if (extractedBytes > effectiveLimits.maxEntryUncompressedBytes)
+                        {
+                            callback(new Error(`${outputName} exceeded the per-file limit.`));
+                            return;
+                        }
+
+                        if (totalExtractedBytes > effectiveLimits.maxTotalUncompressedBytes)
+                        {
+                            callback(new Error("The extracted data exceeded the total limit."));
+                            return;
+                        }
+
+                        callback(null, chunk);
+                    }
+                });
+
+                await pipeline(
+                    entry.stream(password || undefined),
+                    sizeGuard,
+                    fse.createWriteStream(targetPath, { flags: "wx" })
+                );
+
+                if (extractedBytes !== entry.uncompressedSize)
+                    throw new Error(`${outputName} had an unexpected extracted size.`);
             }
         }
         catch (error)

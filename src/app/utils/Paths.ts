@@ -38,4 +38,8 @@ export class Paths {
     static getCachedCharacterCatalogPath() {
         return path.join(app.getPath("userData"), "catalogs", "characters.json");
     }
+
+    static getModsPath() {
+        return path.join(app.getPath("userData"), "mods");
+    }
 }

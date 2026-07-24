@@ -1,14 +1,32 @@
-import type { ModImportMode, ModSourceKind, ModSourceSelectionResult, SelectedModSource } from "../../../shared/mod.js";
+import type { ModImportMode, ModSourceKind, ModSourceSelectionResult, SelectedModSource, ZipExtractionRequest, ZipExtractionResult } from "../../../shared/mod.js";
 import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
+import { ZipModImporter, ModImportError, type ZipImportSource } from "#mod/ZipModImporter.js";
 import { BrowserWindow, dialog } from "electron";
+import { TypeCheck } from "#utils/TypeCheck.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
+import { randomUUID } from "node:crypto";
 import fsp from "node:fs/promises";
 import path from "node:path";
 
+type StoredModSource = SelectedModSource & {
+    filePath: string;
+};
+
+type ImportSession = {
+    createdAt: number;
+    sources: Map<string, StoredModSource>;
+};
+
 export class ModController {
+    private readonly sessions = new Map<string, ImportSession>();
+    private readonly SESSION_LIFETIME = 30 * 60 * 1000;
+    private readonly zipImporter = new ZipModImporter();
+
     @IpcHelper.IpcHandle("mod:select-sources")
     async selectSources(event: IpcMainInvokeEvent, mode: ModImportMode): Promise<ModSourceSelectionResult> {
+        this.pruneExpiredSessions();
+
         if (mode !== "single" && mode !== "batch")
             return this.selectSourcesFailure("Invalid import mode.");
 
@@ -38,17 +56,77 @@ export class ModController {
         if (unsupportedFiles.length > 0)
             return this.selectSourcesFailure(`Unsupported or invalid files: ${unsupportedFiles.join(", ")}`);
 
-        const sources = inspectedSources.filter((source): source is SelectedModSource => source !== null);
+        const sources = inspectedSources.filter((source): source is StoredModSource => source !== null);
+
+        const sessionId = randomUUID();
+
+        this.sessions.set(sessionId, {
+            createdAt: Date.now(),
+            sources: new Map(sources.map((source) => [source.id, source]))
+        });
 
         return {
             success: true,
             canceled: false,
             message: `${sources.length} ${sources.length === 1 ? "mod" : "mods"} selected.`,
-            sources
+            sessionId,
+            sources: sources.map((source) => ({
+                id: source.id,
+                name: source.name,
+                kind: source.kind,
+                size: source.size
+            }))
         };
     }
 
-    private async inspectSource(filePath: string): Promise<SelectedModSource | null> {
+    @IpcHelper.IpcHandle("mod:extract-zips")
+    async extractZips(_event: IpcMainInvokeEvent, value: unknown) {
+        const request = this.parseExtractionRequest(value);
+        if (!request)
+            return this.extractionFailure("Invalid ZIP extraction request.");
+
+        this.pruneExpiredSessions();
+
+        const session = this.sessions.get(request.sessionId);
+        if (!session)
+            return this.extractionFailure("The import session has expired. Select the files again.");
+
+        const sources: ZipImportSource[] = [];
+
+        for (const options of request.sources)
+        {
+            const source = session.sources.get(options.sourceId);
+            if (!source || source.kind !== "zip")
+                return this.extractionFailure("A selected ZIP is no longer available.");
+
+            sources.push({
+                id: source.id,
+                name: source.name,
+                filePath: source.filePath,
+                password: options.password
+            });
+        }
+
+        try
+        {
+            const result = await this.zipImporter.extract(sources, request.deleteOriginals);
+            this.sessions.delete(request.sessionId);
+
+            return result;
+        }
+        catch (error)
+        {
+            console.error("Could not import ZIP mods:", error);
+
+            const message = error instanceof ModImportError
+                ? error.message
+                : "The selected ZIP files could not be imported.";
+
+            return this.extractionFailure(message);
+        }
+    }
+
+    private async inspectSource(filePath: string): Promise<StoredModSource | null> {
         await using file = await fsp.open(filePath, "r");
 
         const stats = await file.stat();
@@ -63,9 +141,11 @@ export class ModController {
             return null;
 
         return {
+            id: randomUUID(),
             name: path.basename(filePath),
             kind,
-            size: stats.size
+            size: stats.size,
+            filePath
         };
     }
 
@@ -90,12 +170,80 @@ export class ModController {
         return null;
     }
 
+    private parseExtractionRequest(value: unknown): ZipExtractionRequest | null {
+        if (!TypeCheck.isRecord(value))
+            return null;
+
+        if (
+            typeof value.sessionId !== "string" ||
+            value.sessionId.length > 100 ||
+            typeof value.deleteOriginals !== "boolean" ||
+            !Array.isArray(value.sources) ||
+            value.sources.length === 0 ||
+            value.sources.length > 100
+        )
+        {
+            return null;
+        }
+
+        const sourceIds = new Set<string>();
+        const sources: ZipExtractionRequest["sources"] = [];
+
+        for (const source of value.sources)
+        {
+            if (
+                !TypeCheck.isRecord(source) ||
+                typeof source.sourceId !== "string" ||
+                source.sourceId.length > 100 ||
+                typeof source.password !== "string" ||
+                source.password.length > 1024 ||
+                sourceIds.has(source.sourceId)
+            )
+            {
+                return null;
+            }
+
+            sourceIds.add(source.sourceId);
+
+            sources.push({
+                sourceId: source.sourceId,
+                password: source.password
+            });
+        }
+
+        return {
+            sessionId: value.sessionId,
+            sources,
+            deleteOriginals: value.deleteOriginals
+        };
+    }
+
+    private pruneExpiredSessions() {
+        const expirationTime = Date.now() - this.SESSION_LIFETIME;
+
+        for (const [sessionId, session] of this.sessions)
+        {
+            if (session.createdAt < expirationTime)
+                this.sessions.delete(sessionId);
+        }
+    }
+
     private selectSourcesFailure(message: string, canceled = false): ModSourceSelectionResult {
         return {
             success: false,
             canceled,
             message,
+            sessionId: null,
             sources: []
+        };
+    }
+
+    private extractionFailure(message: string): ZipExtractionResult {
+        return {
+            success: false,
+            message,
+            mods: [],
+            warnings: []
         };
     }
 }

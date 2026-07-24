@@ -1,5 +1,6 @@
 import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js";
 
+import { TypeCheck } from "./TypeCheck.js";
 import { Paths } from "./Paths.js";
 import fse from "fs-extra";
 
@@ -121,7 +122,7 @@ export class CharacterCatalogService {
     }
 
     private parseCatalog(value: unknown): CharacterCatalog {
-        if (!this.isRecord(value))
+        if (!TypeCheck.isRecord(value))
             throw new Error("The character catalog is not an object.");
 
         const version = this.readString(value.version, "catalog version", 10);
@@ -140,7 +141,7 @@ export class CharacterCatalogService {
     }
 
     private parseCharacterSkin(value: unknown, index: number): CharacterSkin {
-        if (!this.isRecord(value))
+        if (!TypeCheck.isRecord(value))
             throw new Error(`Character catalog entry ${index} is not an object.`);
 
         const assetsValue = value.assets;
@@ -224,10 +225,6 @@ export class CharacterCatalogService {
             throw new Error(`Invalid ${fieldName}.`);
 
         return value;
-    }
-
-    private isRecord(value: unknown): value is Record<string, unknown> {
-        return Boolean(value && typeof value === "object" && !Array.isArray(value));
     }
 }
 
