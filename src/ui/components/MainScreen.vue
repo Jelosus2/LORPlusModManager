@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import type { ModImportMode, SelectedModSource, ZipExtractionRequest } from "../../shared/mod.ts";
+import type { ModImportMode, SelectedModSource, ZipExtractionRequest, ZipExtractionResult } from "../../shared/mod.ts";
 
 import CharactersScreen from "./CharactersScreen.vue";
 import ImportFileIcon from "./icons/ImportFileIcon.vue";
 import ImportFilesIcon from "./icons/ImportFilesIcon.vue";
+import ModImportScreen from "./ModImportScreen.vue";
 import ZipExtractionModal from "./ZipExtractionModal.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
 import { ref, onMounted } from "vue";
 
 type MainSection = "mods" | "characters";
+type ModsView = "library" | "import";
 
 const characterCatalog = useCharacterCatalogStore();
 
 const activeSection = ref<MainSection>("mods");
+const modsView = ref<ModsView>("library");
 const isSelectingMods = ref(false);
 const importMessage = ref("");
 const importFailed = ref(false);
@@ -21,10 +24,8 @@ const selectedSources = ref<SelectedModSource[]>([]);
 const importSessionId = ref<string | null>(null);
 const zipPasswords = ref<Record<string, string>>({});
 const deleteOriginals = ref(false);
-const extractionMessage = ref("");
-const extractionFailed = ref(false);
 const isExtractingMods = ref(false);
-const extractionComplete = ref(false);
+const extractionResult = ref<ZipExtractionResult | null>(null);
 
 async function selectModSources(mode: ModImportMode) {
     if (isSelectingMods.value)
@@ -48,9 +49,7 @@ async function selectModSources(mode: ModImportMode) {
             selectedSources.value = result.sources;
             importSessionId.value = result.sessionId;
             deleteOriginals.value = false;
-            extractionMessage.value = "";
-            extractionFailed.value = false;
-            extractionComplete.value = false;
+            extractionResult.value = null;
 
             zipPasswords.value = Object.fromEntries(
                 result.sources
@@ -75,6 +74,7 @@ async function selectModSources(mode: ModImportMode) {
 
 function returnToSourceSelection() {
     hidePopover("zip-extraction-popover");
+    resetZipExtraction();
     showPopover("add-mod-popover");
 }
 
@@ -99,23 +99,20 @@ async function prepareZipExtraction() {
     };
 
     isExtractingMods.value = true;
-    extractionMessage.value = "";
-    extractionFailed.value = false;
+    extractionResult.value = null;
+    activeSection.value = "mods";
+    modsView.value = "import";
+    hidePopover("zip-extraction-popover");
 
     try
     {
         const result = await window.app.extractZipMods(request);
 
-        extractionFailed.value = !result.success;
-        extractionMessage.value = [
-            result.message,
-            ...result.warnings
-        ].filter(Boolean).join(" ");
+        extractionResult.value = result;
 
         if (!result.success)
             return;
 
-        extractionComplete.value = true;
         importSessionId.value = null;
         zipPasswords.value = {};
     }
@@ -123,8 +120,21 @@ async function prepareZipExtraction() {
     {
         console.error("Could not extract the selected ZIP files:", error);
 
-        extractionFailed.value = true;
-        extractionMessage.value = "The selected ZIP files could not be imported.";
+        extractionResult.value = {
+            success: false,
+            message: "The selected ZIP files could not be imported.",
+            mods: [],
+            warnings: [],
+            issues: [
+                {
+                    sourceId: null,
+                    sourceName: "Import",
+                    kind: "extraction",
+                    message: "The selected ZIP files could not be imported.",
+                    candidates: []
+                }
+            ]
+        };
     }
     finally
     {
@@ -137,10 +147,32 @@ function resetZipExtraction() {
     importSessionId.value = null;
     zipPasswords.value = {};
     deleteOriginals.value = false;
-    extractionMessage.value = "";
-    extractionFailed.value = false;
     isExtractingMods.value = false;
-    extractionComplete.value = false;
+    extractionResult.value = null;
+    modsView.value = "library";
+}
+
+function finishImport() {
+    resetZipExtraction();
+    activeSection.value = "mods";
+}
+
+function retryImport() {
+    if (!importSessionId.value)
+    {
+        chooseImportFilesAgain();
+        return;
+    }
+
+    extractionResult.value = null;
+    modsView.value = "library";
+    showPopover("zip-extraction-popover");
+}
+
+function chooseImportFilesAgain() {
+    resetZipExtraction();
+    activeSection.value = "mods";
+    showPopover("add-mod-popover");
 }
 
 function showPopover(id: string) {
@@ -195,6 +227,16 @@ onMounted(() => {
 
         <main class="main-content">
             <CharactersScreen v-if="activeSection === 'characters'" />
+
+            <ModImportScreen
+                v-else-if="modsView === 'import'"
+                :busy="isExtractingMods"
+                :result="extractionResult"
+                :sources="selectedSources"
+                @done="finishImport"
+                @retry="retryImport"
+                @choose-again="chooseImportFilesAgain"
+            />
 
             <template v-else>
                 <header class="content-header">
@@ -310,10 +352,7 @@ onMounted(() => {
             v-model:passwords="zipPasswords"
             v-model:delete-originals="deleteOriginals"
             :sources="selectedSources"
-            :message="extractionMessage"
-            :failed="extractionFailed"
             :busy="isExtractingMods"
-            :complete="extractionComplete"
             @back="returnToSourceSelection"
             @close="closeZipExtraction"
             @extract="prepareZipExtraction"

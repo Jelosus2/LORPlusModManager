@@ -1,9 +1,10 @@
-import type { ExtractedModSummary, ZipExtractionResult } from "../../shared/mod.js";
-import type { ZipModMatch } from "./ZipModMatcher.js";
+import type { ExtractedModSummary, ModImportIssue, ZipExtractionResult } from "../../shared/mod.js";
+import type { ZipModMatch, ZipMatchResult } from "./ZipModMatcher.js";
 
 import { characterCatalog } from "#utils/CharacterCatalogService.js";
 import { ZipModMatcher } from "./ZipModMatcher.js";
 import { ZipArchive } from "#utils/ZipArchive.js";
+import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { randomUUID } from "node:crypto";
 import { Paths } from "#utils/Paths.js";
 import path from "node:path";
@@ -19,6 +20,11 @@ export type ZipImportSource = {
 type AnalyzedSource = {
     source: ZipImportSource;
     matches: ZipModMatch[];
+};
+
+type SourceAnalysis = {
+    sources: AnalyzedSource[];
+    issues: ModImportIssue[];
 };
 
 type PlannedMod = {
@@ -42,7 +48,24 @@ export class ZipModImporter {
         if (sources.length === 0)
             throw new ModImportError("No ZIP archives were provided.");
 
-        const analyzedSources = await this.analyzeSources(sources);
+        const analysis = await this.analyzeSources(sources);
+
+        if (analysis.issues.length > 0)
+        {
+            return {
+                success: false,
+                message:
+                    `${analysis.issues.length} ` +
+                    `${analysis.issues.length === 1 ? "file needs" : "files need"} attention. ` +
+                    "No files were extracted or deleted.",
+                mods: [],
+                warnings: [],
+                issues: analysis.issues
+            };
+        }
+
+        const analyzedSources = analysis.sources;
+
         const modsRoot = Paths.getModsPath();
         const stagingRoot = path.join(modsRoot, `.staging-${randomUUID()}`);
 
@@ -52,6 +75,7 @@ export class ZipModImporter {
         const reservedDirectories = new Set<string>();
         const plannedMods: PlannedMod[] = [];
         const movedDirectories: string[] = [];
+        const extractionIssues: ModImportIssue[] = [];
 
         try
         {
@@ -62,6 +86,8 @@ export class ZipModImporter {
                 );
 
                 const containsMultipleMods = analyzed.matches.length > 1;
+                const sourcePlans: PlannedMod[] = [];
+                let sourceIssue: ModImportIssue | null = null;
 
                 for (const match of analyzed.matches)
                 {
@@ -84,14 +110,11 @@ export class ZipModImporter {
                     }
                     catch (error)
                     {
-                        throw new ModImportError(
-                            `Could not extract ${analyzed.source.name}. ` +
-                            "Check its password and make sure the archive is valid.",
-                            { cause: error }
-                        );
+                        sourceIssue = this.createExtractionIssue(analyzed.source, error);
+                        break;
                     }
 
-                    plannedMods.push({
+                    sourcePlans.push({
                         stagingDirectory,
                         finalDirectory,
                         summary: {
@@ -103,6 +126,25 @@ export class ZipModImporter {
                         }
                     });
                 }
+
+                if (sourceIssue)
+                    extractionIssues.push(sourceIssue);
+                else
+                    plannedMods.push(...sourcePlans);
+            }
+
+            if (extractionIssues.length > 0)
+            {
+                return {
+                    success: false,
+                    message:
+                        `${extractionIssues.length} ` +
+                        `${extractionIssues.length === 1 ? "file needs" : "files need"} attention. ` +
+                        "No files were extracted or deleted.",
+                    mods: [],
+                    warnings: [],
+                    issues: extractionIssues
+                };
             }
 
             for (const plannedMod of plannedMods)
@@ -140,7 +182,11 @@ export class ZipModImporter {
                 catch (error)
                 {
                     console.error(`Could not delete imported ZIP ${source.filePath}:`, error);
-                    warnings.push(`${source.name} could not be deleted.`);
+
+                    let message = `${source.name} could not be deleted. `;
+                    message += ErrorUtils.getFsErrorMessage(error);
+
+                    warnings.push(message.trim());
                 }
             }
         }
@@ -151,52 +197,85 @@ export class ZipModImporter {
             success: true,
             message: `${mods.length} ${mods.length === 1 ? "mod" : "mods"} imported successfully.`,
             mods,
-            warnings
+            warnings,
+            issues: []
         };
     }
 
-    private async analyzeSources(sources: readonly ZipImportSource[]): Promise<AnalyzedSource[]> {
+    private async analyzeSources(sources: readonly ZipImportSource[]): Promise<SourceAnalysis> {
         const catalog = await characterCatalog.getCatalog();
         const analyzedSources: AnalyzedSource[] = [];
+        const issues: ModImportIssue[] = [];
 
         for (const source of sources)
         {
-            let entries;
+            let result: ZipMatchResult;
 
             try
             {
-                entries = await this.archive.inspect(source.filePath);
+                const entries = await this.archive.inspect(source.filePath);
+                result = this.matcher.match(entries, catalog);
             }
             catch (error)
             {
-                throw new ModImportError(`${source.name} could not be inspected.`, { cause: error });
+                console.error(`Could not inspect ${source.filePath}:`, error);
+
+                issues.push({
+                    sourceId: source.id,
+                    sourceName: source.name,
+                    kind: "invalid",
+                    message: "The archive could not be inspected. It may be invalid or corrupted.",
+                    candidates: []
+                });
+
+                continue;
             }
 
-            const result = this.matcher.match(entries, catalog);
+            if (result.incompleteMatches.length > 0)
+            {
+                issues.push({
+                    sourceId: source.id,
+                    sourceName: source.name,
+                    kind: "incomplete",
+                    message: result.matches.length > 0
+                        ? "The archive also contains an incomplete Spine mod."
+                        : "Required Spine assets are missing.",
+                    candidates: result.incompleteMatches.map((match) => ({
+                        characterName: match.character.characterName,
+                        skinName: match.character.skinName,
+                        skin2dId: match.character.skin2dId,
+                        foundAssets: match.foundAssets,
+                        missingAssets: match.missingAssets
+                    }))
+                });
+
+                continue;
+            }
 
             if (result.matches.length === 0)
             {
-                if (result.incompleteMatches.length > 0)
+                if (result.hasAmbiguousMatches)
                 {
-                    const displayedMatches = result.incompleteMatches
-                        .slice(0, 3)
-                        .map(({ character, missingAssets }) =>
-                            `${character.characterName}: ${character.skinName} is missing ${missingAssets.join(", ")}`
-                        );
-
-                    const remainingCount = result.incompleteMatches.length - displayedMatches.length;
-
-                    const remainingMessage = remainingCount > 0
-                        ? `; and ${remainingCount} other possible match${remainingCount === 1 ? "" : "es"}`
-                        : "";
-
-                    throw new ModImportError(`${source.name} contains an incomplete mod: ${displayedMatches.join("; ")}${remainingMessage}`);
+                    issues.push({
+                        sourceId: source.id,
+                        sourceName: source.name,
+                        kind: "ambiguous",
+                        message: "The archive contains only shared asset names, so its character could not be identified safely.",
+                        candidates: []
+                    });
+                }
+                else
+                {
+                    issues.push({
+                        sourceId: source.id,
+                        sourceName: source.name,
+                        kind: "unrecognized",
+                        message: "No supported character assets from the catalog were found.",
+                        candidates: []
+                    });
                 }
 
-                if (result.hasAmbiguousMatches)
-                    throw new ModImportError(`${source.name} contains only shared asset names, so its character could not be identified safely.`);
-
-                throw new ModImportError(`${source.name} does not contain a recognized mod.`);
+                continue;
             }
 
             analyzedSources.push({
@@ -205,7 +284,10 @@ export class ZipModImporter {
             });
         }
 
-        return analyzedSources;
+        return {
+            sources: analyzedSources,
+            issues
+        };
     }
 
     private async reserveDestination(root: string, requestedName: string, reservedDirectories: Set<string>) {
@@ -243,5 +325,27 @@ export class ZipModImporter {
             sanitized = `_${sanitized}`;
 
         return sanitized.slice(0, 80);
+    }
+
+    private createExtractionIssue(source: ZipImportSource, error: unknown): ModImportIssue {
+        let message = "The archive could not be extracted.";
+
+        if (error instanceof Error)
+        {
+            if (error.message === "MISSING_PASSWORD")
+                message = "A password is required to open this ZIP file.";
+            else if (error.message === "BAD_PASSWORD")
+                message = "The password is incorrect or the ZIP encryption is unsupported.";
+            else
+                message = "Make sure the archive is valid.";
+        }
+
+        return {
+            sourceId: source.id,
+            sourceName: source.name,
+            kind: "extraction",
+            message,
+            candidates: []
+        };
     }
 }

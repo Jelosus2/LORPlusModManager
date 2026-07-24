@@ -1,4 +1,4 @@
-import type { ModImportMode, ModSourceKind, ModSourceSelectionResult, SelectedModSource, ZipExtractionRequest, ZipExtractionResult } from "../../../shared/mod.js";
+import type { ModImportIssueKind, ModImportMode, ModSourceKind, ModSourceSelectionResult, SelectedModSource, ZipExtractionRequest, ZipExtractionResult } from "../../../shared/mod.js";
 import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
 import { ZipModImporter, ModImportError, type ZipImportSource } from "#mod/ZipModImporter.js";
@@ -80,16 +80,16 @@ export class ModController {
     }
 
     @IpcHelper.IpcHandle("mod:extract-zips")
-    async extractZips(_event: IpcMainInvokeEvent, value: unknown) {
+    async extractZips(_event: IpcMainInvokeEvent, value: unknown): Promise<ZipExtractionResult> {
         const request = this.parseExtractionRequest(value);
         if (!request)
-            return this.extractionFailure("Invalid ZIP extraction request.");
+            return this.extractionFailure("Invalid ZIP extraction request.", "invalid");
 
         this.pruneExpiredSessions();
 
         const session = this.sessions.get(request.sessionId);
         if (!session)
-            return this.extractionFailure("The import session has expired. Select the files again.");
+            return this.extractionFailure("The import session has expired. Select the files again.", "session");
 
         const sources: ZipImportSource[] = [];
 
@@ -97,7 +97,7 @@ export class ModController {
         {
             const source = session.sources.get(options.sourceId);
             if (!source || source.kind !== "zip")
-                return this.extractionFailure("A selected ZIP is no longer available.");
+                return this.extractionFailure("A selected ZIP is no longer available.", "invalid");
 
             sources.push({
                 id: source.id,
@@ -110,7 +110,8 @@ export class ModController {
         try
         {
             const result = await this.zipImporter.extract(sources, request.deleteOriginals);
-            this.sessions.delete(request.sessionId);
+            if (result.success)
+                this.sessions.delete(request.sessionId);
 
             return result;
         }
@@ -238,12 +239,21 @@ export class ModController {
         };
     }
 
-    private extractionFailure(message: string): ZipExtractionResult {
+    private extractionFailure(message: string, kind: ModImportIssueKind = "extraction"): ZipExtractionResult {
         return {
             success: false,
             message,
             mods: [],
-            warnings: []
+            warnings: [],
+            issues: [
+                {
+                    sourceId: null,
+                    sourceName: "Import",
+                    kind,
+                    message,
+                    candidates: []
+                }
+            ]
         };
     }
 }

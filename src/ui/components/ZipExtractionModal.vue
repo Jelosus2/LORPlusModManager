@@ -5,10 +5,7 @@ import { computed } from "vue";
 
 const props = defineProps<{
     sources: SelectedModSource[];
-    message: string;
-    failed: boolean;
     busy: boolean;
-    complete: boolean;
 }>();
 
 const passwords = defineModel<Record<string, string>>("passwords", { required: true });
@@ -61,6 +58,7 @@ function formatFileSize(bytes: number) {
                 class="close-button"
                 type="button"
                 aria-label="Close ZIP preparation"
+                :disabled="props.busy"
                 @click="$emit('close')"
             >
                 <span aria-hidden="true"></span>
@@ -98,6 +96,7 @@ function formatFileSize(bytes: number) {
                         type="password"
                         autocomplete="off"
                         placeholder="Archive password"
+                        :disabled="props.busy"
                     />
                 </label>
             </article>
@@ -124,7 +123,11 @@ function formatFileSize(bytes: number) {
         </div>
 
         <label class="delete-source-option">
-            <input v-model="deleteOriginals" type="checkbox" />
+            <input
+                v-model="deleteOriginals"
+                type="checkbox"
+                :disabled="props.busy"
+            />
 
             <span>
                 <strong>Delete original ZIP files after importing</strong>
@@ -134,16 +137,6 @@ function formatFileSize(bytes: number) {
                 </small>
             </span>
         </label>
-
-        <p
-            v-if="message"
-            class="modal-feedback"
-            :class="{ 'modal-feedback--error': failed }"
-            role="status"
-            aria-live="polite"
-        >
-            {{ message }}
-        </p>
 
         <footer class="modal-actions">
             <button
@@ -158,16 +151,10 @@ function formatFileSize(bytes: number) {
             <button
                 class="primary-button"
                 type="button"
-                :disabled="zipSources.length === 0 || props.busy || props.complete"
+                :disabled="zipSources.length === 0 || props.busy"
                 @click="$emit('extract')"
             >
-                {{
-                    props.busy
-                        ? "Extracting..."
-                        : props.complete
-                            ? "Imported"
-                            : "Extract mods"
-                }}
+                {{ props.busy ? "Starting..." : "Extract mods" }}
             </button>
         </footer>
     </section>
@@ -235,6 +222,11 @@ function formatFileSize(bytes: number) {
 .close-button:hover {
     color: #f2eee5;
     background: #181c1a;
+}
+
+.close-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
 }
 
 .close-button span {
@@ -359,6 +351,12 @@ function formatFileSize(bytes: number) {
     color: #686d68;
 }
 
+.password-field input:disabled,
+.delete-source-option input:disabled {
+    cursor: wait;
+    opacity: 0.55;
+}
+
 .deferred-sources {
     display: grid;
     gap: 7px;
@@ -439,17 +437,6 @@ function formatFileSize(bytes: number) {
     line-height: 1.45;
 }
 
-.modal-feedback {
-    margin: 16px 28px 0;
-    color: #aeb4ae;
-    font-size: 13px;
-    line-height: 1.5;
-}
-
-.modal-feedback--error {
-    color: #efa3a3;
-}
-
 .modal-actions {
     display: flex;
     justify-content: flex-end;
@@ -512,8 +499,7 @@ function formatFileSize(bytes: number) {
     .modal-description,
     .deferred-sources,
     .no-zip-notice,
-    .delete-source-option,
-    .modal-feedback {
+    .delete-source-option {
         margin-right: 22px;
         margin-left: 22px;
     }
