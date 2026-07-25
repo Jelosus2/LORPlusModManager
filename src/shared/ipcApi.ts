@@ -1,4 +1,4 @@
-import type { ModImportMode, ModSourceSelectionResult, ZipExtractionRequest, ZipExtractionResult } from "./mod.js";
+import type { ModImportMode, ModSourceSelectionResult, ModExtractionRequest, ModExtractionResult } from "./mod.js";
 import type { PluginInstallResult, PluginProgress } from "./plugin.js";
 import type { GameLocationResult, SetupState } from "./setup.js";
 import type { CharacterCatalog } from "./characters.js";
@@ -10,5 +10,5 @@ export type IpcApi = {
     getSetupState: () => Promise<SetupState>;
     getCharacterCatalog: () => Promise<CharacterCatalog>;
     selectModSources: (mode: ModImportMode) => Promise<ModSourceSelectionResult>;
-    extractZipMods: (request: ZipExtractionRequest) => Promise<ZipExtractionResult>;
+    extractMods: (request: ModExtractionRequest) => Promise<ModExtractionResult>;
 };

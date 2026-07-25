@@ -16,14 +16,14 @@ export type ModSourceSelectionResult = {
     sources: SelectedModSource[];
 };
 
-export type ZipExtractionOptions = {
+export type ModExtractionSourceOptions = {
     sourceId: string;
     password: string;
 };
 
-export type ZipExtractionRequest = {
+export type ModExtractionRequest = {
     sessionId: string;
-    sources: ZipExtractionOptions[];
+    sources: ModExtractionSourceOptions[];
     deleteOriginals: boolean;
 };
 
@@ -59,7 +59,7 @@ export type ModImportIssue = {
     candidates: ModImportCandidate[];
 };
 
-export type ZipExtractionResult = {
+export type ModExtractionResult = {
     success: boolean;
     message: string;
     mods: ExtractedModSummary[];

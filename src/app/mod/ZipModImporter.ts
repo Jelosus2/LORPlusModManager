@@ -1,4 +1,4 @@
-import type { ExtractedModSummary, ModImportIssue, ZipExtractionResult } from "../../shared/mod.js";
+import type { ExtractedModSummary, ModImportIssue, ModExtractionResult } from "../../shared/mod.js";
 import type { ZipModMatch, ZipMatchResult } from "./ZipModMatcher.js";
 
 import { characterCatalog } from "#utils/CharacterCatalogService.js";
@@ -44,7 +44,7 @@ export class ZipModImporter {
     private readonly archive = new ZipArchive();
     private readonly matcher = new ZipModMatcher();
 
-    async extract(sources: readonly ZipImportSource[], deleteOriginals: boolean): Promise<ZipExtractionResult> {
+    async extract(sources: readonly ZipImportSource[], deleteOriginals: boolean): Promise<ModExtractionResult> {
         if (sources.length === 0)
             throw new ModImportError("No ZIP archives were provided.");
 

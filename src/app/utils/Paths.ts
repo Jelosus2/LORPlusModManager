@@ -42,4 +42,18 @@ export class Paths {
     static getModsPath() {
         return path.join(app.getPath("userData"), "mods");
     }
+
+    static getUnityWorkerPath() {
+        if (app.isPackaged)
+            return path.join(process.resourcesPath, "unity-worker", "lorplus-unity-worker.exe");
+
+        return path.join(
+            app.getAppPath(),
+            "build",
+            "unity-worker",
+            "win-x64",
+            "lorplus-unity-worker",
+            "lorplus-unity-worker.exe"
+        );
+    }
 }

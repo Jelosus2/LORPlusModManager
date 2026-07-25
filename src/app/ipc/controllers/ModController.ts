@@ -1,4 +1,4 @@
-import type { ModImportIssueKind, ModImportMode, ModSourceKind, ModSourceSelectionResult, SelectedModSource, ZipExtractionRequest, ZipExtractionResult } from "../../../shared/mod.js";
+import type { ModImportIssueKind, ModImportMode, ModSourceKind, ModSourceSelectionResult, SelectedModSource, ModExtractionRequest, ModExtractionResult } from "../../../shared/mod.js";
 import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
 import { ZipModImporter, ModImportError, type ZipImportSource } from "#mod/ZipModImporter.js";
@@ -79,11 +79,11 @@ export class ModController {
         };
     }
 
-    @IpcHelper.IpcHandle("mod:extract-zips")
-    async extractZips(_event: IpcMainInvokeEvent, value: unknown): Promise<ZipExtractionResult> {
+    @IpcHelper.IpcHandle("mod:extract")
+    async extractMods(_event: IpcMainInvokeEvent, value: unknown): Promise<ModExtractionResult> {
         const request = this.parseExtractionRequest(value);
         if (!request)
-            return this.extractionFailure("Invalid ZIP extraction request.", "invalid");
+            return this.extractionFailure("Invalid mod extraction request.", "invalid");
 
         this.pruneExpiredSessions();
 
@@ -117,11 +117,11 @@ export class ModController {
         }
         catch (error)
         {
-            console.error("Could not import ZIP mods:", error);
+            console.error("Could not import the selected mods:", error);
 
             const message = error instanceof ModImportError
                 ? error.message
-                : "The selected ZIP files could not be imported.";
+                : "The selected mod files could not be imported.";
 
             return this.extractionFailure(message);
         }
@@ -171,7 +171,7 @@ export class ModController {
         return null;
     }
 
-    private parseExtractionRequest(value: unknown): ZipExtractionRequest | null {
+    private parseExtractionRequest(value: unknown): ModExtractionRequest | null {
         if (!TypeCheck.isRecord(value))
             return null;
 
@@ -188,7 +188,7 @@ export class ModController {
         }
 
         const sourceIds = new Set<string>();
-        const sources: ZipExtractionRequest["sources"] = [];
+        const sources: ModExtractionRequest["sources"] = [];
 
         for (const source of value.sources)
         {
@@ -239,7 +239,7 @@ export class ModController {
         };
     }
 
-    private extractionFailure(message: string, kind: ModImportIssueKind = "extraction"): ZipExtractionResult {
+    private extractionFailure(message: string, kind: ModImportIssueKind = "extraction"): ModExtractionResult {
         return {
             success: false,
             message,

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { ModImportMode, SelectedModSource, ZipExtractionRequest, ZipExtractionResult } from "../../shared/mod.ts";
+import type { ModImportMode, SelectedModSource, ModExtractionRequest, ModExtractionResult } from "../../shared/mod.ts";
 
 import CharactersScreen from "./CharactersScreen.vue";
 import ImportFileIcon from "./icons/ImportFileIcon.vue";
 import ImportFilesIcon from "./icons/ImportFilesIcon.vue";
 import ModImportScreen from "./ModImportScreen.vue";
-import ZipExtractionModal from "./ZipExtractionModal.vue";
+import ModExtractionModal from "./ModExtractionModal.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
 import { ref, onMounted } from "vue";
@@ -25,7 +25,7 @@ const importSessionId = ref<string | null>(null);
 const zipPasswords = ref<Record<string, string>>({});
 const deleteOriginals = ref(false);
 const isExtractingMods = ref(false);
-const extractionResult = ref<ZipExtractionResult | null>(null);
+const extractionResult = ref<ModExtractionResult | null>(null);
 
 async function selectModSources(mode: ModImportMode) {
     if (isSelectingMods.value)
@@ -58,7 +58,7 @@ async function selectModSources(mode: ModImportMode) {
             );
 
             hidePopover("add-mod-popover");
-            showPopover("zip-extraction-popover");
+            showPopover("mod-extraction-popover");
         }
     }
     catch (error)
@@ -73,27 +73,27 @@ async function selectModSources(mode: ModImportMode) {
 }
 
 function returnToSourceSelection() {
-    hidePopover("zip-extraction-popover");
-    resetZipExtraction();
+    hidePopover("mod-extraction-popover");
+    resetModExtraction();
     showPopover("add-mod-popover");
 }
 
-function closeZipExtraction() {
-    hidePopover("zip-extraction-popover");
-    resetZipExtraction();
+function closeModExtraction() {
+    hidePopover("mod-extraction-popover");
+    resetModExtraction();
 }
 
-async function prepareZipExtraction() {
+async function prepareModExtraction() {
     if (!importSessionId.value || isExtractingMods.value)
         return;
 
-    const zipSources = selectedSources.value.filter((source) => source.kind === "zip");
-
-    const request: ZipExtractionRequest = {
+    const request: ModExtractionRequest = {
         sessionId: importSessionId.value,
-        sources: zipSources.map((source) => ({
+        sources: selectedSources.value.map((source) => ({
             sourceId: source.id,
-            password: zipPasswords.value[source.id] ?? ""
+            password: source.kind === "zip"
+                ? zipPasswords.value[source.id] ?? ""
+                : ""
         })),
         deleteOriginals: deleteOriginals.value
     };
@@ -102,11 +102,11 @@ async function prepareZipExtraction() {
     extractionResult.value = null;
     activeSection.value = "mods";
     modsView.value = "import";
-    hidePopover("zip-extraction-popover");
+    hidePopover("mod-extraction-popover");
 
     try
     {
-        const result = await window.app.extractZipMods(request);
+        const result = await window.app.extractMods(request);
 
         extractionResult.value = result;
 
@@ -118,11 +118,11 @@ async function prepareZipExtraction() {
     }
     catch (error)
     {
-        console.error("Could not extract the selected ZIP files:", error);
+        console.error("Could not import the selected mod files:", error);
 
         extractionResult.value = {
             success: false,
-            message: "The selected ZIP files could not be imported.",
+            message: "The selected mod files could not be imported.",
             mods: [],
             warnings: [],
             issues: [
@@ -130,7 +130,7 @@ async function prepareZipExtraction() {
                     sourceId: null,
                     sourceName: "Import",
                     kind: "extraction",
-                    message: "The selected ZIP files could not be imported.",
+                    message: "The selected mod files could not be imported.",
                     candidates: []
                 }
             ]
@@ -142,7 +142,7 @@ async function prepareZipExtraction() {
     }
 }
 
-function resetZipExtraction() {
+function resetModExtraction() {
     selectedSources.value = [];
     importSessionId.value = null;
     zipPasswords.value = {};
@@ -153,7 +153,7 @@ function resetZipExtraction() {
 }
 
 function finishImport() {
-    resetZipExtraction();
+    resetModExtraction();
     activeSection.value = "mods";
 }
 
@@ -166,11 +166,11 @@ function retryImport() {
 
     extractionResult.value = null;
     modsView.value = "library";
-    showPopover("zip-extraction-popover");
+    showPopover("mod-extraction-popover");
 }
 
 function chooseImportFilesAgain() {
-    resetZipExtraction();
+    resetModExtraction();
     activeSection.value = "mods";
     showPopover("add-mod-popover");
 }
@@ -259,7 +259,7 @@ onMounted(() => {
                 <section class="mods-content" aria-label="Installed mods">
                     <div class="empty-state">
                         <h2>No mods installed</h2>
-                        <p>Install a mod from a ZIP file to see it here.</p>
+                        <p>Import a mod file to see it here.</p>
                     </div>
                 </section>
             </template>
@@ -348,14 +348,14 @@ onMounted(() => {
             </div>
         </section>
 
-        <ZipExtractionModal
+        <ModExtractionModal
             v-model:passwords="zipPasswords"
             v-model:delete-originals="deleteOriginals"
             :sources="selectedSources"
             :busy="isExtractingMods"
             @back="returnToSourceSelection"
-            @close="closeZipExtraction"
-            @extract="prepareZipExtraction"
+            @close="closeModExtraction"
+            @extract="prepareModExtraction"
         />
     </div>
 </template>

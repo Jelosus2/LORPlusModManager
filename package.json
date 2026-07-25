@@ -16,7 +16,8 @@
     "dev:electron": "pnpm build:electron && electron .",
     "build:ui": "vite build",
     "build:electron": "tsc -p tsconfig.preload.json && tsc -p tsconfig.app.json",
-    "build": "pnpm build:ui && pnpm build:electron",
+    "build:unity-worker": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/unity-worker/build.ps1",
+    "build": "pnpm build:unity-worker && pnpm build:ui && pnpm build:electron",
     "dist": "pnpm build && electron-builder --win --publish never",
     "postinstall": "electron-builder install-app-deps"
   },

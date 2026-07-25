@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { SelectedModSource } from "../../shared/mod.ts";
 
-import { computed } from "vue";
-
 const props = defineProps<{
     sources: SelectedModSource[];
     busy: boolean;
@@ -16,9 +14,6 @@ defineEmits<{
     close: [];
     extract: [];
 }>();
-
-const zipSources = computed(() => props.sources.filter((source) => source.kind === "zip"));
-const assetBundleSources = computed(() => props.sources.filter((source) => source.kind === "asset-bundle"));
 
 function formatFileSize(bytes: number) {
     if (bytes < 1024)
@@ -40,24 +35,24 @@ function formatFileSize(bytes: number) {
 
 <template>
     <section
-        id="zip-extraction-popover"
-        class="zip-extraction-popover"
+        id="mod-extraction-popover"
+        class="mod-extraction-popover"
         popover="manual"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="zip-extraction-title"
-        aria-describedby="zip-extraction-description"
+        aria-labelledby="mod-extraction-title"
+        aria-describedby="mod-extraction-description"
     >
         <header class="modal-header">
             <div>
-                <p class="modal-label">Import · ZIP setup</p>
-                <h2 id="zip-extraction-title">Prepare ZIP files</h2>
+                <p class="modal-label">Import · Setup</p>
+                <h2 id="mod-extraction-title">Prepare files</h2>
             </div>
 
             <button
                 class="close-button"
                 type="button"
-                aria-label="Close ZIP preparation"
+                aria-label="Close mod preparation"
                 :disabled="props.busy"
                 @click="$emit('close')"
             >
@@ -65,19 +60,27 @@ function formatFileSize(bytes: number) {
             </button>
         </header>
 
-        <p id="zip-extraction-description" class="modal-description">
-            Add a password only when an archive is encrypted. Recognized
-            character assets will be found automatically.
+        <p id="mod-extraction-description" class="modal-description">
+            Add a password only when a ZIP is encrypted. Standalone
+            AssetBundles and recognized character assets will be matched
+            automatically.
         </p>
 
-        <div v-if="zipSources.length > 0" class="source-list">
+        <div class="source-list">
             <article
-                v-for="source in zipSources"
+                v-for="source in props.sources"
                 :key="source.id"
                 class="source-card"
             >
                 <div class="source-heading">
-                    <span class="zip-badge">ZIP</span>
+                    <span
+                        class="source-badge"
+                        :class="{
+                            'source-badge--bundle': source.kind === 'asset-bundle'
+                        }"
+                    >
+                        {{ source.kind === "zip" ? "ZIP" : "BUNDLE" }}
+                    </span>
 
                     <span class="source-details">
                         <strong :title="source.name">{{ source.name }}</strong>
@@ -85,7 +88,7 @@ function formatFileSize(bytes: number) {
                     </span>
                 </div>
 
-                <label class="password-field">
+                <label v-if="source.kind === 'zip'" class="password-field">
                     <span>
                         Password
                         <small>Optional</small>
@@ -102,26 +105,6 @@ function formatFileSize(bytes: number) {
             </article>
         </div>
 
-        <div v-else class="no-zip-notice">
-            No ZIP archives were selected.
-        </div>
-
-        <div
-            v-if="assetBundleSources.length > 0"
-            class="deferred-sources"
-        >
-            <p>AssetBundles</p>
-
-            <div
-                v-for="source in assetBundleSources"
-                :key="source.id"
-                class="deferred-source"
-            >
-                <span :title="source.name">{{ source.name }}</span>
-                <small>Support will be added later</small>
-            </div>
-        </div>
-
         <label class="delete-source-option">
             <input
                 v-model="deleteOriginals"
@@ -130,10 +113,10 @@ function formatFileSize(bytes: number) {
             />
 
             <span>
-                <strong>Delete original ZIP files after importing</strong>
+                <strong>Delete original files after importing</strong>
                 <small>
-                    Files are deleted only after all recognized assets are
-                    extracted successfully.
+                    Sources are deleted only after every recognized mod is
+                    imported successfully.
                 </small>
             </span>
         </label>
@@ -151,7 +134,7 @@ function formatFileSize(bytes: number) {
             <button
                 class="primary-button"
                 type="button"
-                :disabled="zipSources.length === 0 || props.busy"
+                :disabled="props.sources.length === 0 || props.busy"
                 @click="$emit('extract')"
             >
                 {{ props.busy ? "Starting..." : "Extract mods" }}
@@ -161,7 +144,7 @@ function formatFileSize(bytes: number) {
 </template>
 
 <style scoped>
-.zip-extraction-popover {
+.mod-extraction-popover {
     width: min(620px, calc(100vw - 32px));
     max-height: calc(100vh - 32px);
     margin: auto;
@@ -174,11 +157,11 @@ function formatFileSize(bytes: number) {
     box-shadow: 0 22px 60px rgb(0 0 0 / 45%);
 }
 
-.zip-extraction-popover:popover-open {
+.mod-extraction-popover:popover-open {
     animation: modal-in 160ms ease-out;
 }
 
-.zip-extraction-popover::backdrop {
+.mod-extraction-popover::backdrop {
     background: rgb(0 0 0 / 72%);
 }
 
@@ -283,7 +266,7 @@ function formatFileSize(bytes: number) {
     gap: 12px;
 }
 
-.zip-badge {
+.source-badge {
     flex: 0 0 auto;
     padding: 6px 8px;
     border-radius: 5px;
@@ -292,6 +275,11 @@ function formatFileSize(bytes: number) {
     font-size: 11px;
     font-weight: 750;
     letter-spacing: 0.04em;
+}
+
+.source-badge--bundle {
+    color: #c9c3ae;
+    background: #25231c;
 }
 
 .source-details {
@@ -355,52 +343,6 @@ function formatFileSize(bytes: number) {
 .delete-source-option input:disabled {
     cursor: wait;
     opacity: 0.55;
-}
-
-.deferred-sources {
-    display: grid;
-    gap: 7px;
-    margin: 18px 28px 0;
-}
-
-.deferred-sources > p {
-    margin: 0;
-    color: #858a84;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.deferred-source {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 10px 12px;
-    border-radius: 7px;
-    color: #929791;
-    background: #101311;
-    font-size: 13px;
-}
-
-.deferred-source span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.deferred-source small {
-    flex: 0 0 auto;
-    color: #6f746f;
-}
-
-.no-zip-notice {
-    margin: 0 28px;
-    padding: 16px;
-    border-radius: 8px;
-    color: #aaa69e;
-    background: #121513;
-    font-size: 14px;
 }
 
 .delete-source-option {
@@ -497,8 +439,6 @@ function formatFileSize(bytes: number) {
     }
 
     .modal-description,
-    .deferred-sources,
-    .no-zip-notice,
     .delete-source-option {
         margin-right: 22px;
         margin-left: 22px;
@@ -508,19 +448,13 @@ function formatFileSize(bytes: number) {
         padding: 0 14px;
     }
 
-    .deferred-source {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 3px;
-    }
-
     .modal-actions {
         padding: 22px;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .zip-extraction-popover:popover-open {
+    .mod-extraction-popover:popover-open {
         animation: none;
     }
 }

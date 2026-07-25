@@ -1,2 +1,6 @@
 node_modules/
 dist/
+tools/unity-worker/.venv/
+tools/unity-worker/test-data/
+build/unity-worker/
+build/pyinstaller/

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SelectedModSource, ZipExtractionResult, ModImportIssueKind } from "../../shared/mod.ts";
+import type { ModImportIssueKind, SelectedModSource, ModExtractionResult } from "../../shared/mod.ts";
 
 import WarningIcon from "./icons/WarningIcon.vue";
 import CheckIcon from "./icons/CheckIcon.vue";
@@ -10,7 +10,7 @@ import { computed } from "vue";
 
 const props = defineProps<{
     busy: boolean;
-    result: ZipExtractionResult | null;
+    result: ModExtractionResult | null;
     sources: SelectedModSource[];
 }>();
 
@@ -23,7 +23,7 @@ defineEmits<{
 const characterCatalog = useCharacterCatalogStore();
 
 const issues = computed(() => props.result?.issues ?? []);
-const zipSourceCount = computed(() => props.sources.filter((source) => source.kind === "zip").length);
+const sourceCount = computed(() => props.sources.length);
 const importedAssetCount = computed(() => props.result?.mods.reduce((total, mod) => total + mod.assetCount, 0) ?? 0);
 const characterIcons = computed(() => {
     const icons = new Map<string, string>();
@@ -83,8 +83,8 @@ function issueLabel(kind: ModImportIssueKind) {
             <div>
                 <h2>Checking and extracting files</h2>
                 <p>
-                    Reading {{ zipSourceCount }}
-                    {{ zipSourceCount === 1 ? "archive" : "archives" }}.
+                    Reading {{ sourceCount }}
+                    {{ sourceCount === 1 ? "file" : "files" }}.
                     Keep the app open until this finishes.
                 </p>
             </div>
