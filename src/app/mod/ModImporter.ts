@@ -1,7 +1,9 @@
-import type { ExtractedModSummary, ModImportIssue, ModExtractionResult } from "../../shared/mod.js";
-import type { ZipModMatch, ZipMatchResult } from "./ZipModMatcher.js";
+import type { ExtractedModSummary, ModExtractionResult, ModImportIssue, ModSourceKind } from "../../shared/mod.js";
+import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js";
 
+import { UnityWorkerClient, UnityWorkerError } from "./UnityWorkerClient.js";
 import { characterCatalog } from "#utils/CharacterCatalogService.js";
+import { AssetBundleModMatcher } from "./AssetBundleModMatcher.js";
 import { ZipModMatcher } from "./ZipModMatcher.js";
 import { ZipArchive } from "#utils/ZipArchive.js";
 import { ErrorUtils } from "#utils/ErrorUtils.js";
@@ -10,21 +12,33 @@ import { Paths } from "#utils/Paths.js";
 import path from "node:path";
 import fse from "fs-extra";
 
-export type ZipImportSource = {
+export type ModImportSource = {
     id: string;
     name: string;
     filePath: string;
+    kind: ModSourceKind;
     password: string;
 };
 
-type AnalyzedSource = {
-    source: ZipImportSource;
-    matches: ZipModMatch[];
+type PreparedMatch = {
+    character: CharacterSkin;
+    assetCount: number;
+    extract: (destination: string) => Promise<void>;
 };
 
-type SourceAnalysis = {
-    sources: AnalyzedSource[];
-    issues: ModImportIssue[];
+type PreparedSource = {
+    source: ModImportSource;
+    matches: PreparedMatch[];
+};
+
+type SourcePreparation = {
+    matches: PreparedMatch[];
+    incompleteMatches: {
+        character: CharacterSkin;
+        foundAssets: string[];
+        missingAssets: string[];
+    }[];
+    hasAmbiguousMatches: boolean;
 };
 
 type PlannedMod = {
@@ -40,13 +54,15 @@ export class ModImportError extends Error {
     }
 }
 
-export class ZipModImporter {
+export class ModImporter {
     private readonly archive = new ZipArchive();
-    private readonly matcher = new ZipModMatcher();
+    private readonly zipMatcher = new ZipModMatcher();
+    private readonly unityWorker = new UnityWorkerClient();
+    private readonly assetBundleMatcher = new AssetBundleModMatcher();
 
-    async extract(sources: readonly ZipImportSource[], deleteOriginals: boolean): Promise<ModExtractionResult> {
+    async extract(sources: readonly ModImportSource[], deleteOriginals: boolean): Promise<ModExtractionResult> {
         if (sources.length === 0)
-            throw new ModImportError("No ZIP archives were provided.");
+            throw new ModImportError("No mod files were provided.");
 
         const analysis = await this.analyzeSources(sources);
 
@@ -100,13 +116,7 @@ export class ZipModImporter {
 
                     try
                     {
-                        await this.archive.extractSelectedEntries(
-                            analyzed.source.filePath,
-                            stagingDirectory,
-                            match.entries,
-                            analyzed.source.password,
-                            { maxTotalUncompressedBytes: 1 * 1024 ** 3 }
-                        );
+                        await match.extract(stagingDirectory);
                     }
                     catch (error)
                     {
@@ -122,7 +132,7 @@ export class ZipModImporter {
                             characterName: match.character.characterName,
                             skinName: match.character.skinName,
                             skin2dId: match.character.skin2dId,
-                            assetCount: match.entries.length
+                            assetCount: match.assetCount
                         }
                     });
                 }
@@ -181,7 +191,7 @@ export class ZipModImporter {
                 }
                 catch (error)
                 {
-                    console.error(`Could not delete imported ZIP ${source.filePath}:`, error);
+                    console.error(`Could not delete imported mod ${source.filePath}:`, error);
 
                     let message = `${source.name} could not be deleted. `;
                     message += ErrorUtils.getFsErrorMessage(error);
@@ -202,91 +212,84 @@ export class ZipModImporter {
         };
     }
 
-    private async analyzeSources(sources: readonly ZipImportSource[]): Promise<SourceAnalysis> {
+    private async analyzeSources(sources: readonly ModImportSource[]) {
         const catalog = await characterCatalog.getCatalog();
-        const analyzedSources: AnalyzedSource[] = [];
+        const analyzedSources: PreparedSource[] = [];
         const issues: ModImportIssue[] = [];
 
         for (const source of sources)
         {
-            let result: ZipMatchResult;
+            let preparation: SourcePreparation;
 
             try
             {
-                const entries = await this.archive.inspect(source.filePath);
-                result = this.matcher.match(entries, catalog);
+                preparation = await this.prepareSource(source, catalog);
             }
             catch (error)
             {
                 console.error(`Could not inspect ${source.filePath}:`, error);
 
-                issues.push({
-                    sourceId: source.id,
-                    sourceName: source.name,
-                    kind: "invalid",
-                    message: "The archive could not be inspected. It may be invalid or corrupted.",
-                    candidates: []
-                });
-
+                issues.push(this.createInspectionIssue(source, error));
                 continue;
             }
 
-            if (result.incompleteMatches.length > 0)
+            const matchingIssue = this.createMatchingIssue(source, preparation);
+            if (matchingIssue)
             {
-                issues.push({
-                    sourceId: source.id,
-                    sourceName: source.name,
-                    kind: "incomplete",
-                    message: result.matches.length > 0
-                        ? "The archive also contains an incomplete Spine mod."
-                        : "Required Spine assets are missing.",
-                    candidates: result.incompleteMatches.map((match) => ({
-                        characterName: match.character.characterName,
-                        skinName: match.character.skinName,
-                        skin2dId: match.character.skin2dId,
-                        foundAssets: match.foundAssets,
-                        missingAssets: match.missingAssets
-                    }))
-                });
-
-                continue;
-            }
-
-            if (result.matches.length === 0)
-            {
-                if (result.hasAmbiguousMatches)
-                {
-                    issues.push({
-                        sourceId: source.id,
-                        sourceName: source.name,
-                        kind: "ambiguous",
-                        message: "The archive contains only shared asset names, so its character could not be identified safely.",
-                        candidates: []
-                    });
-                }
-                else
-                {
-                    issues.push({
-                        sourceId: source.id,
-                        sourceName: source.name,
-                        kind: "unrecognized",
-                        message: "No supported character assets from the catalog were found.",
-                        candidates: []
-                    });
-                }
-
+                issues.push(matchingIssue);
                 continue;
             }
 
             analyzedSources.push({
                 source,
-                matches: result.matches
+                matches: preparation.matches
             });
         }
 
         return {
             sources: analyzedSources,
             issues
+        };
+    }
+
+    private async prepareSource(source: ModImportSource, catalog: CharacterCatalog): Promise<SourcePreparation> {
+        if (source.kind === "zip")
+        {
+            const entries = await this.archive.inspect(source.filePath);
+            const result = this.zipMatcher.match(entries, catalog);
+
+            return {
+                matches: result.matches.map((match) => ({
+                    character: match.character,
+                    assetCount: match.entries.length,
+                    extract: async (destination) => {
+                        await this.archive.extractSelectedEntries(
+                            source.filePath,
+                            destination,
+                            match.entries,
+                            source.password,
+                            { maxTotalUncompressedBytes: 1024 ** 3 }
+                        );
+                    }
+                })),
+                incompleteMatches: result.incompleteMatches,
+                hasAmbiguousMatches: result.hasAmbiguousMatches
+            };
+        }
+
+        const inspection = await this.unityWorker.inspect(source.filePath);
+        const result = this.assetBundleMatcher.match(inspection.assets, catalog);
+
+        return {
+            matches: result.matches.map((match) => ({
+                character: match.character,
+                assetCount: match.assets.length,
+                extract: async (destination) => {
+                    await this.unityWorker.extract(source.filePath, destination, match.assets)
+                }
+            })),
+            incompleteMatches: result.incompleteMatches,
+            hasAmbiguousMatches: result.hasAmbiguousMatches
         };
     }
 
@@ -327,23 +330,95 @@ export class ZipModImporter {
         return sanitized.slice(0, 80);
     }
 
-    private createExtractionIssue(source: ZipImportSource, error: unknown): ModImportIssue {
-        let message = "The archive could not be extracted.";
-
-        if (error instanceof Error)
+    private createMatchingIssue(source: ModImportSource, preparation: SourcePreparation): ModImportIssue | null {
+        if (preparation.incompleteMatches.length > 0)
         {
-            if (error.message === "MISSING_PASSWORD")
-                message = "A password is required to open this ZIP file.";
-            else if (error.message === "BAD_PASSWORD")
-                message = "The password is incorrect or the ZIP encryption is unsupported.";
-            else
-                message = "Make sure the archive is valid.";
+            return {
+                sourceId: source.id,
+                sourceName: source.name,
+                kind: "incomplete",
+                message: preparation.matches.length > 0
+                    ? "The file also contains an incomplete Spine mod."
+                    : "Required Spine assets are missing.",
+                candidates: preparation.incompleteMatches.map((match) => ({
+                    characterName: match.character.characterName,
+                    skinName: match.character.skinName,
+                    skin2dId: match.character.skin2dId,
+                    foundAssets: match.foundAssets,
+                    missingAssets: match.missingAssets
+                }))
+            };
+        }
+
+        if (preparation.matches.length > 0)
+            return null;
+
+        if (preparation.hasAmbiguousMatches)
+        {
+            return {
+                sourceId: source.id,
+                sourceName: source.name,
+                kind: "ambiguous",
+                message: "The file contains only shared asset names, so its character could not be identified safely.",
+                candidates: []
+            };
+        }
+
+        return {
+            sourceId: source.id,
+            sourceName: source.name,
+            kind: "unrecognized",
+            message: "No supported character assets from the catalog were found.",
+            candidates: []
+        };
+    }
+
+    private createExtractionIssue(source: ModImportSource, error: unknown): ModImportIssue {
+        let message: string;
+
+        if (source.kind === "zip")
+        {
+            message = "The archive could not be extracted.";
+
+            if (error instanceof Error)
+            {
+                if (error.message === "MISSING_PASSWORD")
+                    message = "A password is required to open this ZIP file.";
+                else if (error.message === "BAD_PASSWORD")
+                    message = "The password is incorrect or the ZIP encryption is unsupported.";
+                else
+                    message = "Make sure the archive is valid.";
+            }
+        }
+        else
+        {
+            message = "The AssetBundle could not be extracted.";
+
+            if (error instanceof UnityWorkerError)
+                message += ` ${error.message}`;
         }
 
         return {
             sourceId: source.id,
             sourceName: source.name,
             kind: "extraction",
+            message,
+            candidates: []
+        };
+    }
+
+    private createInspectionIssue(source: ModImportSource, error: unknown): ModImportIssue {
+        let message = source.kind === "zip"
+            ? "The archive could not be inspected. It may be invalid or corrupted."
+            : "The AssetBundle could not be inspected. It may be invalid or corrupted.";
+
+        if (source.kind === "asset-bundle" && error instanceof UnityWorkerError && error.message === "The Unity worker could not be started.")
+            message = "The AssetBundle extractor could not be started.";
+
+        return {
+            sourceId: source.id,
+            sourceName: source.name,
+            kind: "invalid",
             message,
             candidates: []
         };

@@ -1,5 +1,6 @@
 import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js";
 
+import { StringUtils } from "./StringUtils.js";
 import { TypeCheck } from "./TypeCheck.js";
 import { Paths } from "./Paths.js";
 import fse from "fs-extra";
@@ -40,19 +41,19 @@ export class CharacterCatalogService {
     async findBySkinId(skin2dId: string): Promise<readonly CharacterSkin[]> {
         await this.getCatalog();
 
-        return this.skinsById.get(this.normalizeIndexKey(skin2dId)) ?? this.EMPTY_RESULTS;
+        return this.skinsById.get(StringUtils.normalize(skin2dId)) ?? this.EMPTY_RESULTS;
     }
 
     async findByCharacterName(characterName: string): Promise<readonly CharacterSkin[]> {
         await this.getCatalog();
 
-        return this.skinsByCharacterName.get(this.normalizeIndexKey(characterName)) ?? this.EMPTY_RESULTS;
+        return this.skinsByCharacterName.get(StringUtils.normalize(characterName)) ?? this.EMPTY_RESULTS;
     }
 
     async findByAssetName(assetName: string): Promise<readonly CharacterSkin[]> {
         await this.getCatalog();
 
-        return this.skinsByAssetName.get(this.normalizeIndexKey(assetName)) ?? this.EMPTY_RESULTS;
+        return this.skinsByAssetName.get(StringUtils.normalize(assetName)) ?? this.EMPTY_RESULTS;
     }
 
     private async loadCatalog(): Promise<CharacterCatalog> {
@@ -183,7 +184,7 @@ export class CharacterCatalogService {
         {
             for (const key of getKeys(entry))
             {
-                const normalizedKey = this.normalizeIndexKey(key);
+                const normalizedKey = StringUtils.normalize(key);
                 const bucket = mutableIndex.get(normalizedKey);
 
                 if (bucket)
@@ -199,10 +200,6 @@ export class CharacterCatalogService {
             index.set(key, Object.freeze(entries));
 
         return index;
-    }
-
-    private normalizeIndexKey(value: string) {
-        return value.trim().toLowerCase();
     }
 
     private readString(value: unknown, fieldName: string, maxLength = 512) {

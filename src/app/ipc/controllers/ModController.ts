@@ -1,7 +1,7 @@
 import type { ModImportIssueKind, ModImportMode, ModSourceKind, ModSourceSelectionResult, SelectedModSource, ModExtractionRequest, ModExtractionResult } from "../../../shared/mod.js";
 import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
-import { ZipModImporter, ModImportError, type ZipImportSource } from "#mod/ZipModImporter.js";
+import { ModImporter, ModImportError, type ModImportSource } from "#mod/ModImporter.js";
 import { BrowserWindow, dialog } from "electron";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
@@ -21,7 +21,7 @@ type ImportSession = {
 export class ModController {
     private readonly sessions = new Map<string, ImportSession>();
     private readonly SESSION_LIFETIME = 30 * 60 * 1000;
-    private readonly zipImporter = new ZipModImporter();
+    private readonly modImporter = new ModImporter();
 
     @IpcHelper.IpcHandle("mod:select-sources")
     async selectSources(event: IpcMainInvokeEvent, mode: ModImportMode): Promise<ModSourceSelectionResult> {
@@ -91,17 +91,18 @@ export class ModController {
         if (!session)
             return this.extractionFailure("The import session has expired. Select the files again.", "session");
 
-        const sources: ZipImportSource[] = [];
+        const sources: ModImportSource[] = [];
 
         for (const options of request.sources)
         {
             const source = session.sources.get(options.sourceId);
-            if (!source || source.kind !== "zip")
-                return this.extractionFailure("A selected ZIP is no longer available.", "invalid");
+            if (!source)
+                return this.extractionFailure("A selected mod is no longer available.", "invalid");
 
             sources.push({
                 id: source.id,
                 name: source.name,
+                kind: source.kind,
                 filePath: source.filePath,
                 password: options.password
             });
@@ -109,7 +110,7 @@ export class ModController {
 
         try
         {
-            const result = await this.zipImporter.extract(sources, request.deleteOriginals);
+            const result = await this.modImporter.extract(sources, request.deleteOriginals);
             if (result.success)
                 this.sessions.delete(request.sessionId);
 
