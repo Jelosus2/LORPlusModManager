@@ -1,8 +1,9 @@
-import type { CentralDirectory, File as ZipFile } from "unzipper";
+import type { File as ZipFile } from "unzipper";
 
 import { pipeline } from "node:stream/promises";
 import { Transform } from "node:stream";
 import { Open } from "unzipper";
+import fsp from "node:fs/promises";
 import path from "node:path";
 import fse from "fs-extra";
 
@@ -30,6 +31,35 @@ export type ZipExtractionProgress = {
     currentEntry: string;
 };
 
+export type ExtractedZipEntry = {
+    entryPath: string;
+    filePath: string;
+    uncompressedSize: number;
+};
+
+type PlannedZipEntry = {
+    entry: ZipFile;
+    outputPath: string;
+    password?: string;
+};
+
+type ExtractedEntryContext = {
+    entry: ZipFile;
+    entryPath: string;
+    outputPath: string;
+    targetPath: string;
+    extractedBytes: number;
+};
+
+type ExtractionHooks<TResult> = {
+    afterFile?: (context: ExtractedEntryContext) =>
+        | TResult
+        | undefined
+        | Promise<TResult | undefined>;
+
+    onEntryComplete?: (context: ExtractedEntryContext) => void | Promise<void>;
+};
+
 export class ZipArchive {
     private readonly DEFAULT_LIMITS: ZipExtractionLimits = {
         maxEntries: 20_000,
@@ -51,48 +81,6 @@ export class ZipArchive {
         }));
     }
 
-    async readFile(archivePath: string, entryPath: string, maxBytes = 4 * 1024 ** 2): Promise<Buffer> {
-        const archive = await Open.file(archivePath);
-        const normalizedPath = this.normalizeEntryPath(entryPath);
-
-        const entry = archive.files.find((candidate) =>
-            candidate.type === "File" && this.normalizeEntryPath(candidate.path) === normalizedPath
-        );
-
-        if (!entry)
-            throw new Error(`${normalizedPath} is missing from the archive.`);
-        if (entry.uncompressedSize > maxBytes)
-            throw new Error(`${normalizedPath} is too large to read into memory.`);
-
-        const chunks: Buffer[] = [];
-        const stream = entry.stream();
-
-        let totalBytes = 0;
-
-        try
-        {
-            for await (const value of stream)
-            {
-                const chunk = Buffer.from(value);
-
-                totalBytes += chunk.length;
-                if (totalBytes > maxBytes)
-                    throw new Error(`${normalizedPath} exceeded the read limit.`);
-
-                chunks.push(chunk);
-            }
-        }
-        finally
-        {
-            stream.destroy();
-        }
-
-        if (totalBytes !== entry.uncompressedSize)
-            throw new Error(`${normalizedPath} had an unexpected extracted size.`);
-
-        return Buffer.concat(chunks);
-    }
-
     async extractArchives(
         archivePaths: string[],
         destinationDirectory: string,
@@ -103,57 +91,31 @@ export class ZipArchive {
             throw new Error("No ZIP archives were provided.");
 
         const archives = await Promise.all(archivePaths.map((archivePath) => Open.file(archivePath)));
-        const entries = archives.flatMap((archive) => archive.files);
-        const effectiveLimits = { ...this.DEFAULT_LIMITS, ...limits };
+        const plans: PlannedZipEntry[] = archives.flatMap((archive) =>
+            archive.files.map((entry) => ({
+                entry,
+                outputPath: entry.path
+            }))
+        );
 
-        this.validateEntries(entries, effectiveLimits);
-
-        const destinationRoot = path.resolve(destinationDirectory);
-        await fse.ensureDir(path.dirname(destinationRoot));
-
-        try
-        {
-            await fse.mkdir(destinationRoot);
-        }
-        catch (error)
-        {
-            throw new Error(`The extraction directory already exists: ${destinationRoot}`, { cause: error });
-        }
-
-        const extractedPaths = new Map<string, ZipFile["type"]>();
         let completedEntries = 0;
-        let totalExtractedBytes = 0;
 
-        try
-        {
-            for (const archive of archives)
+        await this.extractPlannedEntries(
+            destinationDirectory,
+            plans,
+            limits,
             {
-                await this.extractArchive(
-                    archive,
-                    destinationRoot,
-                    effectiveLimits,
-                    extractedPaths,
-                    (entry, extractedBytes) => {
-                        totalExtractedBytes += extractedBytes;
-                        if (totalExtractedBytes > effectiveLimits.maxTotalUncompressedBytes)
-                            throw new Error("The extracted data exceeded the configured size limit.");
+                onEntryComplete: ({ entryPath }) => {
+                    completedEntries++;
 
-                        completedEntries++;
-
-                        reportProgress?.({
-                            completedEntries,
-                            totalEntries: entries.length,
-                            currentEntry: entry.path
-                        });
-                    }
-                );
+                    reportProgress?.({
+                        completedEntries,
+                        totalEntries: plans.length,
+                        currentEntry: entryPath
+                    });
+                }
             }
-        }
-        catch (error)
-        {
-            await fse.rm(destinationRoot, { recursive: true, force: true });
-            throw error;
-        }
+        );
     }
 
     async extractSelectedEntries(
@@ -167,8 +129,6 @@ export class ZipArchive {
             throw new Error("No ZIP entries were selected.");
 
         const archive = await Open.file(archivePath);
-        const effectiveLimits = { ...this.DEFAULT_LIMITS, ...limits };
-
         const entriesByPath = new Map<string, ZipFile>();
 
         for (const entry of archive.files)
@@ -185,12 +145,7 @@ export class ZipArchive {
             entriesByPath.set(key, entry);
         }
 
-        const selectedEntries: Array<{
-            entry: ZipFile;
-            outputName: string;
-        }> = [];
-
-        const outputNames = new Set<string>();
+        const plans: PlannedZipEntry[] = [];
 
         for (const selection of selections)
         {
@@ -200,36 +155,176 @@ export class ZipArchive {
             if (normalizedOutputName.includes("/"))
                 throw new Error("Extracted asset names cannot contain directories.");
 
-            const outputKey = normalizedOutputName.toLowerCase();
-            if (outputNames.has(outputKey))
-                throw new Error(`Multiple entries target ${normalizedOutputName}.`);
-
             const entry = entriesByPath.get(normalizedEntryPath.toLowerCase());
             if (!entry)
                 throw new Error(`${normalizedEntryPath} is missing from the archive.`);
 
-            outputNames.add(outputKey);
-
-            selectedEntries.push({
+            plans.push({
                 entry,
-                outputName: normalizedOutputName
+                outputPath: normalizedOutputName,
+                password
             });
         }
 
-        this.validateEntries(selectedEntries.map(({ entry }) => entry), effectiveLimits);
+        await this.extractPlannedEntries(destinationDirectory, plans, limits);
+    }
+
+    async extractEntriesMatchingSignature(
+        archivePath: string,
+        destinationDirectory: string,
+        signature: Buffer,
+        password?: string,
+        limits: Partial<ZipExtractionLimits> = {}
+    ): Promise<ExtractedZipEntry[]> {
+        if (signature.length === 0 || signature.length > 64)
+            throw new Error("Invalid file signature.");
+
+        const archive = await Open.file(archivePath);
+        const effectiveLimits = { ...this.DEFAULT_LIMITS, ...limits };
+
+        this.validateEntries(archive.files, effectiveLimits);
+
+        const entryPaths = new Set<string>();
+        const plans: PlannedZipEntry[] = [];
+
+        for (const entry of archive.files)
+        {
+            if (entry.type !== "File")
+                continue;
+
+            const normalizedPath = this.normalizeEntryPath(entry.path);
+            const entryKey = normalizedPath.toLowerCase();
+
+            if (entryPaths.has(entryKey))
+                throw new Error(`The archive contains duplicate entries for ${normalizedPath}.`);
+
+            entryPaths.add(entryKey);
+
+            if (entry.uncompressedSize < signature.length)
+                continue;
+
+            plans.push({
+                entry,
+                outputPath: `.candidate-${plans.length}`,
+                password
+            });
+        }
+
+        if (plans.length === 0)
+            return [];
+
+        let matchedEntries = 0;
+
+        return this.extractPlannedEntries(
+            destinationDirectory,
+            plans,
+            effectiveLimits,
+            {
+                afterFile: async ({ entry, entryPath, targetPath }): Promise<ExtractedZipEntry | undefined> => {
+                    const header = Buffer.alloc(signature.length);
+                    let matchesSignature = false;
+
+                    {
+                        await using candidateFile = await fsp.open(targetPath, "r");
+                        const { bytesRead } = await candidateFile.read(header, 0, header.length, 0);
+
+                        matchesSignature = bytesRead === signature.length && header.equals(signature);
+                    }
+
+                    if (!matchesSignature)
+                    {
+                        await fse.unlink(targetPath);
+                        return undefined;
+                    }
+
+                    const bundlePath = path.join(path.dirname(targetPath), `embedded-${matchedEntries}.bundle`);
+
+                    matchedEntries++;
+                    await fse.rename(targetPath, bundlePath);
+
+                    return {
+                        entryPath,
+                        filePath: bundlePath,
+                        uncompressedSize: entry.uncompressedSize
+                    };
+                }
+            }
+        );
+    }
+
+    private async extractPlannedEntries<TResult = never>(
+        destinationDirectory: string,
+        plans: readonly PlannedZipEntry[],
+        limits: Partial<ZipExtractionLimits> = {},
+        hooks: ExtractionHooks<TResult> = {}
+    ): Promise<TResult[]> {
+        const effectiveLimits = { ...this.DEFAULT_LIMITS, ...limits };
+
+        this.validateEntries(plans.map(({ entry }) => entry), effectiveLimits);
+
+        const normalizedPlans = plans.map((plan) => ({
+            ...plan,
+            entryPath: this.normalizeEntryPath(plan.entry.path),
+            outputPath: this.normalizeEntryPath(plan.outputPath)
+        }));
+
+        const targetTypes = new Map<string, ZipFile["type"]>();
+
+        for (const plan of normalizedPlans)
+        {
+            const collisionKey = plan.outputPath.toLowerCase();
+            const existingType = targetTypes.get(collisionKey);
+
+            if (existingType)
+            {
+                const duplicateDirectories = existingType === "Directory" && plan.entry.type === "Directory";
+                if (!duplicateDirectories)
+                    throw new Error(`Multiple archive entries target ${plan.outputPath}.`);
+
+                continue;
+            }
+
+            targetTypes.set(collisionKey, plan.entry.type);
+        }
 
         const destinationRoot = path.resolve(destinationDirectory);
-
         await fse.ensureDir(path.dirname(destinationRoot));
-        await fse.mkdir(destinationRoot);
 
+        try
+        {
+            await fse.mkdir(destinationRoot);
+        }
+        catch (error)
+        {
+            throw new Error(`The extraction directory already exists: ${destinationRoot}`, { cause: error });
+        }
+
+        const results: TResult[] = [];
         let totalExtractedBytes = 0;
 
         try
         {
-            for (const { entry, outputName } of selectedEntries)
+            for (const plan of normalizedPlans)
             {
-                const targetPath = this.resolveTargetPath(destinationRoot, outputName);
+                const targetPath = this.resolveTargetPath(destinationRoot, plan.outputPath);
+
+                if (plan.entry.type === "Directory")
+                {
+                    await fse.ensureDir(targetPath);
+
+                    await hooks.onEntryComplete?.({
+                        entry: plan.entry,
+                        entryPath: plan.entryPath,
+                        outputPath: plan.outputPath,
+                        targetPath,
+                        extractedBytes: 0
+                    });
+
+                    continue;
+                }
+
+                await fse.ensureDir(path.dirname(targetPath));
+
                 let extractedBytes = 0;
 
                 const sizeGuard = new Transform({
@@ -243,7 +338,7 @@ export class ZipArchive {
 
                         if (extractedBytes > effectiveLimits.maxEntryUncompressedBytes)
                         {
-                            callback(new Error(`${outputName} exceeded the per-file limit.`));
+                            callback(new Error(`${plan.outputPath} exceeded the per-file limit.`));
                             return;
                         }
 
@@ -258,87 +353,35 @@ export class ZipArchive {
                 });
 
                 await pipeline(
-                    entry.stream(password || undefined),
+                    plan.entry.stream(plan.password || undefined),
                     sizeGuard,
                     fse.createWriteStream(targetPath, { flags: "wx" })
                 );
 
-                if (extractedBytes !== entry.uncompressedSize)
-                    throw new Error(`${outputName} had an unexpected extracted size.`);
+                if (extractedBytes !== plan.entry.uncompressedSize)
+                    throw new Error(`${plan.outputPath} had an unexpected extracted size.`);
+
+                const context: ExtractedEntryContext = {
+                    entry: plan.entry,
+                    entryPath: plan.entryPath,
+                    outputPath: plan.outputPath,
+                    targetPath,
+                    extractedBytes
+                };
+
+                const result = await hooks.afterFile?.(context);
+                if (result !== undefined)
+                    results.push(result);
+
+                await hooks.onEntryComplete?.(context);
             }
+
+            return results;
         }
         catch (error)
         {
             await fse.rm(destinationRoot, { recursive: true, force: true });
             throw error;
-        }
-    }
-
-    private async extractArchive(
-        archive: CentralDirectory,
-        destinationRoot: string,
-        limits: ZipExtractionLimits,
-        extractedPaths: Map<string, ZipFile["type"]>,
-        onEntryComplete: (entry: ZipFile, extractedBytes: number) => void
-    ) {
-        for (const entry of archive.files)
-        {
-            const normalizedPath = this.normalizeEntryPath(entry.path);
-            const collisionKey = normalizedPath.toLowerCase();
-            const existingType = extractedPaths.get(collisionKey);
-
-            if (existingType)
-            {
-                if (existingType === "Directory" && entry.type === "Directory")
-                {
-                    onEntryComplete(entry, 0);
-                    continue;
-                }
-
-                throw new Error(`Multiple archive entries target ${normalizedPath}.`);
-            }
-
-            extractedPaths.set(collisionKey, entry.type);
-
-            const targetPath = this.resolveTargetPath(destinationRoot, normalizedPath);
-            if (entry.type === "Directory")
-            {
-                await fse.ensureDir(targetPath);
-                onEntryComplete(entry, 0);
-                continue;
-            }
-
-            await fse.ensureDir(path.dirname(targetPath));
-
-            let extractedBytes = 0;
-
-            const sizeGuard = new Transform({
-                transform(chunk, _encoding, callback) {
-                    const chunkSize = Buffer.isBuffer(chunk)
-                        ? chunk.length
-                        : Buffer.byteLength(chunk);
-
-                    extractedBytes += chunkSize;
-                    if (extractedBytes > limits.maxEntryUncompressedBytes)
-                    {
-                        callback(new Error(`${normalizedPath} exceeded the per-file size limit.`));
-                        return;
-                    }
-
-                    callback(null, chunk);
-                }
-            });
-
-            await pipeline(
-                entry.stream(),
-                sizeGuard,
-                fse.createWriteStream(targetPath, { flags: "wx" })
-            );
-
-            if (extractedBytes !== entry.uncompressedSize)
-                throw new Error(`${normalizedPath} had an unexpected extracted size.`);
-
-            onEntryComplete(entry, extractedBytes);
         }
     }
 

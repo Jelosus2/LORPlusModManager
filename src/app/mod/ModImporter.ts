@@ -64,7 +64,29 @@ export class ModImporter {
         if (sources.length === 0)
             throw new ModImportError("No mod files were provided.");
 
-        const analysis = await this.analyzeSources(sources);
+        const modsRoot = Paths.getModsPath();
+        const stagingRoot = path.join(modsRoot, `.staging-${randomUUID()}`);
+
+        await fse.ensureDir(modsRoot);
+        await fse.mkdir(stagingRoot);
+
+        try
+        {
+            return await this.extractInWorkspace(sources, deleteOriginals, modsRoot, stagingRoot);
+        }
+        finally
+        {
+            await fse.rm(stagingRoot, { recursive: true, force: true });
+        }
+    }
+
+    private async extractInWorkspace(
+        sources: readonly ModImportSource[],
+        deleteOriginals: boolean,
+        modsRoot: string,
+        stagingRoot: string
+    ): Promise<ModExtractionResult> {
+        const analysis = await this.analyzeSources(sources, path.join(stagingRoot, "sources"));
 
         if (analysis.issues.length > 0)
         {
@@ -81,12 +103,6 @@ export class ModImporter {
         }
 
         const analyzedSources = analysis.sources;
-
-        const modsRoot = Paths.getModsPath();
-        const stagingRoot = path.join(modsRoot, `.staging-${randomUUID()}`);
-
-        await fse.ensureDir(modsRoot);
-        await fse.mkdir(stagingRoot);
 
         const reservedDirectories = new Set<string>();
         const plannedMods: PlannedMod[] = [];
@@ -112,7 +128,7 @@ export class ModImporter {
                         : archiveName;
 
                     const finalDirectory = await this.reserveDestination(modsRoot, requestedName, reservedDirectories);
-                    const stagingDirectory = path.join(stagingRoot, randomUUID());
+                    const stagingDirectory = path.join(stagingRoot, "mods", randomUUID());
 
                     try
                     {
@@ -174,10 +190,6 @@ export class ModImporter {
 
             throw new ModImportError("The extracted mods could not be committed.", { cause: error });
         }
-        finally
-        {
-            await fse.rm(stagingRoot, { recursive: true, force: true });
-        }
 
         const warnings: string[] = [];
 
@@ -212,7 +224,7 @@ export class ModImporter {
         };
     }
 
-    private async analyzeSources(sources: readonly ModImportSource[]) {
+    private async analyzeSources(sources: readonly ModImportSource[], workspaceRoot: string) {
         const catalog = await characterCatalog.getCatalog();
         const analyzedSources: PreparedSource[] = [];
         const issues: ModImportIssue[] = [];
@@ -223,7 +235,7 @@ export class ModImporter {
 
             try
             {
-                preparation = await this.prepareSource(source, catalog);
+                preparation = await this.prepareSource(source, catalog, path.join(workspaceRoot, randomUUID()));
             }
             catch (error)
             {
@@ -252,29 +264,10 @@ export class ModImporter {
         };
     }
 
-    private async prepareSource(source: ModImportSource, catalog: CharacterCatalog): Promise<SourcePreparation> {
+    private async prepareSource(source: ModImportSource, catalog: CharacterCatalog, workspaceDirectory: string): Promise<SourcePreparation> {
         if (source.kind === "zip")
         {
-            const entries = await this.archive.inspect(source.filePath);
-            const result = this.zipMatcher.match(entries, catalog);
-
-            return {
-                matches: result.matches.map((match) => ({
-                    character: match.character,
-                    assetCount: match.entries.length,
-                    extract: async (destination) => {
-                        await this.archive.extractSelectedEntries(
-                            source.filePath,
-                            destination,
-                            match.entries,
-                            source.password,
-                            { maxTotalUncompressedBytes: 1024 ** 3 }
-                        );
-                    }
-                })),
-                incompleteMatches: result.incompleteMatches,
-                hasAmbiguousMatches: result.hasAmbiguousMatches
-            };
+            return this.prepareZipSource(source, catalog, workspaceDirectory);
         }
 
         const inspection = await this.unityWorker.inspect(source.filePath);
@@ -291,6 +284,57 @@ export class ModImporter {
             incompleteMatches: result.incompleteMatches,
             hasAmbiguousMatches: result.hasAmbiguousMatches
         };
+    }
+
+    private async prepareZipSource(source: ModImportSource, catalog: CharacterCatalog, workspaceDirectory: string): Promise<SourcePreparation> {
+        const entries = await this.archive.inspect(source.filePath);
+        const looseResult = this.zipMatcher.match(entries, catalog);
+
+        const preparation: SourcePreparation = {
+            matches: looseResult.matches.map((match) => ({
+                character: match.character,
+                assetCount: match.entries.length,
+                extract: async (destination) => {
+                    await this.archive.extractSelectedEntries(
+                        source.filePath,
+                        destination,
+                        match.entries,
+                        source.password,
+                        { maxTotalUncompressedBytes: 1024 ** 3 }
+                    );
+                }
+            })),
+            incompleteMatches: [...looseResult.incompleteMatches],
+            hasAmbiguousMatches: looseResult.hasAmbiguousMatches
+        };
+
+        const embeddedBundles = await this.archive.extractEntriesMatchingSignature(
+            source.filePath,
+            workspaceDirectory,
+            Buffer.from("UnityFS", "ascii"),
+            source.password
+        );
+
+        for (const embeddedBundle of embeddedBundles)
+        {
+            const inspection = await this.unityWorker.inspect(embeddedBundle.filePath);
+            const result = this.assetBundleMatcher.match(inspection.assets, catalog);
+
+            preparation.matches.push(
+                ...result.matches.map((match) => ({
+                    character: match.character,
+                    assetCount: match.assets.length,
+                    extract: async (destination: string) => {
+                        await this.unityWorker.extract(embeddedBundle.filePath, destination, match.assets)
+                    }
+                }))
+            );
+
+            preparation.incompleteMatches.push(...result.incompleteMatches);
+            preparation.hasAmbiguousMatches ||= result.hasAmbiguousMatches;
+        }
+
+        return preparation;
     }
 
     private async reserveDestination(root: string, requestedName: string, reservedDirectories: Set<string>) {
@@ -408,6 +452,9 @@ export class ModImporter {
     }
 
     private createInspectionIssue(source: ModImportSource, error: unknown): ModImportIssue {
+        if (source.kind === "zip" && error instanceof Error && ["MISSING_PASSWORD", "BAD_PASSWORD"].includes(error.message))
+            return this.createExtractionIssue(source, error);
+
         let message = source.kind === "zip"
             ? "The archive could not be inspected. It may be invalid or corrupted."
             : "The AssetBundle could not be inspected. It may be invalid or corrupted.";
