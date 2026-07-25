@@ -23,6 +23,7 @@ const importFailed = ref(false);
 const selectedSources = ref<SelectedModSource[]>([]);
 const importSessionId = ref<string | null>(null);
 const zipPasswords = ref<Record<string, string>>({});
+const directoryNames = ref<Record<string, string>>({});
 const deleteOriginals = ref(false);
 const isExtractingMods = ref(false);
 const extractionResult = ref<ModExtractionResult | null>(null);
@@ -56,6 +57,8 @@ async function selectModSources(mode: ModImportMode) {
                     .filter((source) => source.kind === "zip")
                     .map((source) => [source.id, ""])
             );
+
+            directoryNames.value = Object.fromEntries(result.sources.map(((source) => [source.id, ""])));
 
             hidePopover("add-mod-popover");
             showPopover("mod-extraction-popover");
@@ -93,7 +96,8 @@ async function prepareModExtraction() {
             sourceId: source.id,
             password: source.kind === "zip"
                 ? zipPasswords.value[source.id] ?? ""
-                : ""
+                : "",
+            directoryName: directoryNames.value[source.id] ?? ""
         })),
         deleteOriginals: deleteOriginals.value
     };
@@ -146,6 +150,7 @@ function resetModExtraction() {
     selectedSources.value = [];
     importSessionId.value = null;
     zipPasswords.value = {};
+    directoryNames.value = {};
     deleteOriginals.value = false;
     isExtractingMods.value = false;
     extractionResult.value = null;
@@ -350,6 +355,7 @@ onMounted(() => {
 
         <ModExtractionModal
             v-model:passwords="zipPasswords"
+            v-model:directory-names="directoryNames"
             v-model:delete-originals="deleteOriginals"
             :sources="selectedSources"
             :busy="isExtractingMods"

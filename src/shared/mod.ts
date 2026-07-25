@@ -19,6 +19,7 @@ export type ModSourceSelectionResult = {
 export type ModExtractionSourceOptions = {
     sourceId: string;
     password: string;
+    directoryName: string;
 };
 
 export type ModExtractionRequest = {

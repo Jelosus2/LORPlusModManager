@@ -18,6 +18,7 @@ export type ModImportSource = {
     filePath: string;
     kind: ModSourceKind;
     password: string;
+    directoryName: string;
 };
 
 type PreparedMatch = {
@@ -113,9 +114,9 @@ export class ModImporter {
         {
             for (const analyzed of analyzedSources)
             {
-                const archiveName = this.sanitizeDirectoryName(
-                    path.basename(analyzed.source.name, path.extname(analyzed.source.name))
-                );
+                const fallbackName = path.basename(analyzed.source.name, path.extname(analyzed.source.name));
+                const sourceDirectoryName = analyzed.source.directoryName.trim() || fallbackName;
+                const directoryName = this.sanitizeDirectoryName(sourceDirectoryName);
 
                 const containsMultipleMods = analyzed.matches.length > 1;
                 const sourcePlans: PlannedMod[] = [];
@@ -124,8 +125,8 @@ export class ModImporter {
                 for (const match of analyzed.matches)
                 {
                     const requestedName = containsMultipleMods
-                        ? `${archiveName}-${this.sanitizeDirectoryName(match.character.characterName)}`
-                        : archiveName;
+                        ? `${directoryName}-${this.sanitizeDirectoryName(match.character.characterName)}`
+                        : directoryName;
 
                     const finalDirectory = await this.reserveDestination(modsRoot, requestedName, reservedDirectories);
                     const stagingDirectory = path.join(stagingRoot, "mods", randomUUID());

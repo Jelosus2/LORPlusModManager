@@ -104,7 +104,8 @@ export class ModController {
                 name: source.name,
                 kind: source.kind,
                 filePath: source.filePath,
-                password: options.password
+                password: options.password,
+                directoryName: options.directoryName
             });
         }
 
@@ -199,6 +200,8 @@ export class ModController {
                 source.sourceId.length > 100 ||
                 typeof source.password !== "string" ||
                 source.password.length > 1024 ||
+                typeof source.directoryName !== "string" ||
+                source.directoryName.length > 100 ||
                 sourceIds.has(source.sourceId)
             )
             {
@@ -209,7 +212,8 @@ export class ModController {
 
             sources.push({
                 sourceId: source.sourceId,
-                password: source.password
+                password: source.password,
+                directoryName: source.directoryName
             });
         }
 

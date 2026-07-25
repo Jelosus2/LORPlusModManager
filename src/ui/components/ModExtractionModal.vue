@@ -7,6 +7,7 @@ const props = defineProps<{
 }>();
 
 const passwords = defineModel<Record<string, string>>("passwords", { required: true });
+const directoryNames = defineModel<Record<string, string>>("directoryNames", { required: true });
 const deleteOriginals = defineModel<boolean>("deleteOriginals", { required: true });
 
 defineEmits<{
@@ -30,6 +31,14 @@ function formatFileSize(bytes: number) {
     }
 
     return `${size.toFixed(size >= 10 ? 1 : 2)} ${units[unitIndex]}`;
+}
+
+function defaultDirectoryName(fileName: string) {
+    const extensionIndex = fileName.lastIndexOf(".");
+
+    return extensionIndex > 0
+        ? fileName.slice(0, extensionIndex)
+        : fileName;
 }
 </script>
 
@@ -87,6 +96,26 @@ function formatFileSize(bytes: number) {
                         <small>{{ formatFileSize(source.size) }}</small>
                     </span>
                 </div>
+
+                <label class="directory-field">
+                    <span>
+                        Folder name
+                        <small>Optional</small>
+                    </span>
+
+                    <input
+                        v-model="directoryNames[source.id]"
+                        type="text"
+                        maxlength="100"
+                        autocomplete="off"
+                        :placeholder="defaultDirectoryName(source.name)"
+                        :disabled="props.busy"
+                    />
+
+                    <small>
+                        Leave blank to use the source filename.
+                    </small>
+                </label>
 
                 <label v-if="source.kind === 'zip'" class="password-field">
                     <span>
@@ -298,17 +327,20 @@ function formatFileSize(bytes: number) {
 }
 
 .source-details small,
-.password-field small {
+.password-field small,
+.directory-field small {
     color: #858a84;
     font-size: 12px;
 }
 
-.password-field {
+.password-field,
+.directory-field {
     display: grid;
     gap: 7px;
 }
 
-.password-field > span {
+.password-field > span,
+.directory-field > span {
     display: flex;
     align-items: baseline;
     gap: 7px;
@@ -317,7 +349,8 @@ function formatFileSize(bytes: number) {
     font-weight: 600;
 }
 
-.password-field input {
+.password-field input,
+.directory-field input {
     width: 100%;
     height: 42px;
     box-sizing: border-box;
@@ -331,15 +364,18 @@ function formatFileSize(bytes: number) {
     font-size: 14px;
 }
 
-.password-field input:focus {
+.password-field input:focus,
+.directory-field input:focus {
     border-color: #86aec7;
 }
 
-.password-field input::placeholder {
+.password-field input::placeholder,
+.directory-field input::placeholder {
     color: #686d68;
 }
 
 .password-field input:disabled,
+.directory-field input:disabled,
 .delete-source-option input:disabled {
     cursor: wait;
     opacity: 0.55;
