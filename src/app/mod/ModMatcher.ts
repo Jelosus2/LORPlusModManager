@@ -159,8 +159,10 @@ export class ModMatcher {
 
     private characterIdentity(character: CharacterSkin) {
         return [
-            character.skin2dId,
-            ...character.assets.map((asset) => StringUtils.normalize(asset)).sort()
+            StringUtils.normalize(character.skin2dId),
+            character.variantId
+                ? StringUtils.normalize(character.variantId)
+                : ""
         ].join("\0");
     }
 }

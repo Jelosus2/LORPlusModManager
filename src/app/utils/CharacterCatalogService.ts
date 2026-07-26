@@ -135,6 +135,8 @@ export class CharacterCatalogService {
 
         const characters = Object.freeze(value.characters.map((entry, index) => this.parseCharacterSkin(entry, index)));
 
+        this.validateCharacterIdentities(characters);
+
         return Object.freeze({
             version,
             characters
@@ -158,6 +160,7 @@ export class CharacterCatalogService {
 
         return Object.freeze({
             skin2dId: this.readString(value.skin2dId, `entry ${index} skin2dId`),
+            variantId: this.readOptionalString(value.variantId, `entry ${index} variantId`, 20),
             characterName: this.readString(value.characterName, `entry ${index} characterName`),
             skinName: this.readString(value.skinName, `entry ${index} skinName`),
             iconFile: this.readFileName(value.iconFile, `entry ${index} iconFile`),
@@ -202,11 +205,48 @@ export class CharacterCatalogService {
         return index;
     }
 
+    private validateCharacterIdentities(characters: readonly CharacterSkin[]) {
+        const identities = new Set<string>();
+        const entriesBySkinId = new Map<string, CharacterSkin[]>();
+
+        for (const character of characters)
+        {
+            const skinKey = StringUtils.normalize(character.skin2dId);
+            const variantKey = character.variantId
+                ? StringUtils.normalize(character.variantId)
+                : "";
+
+            const identity = `${skinKey}\0${variantKey}`;
+            if (identities.has(identity))
+                throw new Error(`Duplicate character catalog identity: ${character.skin2dId}/${character.variantId ?? "default"}.`);
+
+            identities.add(identity);
+
+            const entries = entriesBySkinId.get(skinKey) ?? [];
+            entries.push(character);
+
+            entriesBySkinId.set(skinKey, entries);
+        }
+
+        for (const entries of entriesBySkinId.values())
+        {
+            if (entries.length > 1 && entries.some(({ variantId }) => variantId === null))
+                throw new Error(`Catalog entries sharing ${entries[0].skin2dId} require variant IDs.`);
+        }
+    }
+
     private readString(value: unknown, fieldName: string, maxLength = 512) {
         if (typeof value !== "string" || !value.trim() || value.length > maxLength)
             throw new Error(`Invalid ${fieldName}.`);
 
         return value;
+    }
+
+    private readOptionalString(value: unknown, fieldName: string, maxLength = 512) {
+        if (value === undefined || value === null)
+            return null;
+
+        return this.readString(value, fieldName, maxLength);
     }
 
     private readFileName(value: unknown, fieldName: string) {

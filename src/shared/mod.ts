@@ -33,6 +33,7 @@ export type ExtractedModSummary = {
     characterName: string;
     skinName: string;
     skin2dId: string;
+    variantId: string | null;
     assetCount: number;
 };
 

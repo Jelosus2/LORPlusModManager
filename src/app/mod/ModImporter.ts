@@ -1,7 +1,9 @@
 import type { ExtractedModSummary, ModExtractionResult, ModImportIssue, ModSourceKind } from "../../shared/mod.js";
 import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js";
+import type { ImportedModRecord } from "#database/repositories/ModRepository.js";
 
 import { UnityWorkerClient, UnityWorkerError } from "./UnityWorkerClient.js";
+import { ModRepository } from "#database/repositories/ModRepository.js";
 import { characterCatalog } from "#utils/CharacterCatalogService.js";
 import { AssetBundleModMatcher } from "./AssetBundleModMatcher.js";
 import { ZipModMatcher } from "./ZipModMatcher.js";
@@ -23,7 +25,7 @@ export type ModImportSource = {
 
 type PreparedMatch = {
     character: CharacterSkin;
-    assetCount: number;
+    assetNames: string[];
     extract: (destination: string) => Promise<void>;
 };
 
@@ -46,6 +48,7 @@ type PlannedMod = {
     stagingDirectory: string;
     finalDirectory: string;
     summary: ExtractedModSummary;
+    record: ImportedModRecord;
 };
 
 export class ModImportError extends Error {
@@ -60,6 +63,7 @@ export class ModImporter {
     private readonly zipMatcher = new ZipModMatcher();
     private readonly unityWorker = new UnityWorkerClient();
     private readonly assetBundleMatcher = new AssetBundleModMatcher();
+    private readonly modRepository = new ModRepository();
 
     async extract(sources: readonly ModImportSource[], deleteOriginals: boolean): Promise<ModExtractionResult> {
         if (sources.length === 0)
@@ -149,7 +153,17 @@ export class ModImporter {
                             characterName: match.character.characterName,
                             skinName: match.character.skinName,
                             skin2dId: match.character.skin2dId,
-                            assetCount: match.assetCount
+                            variantId: match.character.variantId,
+                            assetCount: match.assetNames.length
+                        },
+                        record: {
+                            id: randomUUID(),
+                            directoryName: path.basename(finalDirectory),
+                            sourceName: analyzed.source.name,
+                            sourceKind: analyzed.source.kind,
+                            skin2dId: match.character.skin2dId,
+                            variantId: match.character.variantId,
+                            assetNames: [...match.assetNames]
                         }
                     });
                 }
@@ -179,6 +193,8 @@ export class ModImporter {
                 await fse.move(plannedMod.stagingDirectory, plannedMod.finalDirectory);
                 movedDirectories.push(plannedMod.finalDirectory);
             }
+
+            this.modRepository.addImportedMods(plannedMods.map(({ record }) => record));
         }
         catch (error)
         {
@@ -277,7 +293,7 @@ export class ModImporter {
         return {
             matches: result.matches.map((match) => ({
                 character: match.character,
-                assetCount: match.assets.length,
+                assetNames: match.assets.map(({ outputName }) => outputName),
                 extract: async (destination) => {
                     await this.unityWorker.extract(source.filePath, destination, match.assets)
                 }
@@ -294,7 +310,7 @@ export class ModImporter {
         const preparation: SourcePreparation = {
             matches: looseResult.matches.map((match) => ({
                 character: match.character,
-                assetCount: match.entries.length,
+                assetNames: match.entries.map(({ outputName }) => outputName),
                 extract: async (destination) => {
                     await this.archive.extractSelectedEntries(
                         source.filePath,
@@ -324,7 +340,7 @@ export class ModImporter {
             preparation.matches.push(
                 ...result.matches.map((match) => ({
                     character: match.character,
-                    assetCount: match.assets.length,
+                    assetNames: match.assets.map(({ outputName }) => outputName),
                     extract: async (destination: string) => {
                         await this.unityWorker.extract(embeddedBundle.filePath, destination, match.assets)
                     }

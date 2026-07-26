@@ -1,5 +1,6 @@
 export type CharacterSkin = Readonly<{
     skin2dId: string;
+    variantId: string | null;
     characterName: string;
     skinName: string;
     iconFile: string;
