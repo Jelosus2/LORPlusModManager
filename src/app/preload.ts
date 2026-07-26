@@ -20,7 +20,8 @@ const modManagerApi: IpcApi = {
     getSetupState: () => ipcRenderer.invoke("setup:get-state"),
     getCharacterCatalog: () => ipcRenderer.invoke("characters:get-catalog"),
     selectModSources: (mode) => ipcRenderer.invoke("mod:select-sources", mode),
-    extractMods: (request) => ipcRenderer.invoke("mod:extract", request)
+    extractMods: (request) => ipcRenderer.invoke("mod:extract", request),
+    getMods: () => ipcRenderer.invoke("mod:get-all")
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

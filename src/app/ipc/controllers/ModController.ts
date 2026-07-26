@@ -1,7 +1,8 @@
-import type { ModImportIssueKind, ModImportMode, ModSourceKind, ModSourceSelectionResult, SelectedModSource, ModExtractionRequest, ModExtractionResult } from "../../../shared/mod.js";
+import type { ModImportIssueKind, ModImportMode, ModSourceKind, ModSourceSelectionResult, SelectedModSource, ModExtractionRequest, ModExtractionResult, InstalledMod } from "../../../shared/mod.js";
 import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
 import { ModImporter, ModImportError, type ModImportSource } from "#mod/ModImporter.js";
+import { ModRepository } from "#database/repositories/ModRepository.js";
 import { BrowserWindow, dialog } from "electron";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
@@ -22,6 +23,7 @@ export class ModController {
     private readonly sessions = new Map<string, ImportSession>();
     private readonly SESSION_LIFETIME = 30 * 60 * 1000;
     private readonly modImporter = new ModImporter();
+    private readonly modRepository = new ModRepository();
 
     @IpcHelper.IpcHandle("mod:select-sources")
     async selectSources(event: IpcMainInvokeEvent, mode: ModImportMode): Promise<ModSourceSelectionResult> {
@@ -127,6 +129,11 @@ export class ModController {
 
             return this.extractionFailure(message);
         }
+    }
+
+    @IpcHelper.IpcHandle("mod:get-all")
+    getMods(): readonly InstalledMod[] {
+        return this.modRepository.getAll();
     }
 
     private async inspectSource(filePath: string): Promise<StoredModSource | null> {

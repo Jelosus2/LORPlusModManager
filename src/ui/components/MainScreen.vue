@@ -8,12 +8,14 @@ import ModImportScreen from "./ModImportScreen.vue";
 import ModExtractionModal from "./ModExtractionModal.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
+import { useModStore } from "@/stores/modStore.ts";
 import { ref, onMounted } from "vue";
 
 type MainSection = "mods" | "characters";
 type ModsView = "library" | "import";
 
 const characterCatalog = useCharacterCatalogStore();
+const modStore = useModStore();
 
 const activeSection = ref<MainSection>("mods");
 const modsView = ref<ModsView>("library");
@@ -119,6 +121,8 @@ async function prepareModExtraction() {
 
         importSessionId.value = null;
         zipPasswords.value = {};
+
+        await modStore.load(true);
     }
     catch (error)
     {
@@ -192,7 +196,10 @@ function hidePopover(id: string) {
 }
 
 onMounted(() => {
-    void characterCatalog.load();
+    void Promise.all([
+        characterCatalog.load(),
+        modStore.load()
+    ]);
 });
 </script>
 

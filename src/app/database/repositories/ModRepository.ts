@@ -1,4 +1,4 @@
-import type { ModSourceKind } from "../../../shared/mod.js";
+import type { ModSourceKind, InstalledMod } from "../../../shared/mod.js";
 
 import { AppDatabase } from "#database/AppDatabase.js";
 
@@ -11,6 +11,18 @@ export type ImportedModRecord = Readonly<{
     variantId: string | null;
     assetNames: readonly string[];
 }>;
+
+type StoredModRow = {
+    id: string;
+    directoryName: string;
+    sourceName: string;
+    sourceKind: ModSourceKind;
+    skin2dId: string;
+    variantId: string | null;
+    enabled: 0 | 1;
+    importedAt: string;
+    assetName: string | null;
+};
 
 export class ModRepository {
     addImportedMods(mods: readonly ImportedModRecord[]) {
@@ -45,6 +57,66 @@ export class ModRepository {
         });
 
         insertAll(mods);
+    }
+
+    getAll(): readonly InstalledMod[] {
+        const rows = AppDatabase.connection.prepare<[], StoredModRow>(`
+            SELECT
+                mods.id,
+                mods.directory_name AS directoryName,
+                mods.source_name AS sourceName,
+                mods.source_kind AS sourceKind,
+                mods.skin2d_id AS skin2dId,
+                mods.variant_id AS variantId,
+                mods.enabled,
+                mods.imported_at AS importedAt,
+                mod_assets.file_name AS assetName
+            FROM mods
+            LEFT JOIN mod_assets ON mod_assets.mod_id = mods.id
+            ORDER BY
+                mods.imported_at DESC,
+                mods.id,
+                mod_assets.file_name COLLATE NOCASE
+        `).all();
+
+        const mods = new Map<string, {
+            id: string;
+            directoryName: string;
+            sourceName: string;
+            sourceKind: ModSourceKind;
+            skin2dId: string;
+            variantId: string | null;
+            enabled: boolean;
+            importedAt: string;
+            assetNames: string[];
+        }>();
+
+        for (const row of rows)
+        {
+            let mod = mods.get(row.id);
+
+            if (!mod)
+            {
+                mod = {
+                    id: row.id,
+                    directoryName: row.directoryName,
+                    sourceName: row.sourceName,
+                    sourceKind: row.sourceKind,
+                    skin2dId: row.skin2dId,
+                    variantId: row.variantId,
+                    enabled: row.enabled === 1,
+                    importedAt: row.importedAt,
+                    assetNames: []
+                };
+
+                mods.set(row.id, mod);
+            }
+
+            if (row.assetName)
+                mod.assetNames.push(row.assetName);
+        }
+
+        return [...mods.values()];
     }
 
     private validateRecord(record: ImportedModRecord) {

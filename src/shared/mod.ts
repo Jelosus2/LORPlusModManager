@@ -68,3 +68,15 @@ export type ModExtractionResult = {
     warnings: string[];
     issues: ModImportIssue[];
 };
+
+export type InstalledMod = Readonly<{
+    id: string;
+    directoryName: string;
+    sourceName: string;
+    sourceKind: ModSourceKind;
+    skin2dId: string;
+    variantId: string | null;
+    enabled: boolean;
+    importedAt: string;
+    assetNames: readonly string[];
+}>;

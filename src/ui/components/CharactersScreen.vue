@@ -7,6 +7,7 @@ import MinusIcon from "./icons/MinusIcon.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
 import { getCharacterIconUrl } from "@/data/characterIcons";
+import { useModStore } from "@/stores/modStore.ts";
 import { computed, ref } from "vue";
 
 type SkinTypeFilter = "all" | "spine" | "animator" | "static";
@@ -22,6 +23,7 @@ type CharacterRow = {
 };
 
 const catalogStore = useCharacterCatalogStore();
+const modStore = useModStore();
 
 const nameFilter = ref("");
 const skinTypeFilter = ref<SkinTypeFilter>("all");
@@ -43,17 +45,19 @@ const characterRows = computed<CharacterRow[]>(() => {
         .filter((skin) => !skin.skin2dId.endsWith("_Dam"))
         .map((normal) => {
             const damaged = damagedSkins.get(normal.skin2dId) ?? null;
-            const key = `${normal.skin2dId}::${normal.skinName}`;
-            const modCounts = createPlaceholderModCounts(key, damaged !== null);
+            const normalModCount = modStore.getModsForSkin(normal.skin2dId, normal.variantId).length;
+            const damagedModCount = damaged
+                ? modStore.getModsForSkin(damaged.skin2dId, damaged.variantId).length
+                : 0;
 
             return {
-                key,
+                key: `${normal.skin2dId}::${normal.variantId ?? ""}`,
                 normal,
                 damaged,
                 iconUrl: getCharacterIconUrl(normal.iconFile) ?? null,
-                normalModCount: modCounts.normal,
-                damagedModCount: modCounts.damaged,
-                totalModCount: modCounts.normal + modCounts.damaged
+                normalModCount,
+                damagedModCount,
+                totalModCount: normalModCount + damagedModCount
             };
         });
 });
@@ -89,6 +93,9 @@ const hasActiveFilters = computed(() =>
     )
 );
 
+const isLoading = computed(() => catalogStore.isLoading || modStore.isLoading);
+const loadErrorMessage = computed(() => catalogStore.errorMessage || modStore.errorMessage);
+
 function matchesSkinType(row: CharacterRow, type: Exclude<SkinTypeFilter, "all">) {
     const skins = row.damaged
         ? [row.normal, row.damaged]
@@ -107,29 +114,6 @@ function matchesSkinType(row: CharacterRow, type: Exclude<SkinTypeFilter, "all">
     });
 }
 
-/** Temporary visual data */
-function createPlaceholderModCounts(key: string, hasDamagedVersion: boolean) {
-    let hash = 0;
-
-    for (let index = 0; index < key.length; index++)
-    {
-        hash = Math.imul(hash, 31) + key.charCodeAt(index);
-        hash |= 0;
-    }
-
-    const seed = hash >>> 0;
-
-    return {
-        normal: seed % 8 === 0
-            ? 1 + seed % 3
-            : 0,
-        damaged:
-            hasDamagedVersion && seed % 13 === 0
-                ? 1
-                : 0
-    };
-}
-
 function formatModCount(count: number) {
     return `${count} ${count === 1 ? "mod" : "mods"}`;
 }
@@ -139,6 +123,13 @@ function clearFilters() {
     skinTypeFilter.value = "all";
     onlyWithNormalMods.value = false;
     onlyWithDamagedMods.value = false;
+}
+
+function retryLoading() {
+    void Promise.all([
+        catalogStore.load(true),
+        modStore.load(true)
+    ]);
 }
 </script>
 
@@ -213,7 +204,7 @@ function clearFilters() {
         </form>
 
         <div
-            v-if="!catalogStore.isLoading && !catalogStore.errorMessage"
+            v-if="!isLoading && !loadErrorMessage"
             class="results-header"
         >
             <p>
@@ -233,22 +224,22 @@ function clearFilters() {
         </div>
 
         <div
-            v-if="catalogStore.isLoading"
+            v-if="isLoading"
             class="view-message"
             aria-live="polite"
         >
-            Loading characters...
+            Loading characters and mods...
         </div>
 
         <div
-            v-else-if="catalogStore.errorMessage"
+            v-else-if="loadErrorMessage"
             class="view-message view-message--error"
             role="alert"
         >
-            <p>{{ catalogStore.errorMessage }}</p>
+            <p>{{ loadErrorMessage }}</p>
             <button
                 type="button"
-                @click="catalogStore.load(true)"
+                @click="retryLoading"
             >
                 Try again
             </button>
