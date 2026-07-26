@@ -77,7 +77,7 @@ export class ZipModMatcher extends ModMatcher {
         return selections;
     }
 
-    private groupEntriesByDirectory(entries: readonly ZipEntryInfo[]) {
+    private groupEntriesByDirectory(entries: readonly ZipEntryInfo[]): Map<string, Map<string, ZipEntryInfo[]>> {
         const directories = new Map<string, Map<string, ZipEntryInfo[]>>();
 
         for (const entry of entries)

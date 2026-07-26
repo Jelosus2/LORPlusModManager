@@ -1,7 +1,7 @@
 import { TypeCheck } from "./TypeCheck.js";
 
 export class ErrorUtils {
-    static getFsErrorMessage(error: unknown) {
+    static getFsErrorMessage(error: unknown): string {
         if (!TypeCheck.isNodeError(error))
             return "";
 

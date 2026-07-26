@@ -8,11 +8,11 @@ export class SettingsRepository {
     private static readonly GAME_LOCATION_KEY = "game_location";
     private static readonly LO_PLUGIN_VERSION_KEY = "lo_plugin_version";
 
-    getGameLocation() {
+    getGameLocation(): string | null {
         return this.getSetting(SettingsRepository.GAME_LOCATION_KEY);
     }
 
-    getLOPluginVersion() {
+    getLOPluginVersion(): string | null {
         return this.getSetting(SettingsRepository.LO_PLUGIN_VERSION_KEY);
     }
 

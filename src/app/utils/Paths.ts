@@ -5,19 +5,19 @@ import path from "node:path";
 export class Paths {
     private static appBaseDir = path.dirname(path.join(fileURLToPath(import.meta.url), ".."));
 
-    static getPreloadPath() {
+    static getPreloadPath(): string {
         return path.join(Paths.appBaseDir, "preload.js");
     }
 
-    static getRendererHtmlPath() {
+    static getRendererHtmlPath(): string {
         return path.join(Paths.appBaseDir, "..", "index.html");
     }
 
-    static getDatabasePath() {
+    static getDatabasePath(): string {
         return path.join(app.getPath("userData"), "data.db");
     }
 
-    static getPluginDownloadCachePath() {
+    static getPluginDownloadCachePath(): string {
         return path.join(app.getPath("userData"), "downloads", "LOPlugin+");
     }
 
@@ -28,22 +28,22 @@ export class Paths {
         return path.join(app.getPath("temp"), app.getName(), "LOPlugin+", version);
     }
 
-    static getBundledCharacterCatalogPath() {
+    static getBundledCharacterCatalogPath(): string {
         if (app.isPackaged)
             return path.join(process.resourcesPath, "data", "characters.json");
 
         return path.join(app.getAppPath(), "src", "data", "characters.json");
     }
 
-    static getCachedCharacterCatalogPath() {
+    static getCachedCharacterCatalogPath(): string {
         return path.join(app.getPath("userData"), "catalogs", "characters.json");
     }
 
-    static getModsPath() {
+    static getModsPath(): string {
         return path.join(app.getPath("userData"), "mods");
     }
 
-    static getUnityWorkerPath() {
+    static getUnityWorkerPath(): string {
         if (app.isPackaged)
             return path.join(process.resourcesPath, "unity-worker", "lorplus-unity-worker.exe");
 

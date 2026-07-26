@@ -2,7 +2,7 @@ import { app, BrowserWindow } from "electron";
 import { Paths } from "#utils/Paths.js";
 
 export class MainWindow {
-    static async createMainWindow() {
+    static async createMainWindow(): Promise<BrowserWindow> {
         const mainWindow = new BrowserWindow({
             title: "LORPlusModManager",
             //icon: getAppIconPath(),

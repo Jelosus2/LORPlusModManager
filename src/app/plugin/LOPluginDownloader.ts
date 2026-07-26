@@ -241,7 +241,7 @@ export class LOPluginDownloader {
             throw new Error(`Release ${release.tag_name} contains version ${manifest.version} metadata`);
     }
 
-    private calculateProgress(downloadedBytes: number, totalBytes: number) {
+    private calculateProgress(downloadedBytes: number, totalBytes: number): number {
         if (totalBytes <= 0)
             return 0;
 

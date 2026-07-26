@@ -96,7 +96,7 @@ const hasActiveFilters = computed(() =>
 const isLoading = computed(() => catalogStore.isLoading || modStore.isLoading);
 const loadErrorMessage = computed(() => catalogStore.errorMessage || modStore.errorMessage);
 
-function matchesSkinType(row: CharacterRow, type: Exclude<SkinTypeFilter, "all">) {
+function matchesSkinType(row: CharacterRow, type: Exclude<SkinTypeFilter, "all">): boolean {
     const skins = row.damaged
         ? [row.normal, row.damaged]
         : [row.normal];
@@ -114,7 +114,7 @@ function matchesSkinType(row: CharacterRow, type: Exclude<SkinTypeFilter, "all">
     });
 }
 
-function formatModCount(count: number) {
+function formatModCount(count: number): string {
     return `${count} ${count === 1 ? "mod" : "mods"}`;
 }
 

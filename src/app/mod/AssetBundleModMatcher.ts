@@ -48,7 +48,7 @@ export class AssetBundleModMatcher extends ModMatcher {
         });
     }
 
-    private indexAssets(assets: readonly UnityBundleAsset[]) {
+    private indexAssets(assets: readonly UnityBundleAsset[]): Map<string, UnityBundleAsset[]> {
         const indexed = new Map<string, UnityBundleAsset[]>();
 
         for (const asset of assets)

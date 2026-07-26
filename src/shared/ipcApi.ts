@@ -12,4 +12,5 @@ export type IpcApi = {
     selectModSources: (mode: ModImportMode) => Promise<ModSourceSelectionResult>;
     extractMods: (request: ModExtractionRequest) => Promise<ModExtractionResult>;
     getMods: () => Promise<readonly InstalledMod[]>;
+    setModEnabled: (modId: string, enabled: boolean) => Promise<void>;
 };

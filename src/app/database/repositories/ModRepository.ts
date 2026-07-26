@@ -119,6 +119,14 @@ export class ModRepository {
         return [...mods.values()];
     }
 
+    setEnabled(id: string, enabled: boolean): boolean {
+        const result = AppDatabase.connection.prepare(`
+            UPDATE mods SET enabled = ? WHERE id = ?
+        `).run(enabled ? 1 : 0, id);
+
+        return result.changes === 1;
+    }
+
     private validateRecord(record: ImportedModRecord) {
         if (!record.id.trim())
             throw new Error("A mod ID cannot be empty.");

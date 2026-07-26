@@ -38,7 +38,7 @@ const characterIcons = computed(() => {
     return icons;
 });
 
-function issueLabel(kind: ModImportIssueKind) {
+function issueLabel(kind: ModImportIssueKind): string {
     switch (kind)
     {
         case "incomplete":

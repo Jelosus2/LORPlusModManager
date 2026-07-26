@@ -38,7 +38,11 @@ type MatchOptions<
 export class ModMatcher {
     protected matchCandidates<TContext, TSelection extends CatalogAssetSelection, TMatch, TIncompleteMatch>(
         options: MatchOptions<TContext, TSelection, TMatch, TIncompleteMatch>
-    ) {
+    ): {
+        matches: TMatch[];
+        incompleteMatches: TIncompleteMatch[];
+        hasAmbiguousMatches: boolean;
+    } {
         const ownership = this.buildAssetOwnerShip(options.catalog);
 
         const matches: TMatch[] = [];
@@ -137,7 +141,7 @@ export class ModMatcher {
         };
     }
 
-    private buildAssetOwnerShip(catalog: CharacterCatalog) {
+    private buildAssetOwnerShip(catalog: CharacterCatalog): Map<string, Set<string>> {
         const ownership = new Map<string, Set<string>>();
 
         for (const character of catalog.characters)
@@ -157,7 +161,7 @@ export class ModMatcher {
         return ownership;
     }
 
-    private characterIdentity(character: CharacterSkin) {
+    private characterIdentity(character: CharacterSkin): string {
         return [
             StringUtils.normalize(character.skin2dId),
             character.variantId

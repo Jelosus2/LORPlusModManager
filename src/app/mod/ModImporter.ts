@@ -241,7 +241,10 @@ export class ModImporter {
         };
     }
 
-    private async analyzeSources(sources: readonly ModImportSource[], workspaceRoot: string) {
+    private async analyzeSources(sources: readonly ModImportSource[], workspaceRoot: string): Promise<{
+        sources: PreparedSource[];
+        issues: ModImportIssue[];
+    }> {
         const catalog = await characterCatalog.getCatalog();
         const analyzedSources: PreparedSource[] = [];
         const issues: ModImportIssue[] = [];
@@ -354,7 +357,7 @@ export class ModImporter {
         return preparation;
     }
 
-    private async reserveDestination(root: string, requestedName: string, reservedDirectories: Set<string>) {
+    private async reserveDestination(root: string, requestedName: string, reservedDirectories: Set<string>): Promise<string> {
         const baseName = requestedName.slice(0, 100);
 
         for (let i = 1; ; i++)
@@ -375,7 +378,7 @@ export class ModImporter {
         }
     }
 
-    private sanitizeDirectoryName(value: string) {
+    private sanitizeDirectoryName(value: string): string {
         let sanitized = value
             .normalize("NFKC")
             .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")

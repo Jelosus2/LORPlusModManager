@@ -16,7 +16,7 @@ defineEmits<{
     extract: [];
 }>();
 
-function formatFileSize(bytes: number) {
+function formatFileSize(bytes: number): string {
     if (bytes < 1024)
         return `${bytes} B`;
 
@@ -33,7 +33,7 @@ function formatFileSize(bytes: number) {
     return `${size.toFixed(size >= 10 ? 1 : 2)} ${units[unitIndex]}`;
 }
 
-function defaultDirectoryName(fileName: string) {
+function defaultDirectoryName(fileName: string): string {
     const extensionIndex = fileName.lastIndexOf(".");
 
     return extensionIndex > 0

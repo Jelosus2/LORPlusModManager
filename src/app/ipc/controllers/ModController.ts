@@ -136,6 +136,15 @@ export class ModController {
         return this.modRepository.getAll();
     }
 
+    @IpcHelper.IpcHandle("mods:set-enabled")
+    setModEnabled(_event: IpcMainInvokeEvent, modId: unknown, enabled: unknown) {
+        if (typeof modId !== "string" || !modId.trim() || modId.length > 100 || typeof enabled !== "boolean")
+            throw new Error("Invalid mod enabled-state request.");
+
+        if (!this.modRepository.setEnabled(modId, enabled))
+            throw new Error("The selected mod could not be found.");
+    }
+
     private async inspectSource(filePath: string): Promise<StoredModSource | null> {
         await using file = await fsp.open(filePath, "r");
 

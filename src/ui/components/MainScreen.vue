@@ -6,6 +6,7 @@ import ImportFileIcon from "./icons/ImportFileIcon.vue";
 import ImportFilesIcon from "./icons/ImportFilesIcon.vue";
 import ModImportScreen from "./ModImportScreen.vue";
 import ModExtractionModal from "./ModExtractionModal.vue";
+import ModsScreen from "./ModsScreen.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
 import { useModStore } from "@/stores/modStore.ts";
@@ -241,7 +242,10 @@ onMounted(() => {
             <CharactersScreen v-if="activeSection === 'characters'" />
 
             <ModImportScreen
-                v-else-if="modsView === 'import'"
+                v-if="
+                    activeSection === 'mods' &&
+                    modsView === 'import'
+                "
                 :busy="isExtractingMods"
                 :result="extractionResult"
                 :sources="selectedSources"
@@ -250,31 +254,12 @@ onMounted(() => {
                 @choose-again="chooseImportFilesAgain"
             />
 
-            <template v-else>
-                <header class="content-header">
-                    <div>
-                        <p class="content-label">Library</p>
-                        <h1>Mods</h1>
-                    </div>
-
-                    <button
-                        class="add-mod-button"
-                        type="button"
-                        aria-haspopup="dialog"
-                        popovertarget="add-mod-popover"
-                    >
-                        <span class="add-mod-symbol" aria-hidden="true">+</span>
-                        Add mod
-                    </button>
-                </header>
-
-                <section class="mods-content" aria-label="Installed mods">
-                    <div class="empty-state">
-                        <h2>No mods installed</h2>
-                        <p>Import a mod file to see it here.</p>
-                    </div>
-                </section>
-            </template>
+            <ModsScreen
+                v-show="
+                    activeSection === 'mods' &&
+                    modsView === 'library'
+                "
+            />
         </main>
 
         <section

@@ -28,7 +28,7 @@ export class Migrations {
                     variant_id TEXT CHECK (
                         variant_id IS NULL OR length(trim(variant_id)) > 0
                     ),
-                    enabled INTEGER NOT NULL DEFAULT 1
+                    enabled INTEGER NOT NULL DEFAULT 0
                         CHECK (enabled IN (0, 1)),
                     imported_at TEXT NOT NULL DEFAULT (
                         strftime('%Y-%m-%dT%H:%M:%fZ', 'now')

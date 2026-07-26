@@ -180,7 +180,7 @@ export class CharacterCatalogService {
     private buildIndex(
         entries: readonly CharacterSkin[],
         getKeys: (entry: CharacterSkin) => readonly string[]
-    ) {
+    ): Map<string, readonly CharacterSkin[]> {
         const mutableIndex = new Map<string, CharacterSkin[]>();
 
         for (const entry of entries)
@@ -235,21 +235,21 @@ export class CharacterCatalogService {
         }
     }
 
-    private readString(value: unknown, fieldName: string, maxLength = 512) {
+    private readString(value: unknown, fieldName: string, maxLength = 512): string {
         if (typeof value !== "string" || !value.trim() || value.length > maxLength)
             throw new Error(`Invalid ${fieldName}.`);
 
         return value;
     }
 
-    private readOptionalString(value: unknown, fieldName: string, maxLength = 512) {
+    private readOptionalString(value: unknown, fieldName: string, maxLength = 512): string | null {
         if (value === undefined || value === null)
             return null;
 
         return this.readString(value, fieldName, maxLength);
     }
 
-    private readFileName(value: unknown, fieldName: string) {
+    private readFileName(value: unknown, fieldName: string): string {
         const fileName = this.readString(value, fieldName, 100);
         if (fileName === "." || fileName === ".." || /[\\/\u0000]/.test(fileName))
             throw new Error(`Invalid ${fieldName}.`);
@@ -257,7 +257,7 @@ export class CharacterCatalogService {
         return fileName;
     }
 
-    private readBoolean(value: unknown, fieldName: string) {
+    private readBoolean(value: unknown, fieldName: string): boolean {
         if (typeof value !== "boolean")
             throw new Error(`Invalid ${fieldName}.`);
 

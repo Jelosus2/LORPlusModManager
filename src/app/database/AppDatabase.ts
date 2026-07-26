@@ -27,7 +27,7 @@ export class AppDatabase {
         }
     }
 
-    static get connection() {
+    static get connection(): Database.Database {
         if (!AppDatabase.database)
             throw new Error("The application database has not been initialized.");
 

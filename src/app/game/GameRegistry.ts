@@ -6,7 +6,7 @@ export class GameRegistry {
         key: "\\SOFTWARE\\Valofe\\lastorigin-gl"
     });
 
-    private static getRegistryValue(name: string) {
+    private static getRegistryValue(name: string): Promise<string | null> {
         return new Promise<string | null>((resolve) => {
             GameRegistry.gameRegistry.get(name, (error, result) => {
                 if (error)
@@ -23,11 +23,11 @@ export class GameRegistry {
         });
     }
 
-    static async getInstallPath() {
+    static async getInstallPath(): Promise<string | null> {
         return GameRegistry.getRegistryValue("PATH");
     }
 
-    static async getExecutableFileName() {
+    static async getExecutableFileName(): Promise<string | null> {
         return GameRegistry.getRegistryValue("FILENAME");
     }
 }

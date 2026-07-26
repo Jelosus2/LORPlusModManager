@@ -408,7 +408,7 @@ export class ZipArchive {
         }
     }
 
-    private normalizeEntryPath(entryPath: string) {
+    private normalizeEntryPath(entryPath: string): string {
         const normalized = entryPath.replaceAll("\\", "/");
         if (!normalized || normalized.startsWith("/") || /^[a-zA-Z]:/.test(normalized))
             throw new Error(`Unsafe archive path: ${entryPath}`);
@@ -434,7 +434,7 @@ export class ZipArchive {
         return parts.join("/");
     }
 
-    private resolveTargetPath(root: string, entryPath: string) {
+    private resolveTargetPath(root: string, entryPath: string): string {
         const target = path.resolve(root, ...entryPath.split("/"));
         const relative = path.relative(root, target);
 
@@ -444,7 +444,7 @@ export class ZipArchive {
         return target;
     }
 
-    private isUnixSymbolicLink(entry: ZipFile) {
+    private isUnixSymbolicLink(entry: ZipFile): boolean {
         const platform = entry.versionMadeBy >> 8;
         if (platform !== 3)
             return false;
