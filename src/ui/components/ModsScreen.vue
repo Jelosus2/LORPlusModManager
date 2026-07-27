@@ -2,16 +2,19 @@
 import type { CharacterSkin } from "../../shared/characters";
 import type { InstalledMod } from "../../shared/mod";
 
-import ModWarning from "./ModWarning.vue";
-import SearchIcon from "./icons/SearchIcon.vue";
-import CheckIcon from "./icons/CheckIcon.vue";
 import RefreshIcon from "./icons/RefreshIcon.vue";
+import SearchIcon from "./icons/SearchIcon.vue";
+import FolderIcon from "./icons/FolderIcon.vue";
+import RenameIcon from "./icons/RenameIcon.vue";
+import CheckIcon from "./icons/CheckIcon.vue";
+import TrashIcon from "./icons/TrashIcon.vue";
+import ModWarning from "./ModWarning.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
 import { useModStore, createCatalogIdentity } from "@/stores/modStore";
 import { getCharacterIconUrl } from "@/data/characterIcons";
 import { StringUtils } from "@/utils/StringUtils";
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 
 type ModType = "normal" | "damaged";
 type SkinType = "spine" | "animator" | "static" | "unknown";
@@ -53,12 +56,21 @@ const modTypeFilter = ref<ModTypeFilter>("all");
 const skinTypeFilter = ref<SkinTypeFilter>("all");
 const importedFrom = ref("");
 const importedTo = ref("");
-const sortKey = ref<SortKey>("importedAt");
-const sortDirection = ref<SortDirection>("descending");
+const sortKey = ref<SortKey>("directoryName");
+const sortDirection = ref<SortDirection>("ascending");
 const currentPage = ref(1);
 const selectedModIds = ref(new Set<string>());
 const isRefreshing = ref(false);
 const refreshErrorMessage = ref("");
+const deleteDialog = ref<HTMLDialogElement | null>(null);
+const modPendingDeletion = ref<InstalledMod | null>(null);
+const isDeletingMod = ref(false);
+const actionErrorMessage = ref("");
+const renameDialog = ref<HTMLDialogElement | null>(null);
+const modPendingRename = ref<InstalledMod | null>(null);
+const renameDirectoryName = ref("");
+const renameErrorMessage = ref("");
+const isRenamingMod = ref(false);
 
 let knownModIds = new Set<string>();
 
@@ -298,6 +310,118 @@ async function refreshMods() {
     }
 }
 
+async function openModFolder(mod: InstalledMod) {
+    actionErrorMessage.value = "";
+
+    try
+    {
+        await window.app.openModFolder(mod.id);
+    }
+    catch (error)
+    {
+        console.error("Could not open the mod folder:", error);
+        actionErrorMessage.value =  "The mod folder could not be opened. Refresh the list and try again.";
+    }
+}
+
+async function requestModDeletion(mod: InstalledMod) {
+    modPendingDeletion.value = mod;
+    actionErrorMessage.value = "";
+
+    await nextTick();
+    deleteDialog.value?.showModal();
+}
+
+async function confirmModDeletion() {
+    const mod = modPendingDeletion.value;
+    if (!mod || isDeletingMod.value)
+        return;
+
+    isDeletingMod.value = true;
+    actionErrorMessage.value = "";
+
+    try
+    {
+        await window.app.deleteMod(mod.id);
+
+        const nextSelection = new Set(selectedModIds.value);
+        nextSelection.delete(mod.id);
+        selectedModIds.value = nextSelection;
+
+        deleteDialog.value?.close();
+        modPendingDeletion.value = null;
+
+        const refreshed = await modStore.load(true);
+        if (!refreshed)
+            actionErrorMessage.value = "The mod was deleted, but the list could not be refreshed.";
+    }
+    catch (error)
+    {
+        console.error("Could not delete the mod:", error);
+        actionErrorMessage.value = "The mod could not be deleted. Its files and library entry were left unchanged.";
+    }
+    finally
+    {
+        isDeletingMod.value = false;
+    }
+}
+
+async function requestModRename(mod: InstalledMod) {
+    modPendingRename.value = mod;
+    renameDirectoryName.value = mod.directoryName;
+    renameErrorMessage.value = "";
+    actionErrorMessage.value = "";
+
+    await nextTick();
+    renameDialog.value?.showModal();
+}
+
+async function confirmModRename() {
+    const mod = modPendingRename.value;
+    const directoryName = renameDirectoryName.value.trim();
+
+    if (!mod || isRenamingMod.value)
+        return;
+
+    if (!directoryName)
+    {
+        renameErrorMessage.value = "Enter a name for the mod.";
+        return;
+    }
+
+    if (directoryName === mod.directoryName)
+    {
+        cancelModRename();
+        return;
+    }
+
+    isRenamingMod.value = true;
+    renameErrorMessage.value = "";
+    actionErrorMessage.value = "";
+
+    try
+    {
+        await window.app.renameMod({ modId: mod.id, directoryName });
+
+        renameDialog.value?.close();
+        modPendingRename.value = null;
+        renameDirectoryName.value = "";
+
+        const refreshed = await modStore.load(true);
+        if (!refreshed)
+            actionErrorMessage.value = "The mod was renamed, but the list could not be refreshed.";
+    }
+    catch (error)
+    {
+        console.error("Could not rename the mod:", error);
+        renameErrorMessage.value = "The mod could not be renamed. Another mod or folder may already use that name.";
+    }
+    finally
+    {
+        isRenamingMod.value = false;
+    }
+}
+
 function getModType(mod: InstalledMod): ModType {
     return StringUtils.normalize(mod.skin2dId).endsWith("_dam")
         ? "damaged"
@@ -365,11 +489,11 @@ function getVerificationMessage(mod: InstalledMod): string {
     switch(mod.verification.status)
     {
         case "missing-directory":
-            return `The mod directory "${mod.directoryName}" no longer exists. Restore it and refresh the mod list.`;
+            return `The mod directory "${mod.directoryName}" no longer exists. Restore it and refresh the mod list or delete it.`;
         case "missing-assets":
         {
             const missingAssets = mod.verification.missingAssets.join(", ");
-            return `Required mod files are missing: ${missingAssets}. Restore them and refresh the mod list.`;
+            return `Required mod files are missing: ${missingAssets}. Restore them and refresh the mod list or delete it.`;
         }
         case "unreadable":
             return `The mod directory "${mod.directoryName}" could not be read. Check its permissions and refresh the mod list.`;
@@ -389,6 +513,24 @@ function clearFilters() {
     skinTypeFilter.value = "all";
     importedFrom.value = "";
     importedTo.value = "";
+}
+
+function cancelModDeletion() {
+    if (isDeletingMod.value)
+        return;
+
+    deleteDialog.value?.close();
+    modPendingDeletion.value = null;
+}
+
+function cancelModRename() {
+    if (isRenamingMod.value)
+        return;
+
+    renameDialog.value?.close();
+    modPendingRename.value = null;
+    renameDirectoryName.value = "";
+    renameErrorMessage.value = "";
 }
 
 function retryLoading() {
@@ -564,6 +706,14 @@ function retryLoading() {
             </div>
 
             <div
+                v-if="actionErrorMessage"
+                class="action-error"
+                role="alert"
+            >
+                {{ actionErrorMessage }}
+            </div>
+
+            <div
                 v-if="visibleRows.length"
                 class="mods-table-wrapper"
             >
@@ -653,6 +803,10 @@ function retryLoading() {
                                         <span class="sort-down"></span>
                                     </span>
                                 </button>
+                            </th>
+
+                            <th class="actions-heading">
+                                <span>Actions</span>
                             </th>
                         </tr>
                     </thead>
@@ -749,6 +903,44 @@ function retryLoading() {
                                     {{ formatImportDate(row) }}
                                 </time>
                             </td>
+
+                            <td>
+                                <div class="mod-actions">
+                                    <button
+                                        type="button"
+                                        aria-label="Open mod folder"
+                                        title="Open folder"
+                                        :disabled="
+                                            row.mod.verification.status === 'missing-directory'
+                                        "
+                                        @click="openModFolder(row.mod)"
+                                    >
+                                        <FolderIcon />
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        aria-label="Rename mod"
+                                        title="Rename mod"
+                                        :disabled="
+                                            row.mod.verification.status === 'missing-directory'
+                                        "
+                                        @click="requestModRename(row.mod)"
+                                    >
+                                        <RenameIcon />
+                                    </button>
+
+                                    <button
+                                        class="delete-mod-button"
+                                        type="button"
+                                        aria-label="Delete mod"
+                                        title="Delete mod"
+                                        @click="requestModDeletion(row.mod)"
+                                    >
+                                        <TrashIcon />
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -794,6 +986,111 @@ function retryLoading() {
             </footer>
         </template>
     </section>
+
+    <dialog
+        ref="deleteDialog"
+        class="mod-action-dialog delete-mod-dialog"
+        aria-labelledby="delete-mod-title"
+        aria-describedby="delete-mod-description"
+        @cancel.prevent="cancelModDeletion"
+    >
+        <div class="mod-dialog-content">
+            <p class="mod-dialog-label mod-dialog-label--danger">
+                Delete mod
+            </p>
+
+            <h2 id="delete-mod-title">
+                Delete {{ modPendingDeletion?.directoryName }}?
+            </h2>
+
+            <p id="delete-mod-description">
+                This removes the mod from the library and permanently deletes
+                its files. This action cannot be undone.
+            </p>
+
+            <div class="mod-dialog-actions">
+                <button
+                    type="button"
+                    :disabled="isDeletingMod"
+                    @click="cancelModDeletion"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    class="confirm-delete-button"
+                    type="button"
+                    :disabled="isDeletingMod"
+                    @click="confirmModDeletion"
+                >
+                    {{ isDeletingMod ? "Deleting..." : "Delete mod" }}
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog
+        ref="renameDialog"
+        class="mod-action-dialog rename-mod-dialog"
+        aria-labelledby="rename-mod-title"
+        aria-describedby="rename-mod-description"
+        @cancel.prevent="cancelModRename"
+    >
+        <form class="mod-dialog-content" @submit.prevent="confirmModRename">
+            <p class="mod-dialog-label">Rename mod</p>
+
+            <h2 id="rename-mod-title">
+                Choose a new mod name
+            </h2>
+
+            <p id="rename-mod-description">
+                This will also rename the mod's directory.
+            </p>
+
+            <label class="rename-mod-field" for="rename-mod-name">
+                <span>Mod name</span>
+                <input
+                    id="rename-mod-name"
+                    v-model="renameDirectoryName"
+                    type="text"
+                    maxlength="80"
+                    autocomplete="off"
+                    spellcheck="false"
+                    autofocus
+                    :disabled="isRenamingMod"
+                    @input="renameErrorMessage = ''"
+                />
+            </label>
+
+            <p
+                v-if="renameErrorMessage"
+                class="rename-mod-error"
+                role="alert"
+            >
+                {{ renameErrorMessage }}
+            </p>
+
+            <div class="mod-dialog-actions">
+                <button
+                    type="button"
+                    :disabled="isRenamingMod"
+                    @click="cancelModRename"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    class="confirm-rename-button"
+                    type="submit"
+                    :disabled="
+                        isRenamingMod || !renameDirectoryName.trim()
+                    "
+                >
+                    {{ isRenamingMod ? "Renaming..." : "Rename mod" }}
+                </button>
+            </div>
+        </form>
+    </dialog>
 </template>
 
 <style scoped>
@@ -988,26 +1285,30 @@ h1 {
 
 .mods-table {
     width: 100%;
-    min-width: 960px;
+    min-width: 1040px;
     border-collapse: collapse;
     table-layout: fixed;
 }
 
 .mods-table th:nth-child(1) {
-    width: 28%;
+    width: 25%;
 }
 
 .mods-table th:nth-child(2),
 .mods-table th:nth-child(3) {
-    width: 12%;
+    width: 10%;
 }
 
 .mods-table th:nth-child(4) {
-    width: 32%;
+    width: 33%;
 }
 
 .mods-table th:nth-child(5) {
-    width: 16%;
+    width: 10%;
+}
+
+.mods-table th:nth-child(6) {
+    width: 12%;
 }
 
 .mods-table th {
@@ -1175,9 +1476,12 @@ h1 {
 
 .type-badge {
     display: inline-flex;
+    width: 72px;
     min-height: 28px;
     align-items: center;
+    justify-content: center;
     padding: 0 9px;
+    box-sizing: border-box;
     border-radius: 5px;
     font-size: 12px;
     font-weight: 650;
@@ -1260,7 +1564,8 @@ h1 {
     opacity: 0.4;
 }
 
-.refresh-error {
+.refresh-error,
+.action-error {
     margin-top: 14px;
     padding: 11px 13px;
     border-radius: 6px;
@@ -1361,6 +1666,193 @@ h1 {
 
 .mod-row--invalid .enabled-toggle {
     cursor: not-allowed;
+}
+
+.mods-table th.actions-heading {
+    color: #9da19b;
+    font-size: 12px;
+    font-weight: 650;
+    text-align: left;
+}
+
+.mod-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 2px;
+}
+
+.mod-actions button {
+    display: inline-flex;
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    color: #9da19b;
+    background: transparent;
+    cursor: pointer;
+}
+
+.mod-actions button:hover:not(:disabled) {
+    color: #dcecf5;
+    background: #192126;
+}
+
+.mod-actions .delete-mod-button:hover:not(:disabled) {
+    color: #f0a29a;
+    background: #2d1b1a;
+}
+
+.mod-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+}
+
+.mod-actions svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.mod-actions button:focus-visible,
+.mod-dialog-actions button:focus-visible {
+    outline: 2px solid #f2eee5;
+    outline-offset: 2px;
+}
+
+.mod-action-dialog {
+    width: min(440px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    margin: auto;
+    padding: 0;
+    overflow: auto;
+    border: 1px solid #383d39;
+    border-radius: 12px;
+    color: #e4e0d7;
+    background: #0e110f;
+    box-shadow: 0 22px 60px rgb(0 0 0 / 50%);
+}
+
+.mod-action-dialog::backdrop {
+    background: rgb(0 0 0 / 72%);
+}
+
+.mod-dialog-content {
+    padding: 26px;
+}
+
+.mod-dialog-label {
+    margin: 0 0 5px;
+    color: #91b8cf;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mod-dialog-label--danger {
+    color: #e69b93;
+}
+
+.mod-dialog-content h2 {
+    margin: 0;
+    color: #f2eee5;
+    font-size: 22px;
+}
+
+.mod-dialog-content > p:not(.mod-dialog-label, .rename-mod-error) {
+    margin: 14px 0 0;
+    color: #a9ada7;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.mod-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 24px;
+}
+
+.mod-dialog-actions button {
+    min-height: 40px;
+    padding: 0 15px;
+    border: 0;
+    border-radius: 7px;
+    color: #d8d4cb;
+    background: #1a1e1b;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.mod-dialog-actions .confirm-delete-button {
+    color: #fff0ed;
+    background: #713d38;
+}
+
+.mod-dialog-actions .confirm-delete-button:hover:not(:disabled) {
+    background: #854a44;
+}
+
+.mod-dialog-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.rename-mod-field {
+    display: grid;
+    gap: 7px;
+    margin-top: 20px;
+    color: #b9bcb6;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.rename-mod-field input {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid #343936;
+    border-radius: 7px;
+    color: #e4e0d7;
+    background: #0a0d0b;
+    font: inherit;
+    font-size: 14px;
+}
+
+.rename-mod-field input:focus {
+    border-color: #86aec7;
+    outline: 0;
+}
+
+.rename-mod-field input:focus-visible {
+    outline: 2px solid #f2eee5;
+    outline-offset: 2px;
+}
+
+.rename-mod-error {
+    margin: 9px 0 0;
+    color: #efa3a3;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.mod-dialog-actions .confirm-rename-button {
+    color: #10202a;
+    background: #91b8cf;
+}
+
+.mod-dialog-actions .confirm-rename-button:hover:not(:disabled) {
+    background: #a3c7dc;
 }
 
 @media (max-width: 1280px) {

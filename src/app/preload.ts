@@ -4,7 +4,7 @@ import type { IpcApi } from "../shared/ipcApi.js";
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
 
 const modManagerApi: IpcApi = {
-    setupGameLocation: (manualSetup: boolean) => ipcRenderer.invoke("setup:game-location", manualSetup),
+    setupGameLocation: (manualSetup) => ipcRenderer.invoke("setup:game-location", manualSetup),
     installLOPlugin: () => ipcRenderer.invoke("plugin:install"),
     onLOPluginInstallProgress: (callback) => {
         const listener = (_event: IpcRendererEvent, progress: PluginProgress) => {
@@ -22,7 +22,9 @@ const modManagerApi: IpcApi = {
     selectModSources: (mode) => ipcRenderer.invoke("mod:select-sources", mode),
     extractMods: (request) => ipcRenderer.invoke("mod:extract", request),
     getMods: () => ipcRenderer.invoke("mod:get-all"),
-    setModEnabled: (modId: string, enabled: boolean) => ipcRenderer.invoke("mods:set-enabled", modId, enabled)
+    openModFolder: (modId) => ipcRenderer.invoke("mod:open-folder", modId),
+    deleteMod: (modId) => ipcRenderer.invoke("mod:delete", modId),
+    renameMod: (request) => ipcRenderer.invoke("mod:rename", request)
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

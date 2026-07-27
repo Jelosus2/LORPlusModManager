@@ -71,9 +71,9 @@ export class UnityWorkerClient {
         }, this.INSPECTION_TIMEOUT);
 
         if (
-            typeof response.bundleName !== "string" ||
-            typeof response.unityPyVersion !== "string" ||
-            !Array.isArray(response.assets) ||
+            !TypeCheck.isValidString(response.bundleName) ||
+            !TypeCheck.isValidString(response.unityPyVersion) ||
+            !TypeCheck.isValidArray(response.assets) ||
             !response.assets.every((asset) => this.isBundleAsset(asset))
         )
         {
@@ -97,8 +97,8 @@ export class UnityWorkerClient {
         }, this.EXTRACTION_TIMEOUT);
 
         if (
-            typeof response.bundleName !== "string" ||
-            !Array.isArray(response.written) ||
+            !TypeCheck.isValidString(response.bundleName) ||
+            !TypeCheck.isValidArray(response.written) ||
             !response.written.every((asset) => this.isExtractedAsset(asset))
         )
         {
@@ -198,7 +198,7 @@ export class UnityWorkerClient {
                     return;
                 }
 
-                if (!TypeCheck.isRecord(response) || response.protocolVersion !== this.PROTOCOL_VERSION || typeof response.success !== "boolean")
+                if (!TypeCheck.isRecord(response) || response.protocolVersion !== this.PROTOCOL_VERSION || !TypeCheck.isBoolean(response.success))
                 {
                     reject(new UnityWorkerError("The Unity worker returned an unsupported response.", stderr.trim()));
                     return;
@@ -206,7 +206,7 @@ export class UnityWorkerClient {
 
                 if (!response.success)
                 {
-                    const message = typeof response.message === "string"
+                    const message = TypeCheck.isValidString(response.message)
                         ? response.message
                         : "The Unity worker failed.";
 
@@ -231,24 +231,22 @@ export class UnityWorkerClient {
     private isBundleAsset(value: unknown): value is UnityBundleAsset {
         return (
             TypeCheck.isRecord(value) &&
-            typeof value.id === "string" &&
+            TypeCheck.isValidString(value.id) &&
             (value.type === "Texture2D" || value.type === "TextAsset") &&
-            typeof value.name === "string" &&
-            typeof value.pathId === "string" &&
-            typeof value.serializedFile === "string" &&
-            Array.isArray(value.catalogCandidates) &&
-            value.catalogCandidates.every((candidate) => typeof candidate === "string")
+            TypeCheck.isValidString(value.name) &&
+            TypeCheck.isValidString(value.pathId) &&
+            TypeCheck.isValidString(value.serializedFile) &&
+            TypeCheck.isValidArray(value.catalogCandidates) &&
+            value.catalogCandidates.every((candidate) => TypeCheck.isValidString(candidate))
         );
     }
 
     private isExtractedAsset(value: unknown): value is ExtractedUnityAsset {
         return (
             TypeCheck.isRecord(value) &&
-            typeof value.id === "string" &&
-            typeof value.outputName === "string" &&
-            typeof value.size === "number" &&
-            Number.isSafeInteger(value.size) &&
-            value.size >= 0
+            TypeCheck.isValidString(value.id) &&
+            TypeCheck.isValidString(value.outputName) &&
+            TypeCheck.isValidInteger(value.size, true)
         );
     }
 }

@@ -128,7 +128,7 @@ export class CharacterCatalogService {
 
         const version = this.readString(value.version, "catalog version", 10);
 
-        if (!Array.isArray(value.characters))
+        if (!TypeCheck.isValidArray(value.characters))
             throw new Error("The catalog has no characters array.");
         if (value.characters.length > this.MAX_CATALOG_ENTRIES)
             throw new Error("The catalog contains too many entries.");
@@ -149,7 +149,7 @@ export class CharacterCatalogService {
 
         const assetsValue = value.assets;
 
-        if (!Array.isArray(assetsValue) || assetsValue.length === 0)
+        if (!TypeCheck.isValidArray(assetsValue) || assetsValue.length === 0)
             throw new Error(`Character catalog entry ${index} has no assets.`);
         if (assetsValue.length > this.MAX_ASSETS_PER_ENTRY)
             throw new Error(`Character catalog entry ${index} has too many assets.`);
@@ -236,7 +236,7 @@ export class CharacterCatalogService {
     }
 
     private readString(value: unknown, fieldName: string, maxLength = 512): string {
-        if (typeof value !== "string" || !value.trim() || value.length > maxLength)
+        if (!TypeCheck.isValidString(value, maxLength))
             throw new Error(`Invalid ${fieldName}.`);
 
         return value;
@@ -258,7 +258,7 @@ export class CharacterCatalogService {
     }
 
     private readBoolean(value: unknown, fieldName: string): boolean {
-        if (typeof value !== "boolean")
+        if (!TypeCheck.isBoolean(value))
             throw new Error(`Invalid ${fieldName}.`);
 
         return value;

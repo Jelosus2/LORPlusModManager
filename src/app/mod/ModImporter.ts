@@ -120,7 +120,7 @@ export class ModImporter {
             {
                 const fallbackName = path.basename(analyzed.source.name, path.extname(analyzed.source.name));
                 const sourceDirectoryName = analyzed.source.directoryName.trim() || fallbackName;
-                const directoryName = this.sanitizeDirectoryName(sourceDirectoryName);
+                const directoryName = Paths.sanitizeDirectoryName(sourceDirectoryName, "mod", 80);
 
                 const containsMultipleMods = analyzed.matches.length > 1;
                 const sourcePlans: PlannedMod[] = [];
@@ -129,7 +129,7 @@ export class ModImporter {
                 for (const match of analyzed.matches)
                 {
                     const requestedName = containsMultipleMods
-                        ? `${directoryName}-${this.sanitizeDirectoryName(match.character.characterName)}`
+                        ? `${directoryName}-${Paths.sanitizeDirectoryName(match.character.characterName, "mod", 80)}`
                         : directoryName;
 
                     const finalDirectory = await this.reserveDestination(modsRoot, requestedName, reservedDirectories);
@@ -376,22 +376,6 @@ export class ModImporter {
             reservedDirectories.add(reservationKey);
             return candidatePath;
         }
-    }
-
-    private sanitizeDirectoryName(value: string): string {
-        let sanitized = value
-            .normalize("NFKC")
-            .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
-            .replace(/[. ]+$/g, "")
-            .trim()
-
-        if (!sanitized)
-            sanitized = "mod";
-
-        if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(sanitized))
-            sanitized = `_${sanitized}`;
-
-        return sanitized.slice(0, 80);
     }
 
     private createMatchingIssue(source: ModImportSource, preparation: SourcePreparation): ModImportIssue | null {

@@ -1,7 +1,17 @@
-import type { ModImportIssueKind, ModImportMode, ModSourceKind, ModSourceSelectionResult, SelectedModSource, ModExtractionRequest, ModExtractionResult, InstalledMod } from "../../../shared/mod.js";
+import type {
+    ModImportIssueKind,
+    ModImportMode,
+    ModSourceKind,
+    ModSourceSelectionResult,
+    SelectedModSource,
+    ModExtractionRequest,
+    ModExtractionResult,
+    InstalledMod
+} from "../../../shared/mod.js";
 import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
 import { ModImporter, ModImportError, type ModImportSource } from "#mod/ModImporter.js";
+import { ModLibraryService, ModLibraryError } from "#mod/ModLibraryService.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { ModVerifier } from "#mod/ModVerifier.js";
 import { BrowserWindow, dialog } from "electron";
@@ -26,6 +36,7 @@ export class ModController {
     private readonly modImporter = new ModImporter();
     private readonly modRepository = new ModRepository();
     private readonly modVerifier = new ModVerifier();
+    private readonly modLibrary = new ModLibraryService();
 
     @IpcHelper.IpcHandle("mod:select-sources")
     async selectSources(event: IpcMainInvokeEvent, mode: ModImportMode): Promise<ModSourceSelectionResult> {
@@ -139,13 +150,24 @@ export class ModController {
         return this.modVerifier.verifyAll(mods);
     }
 
-    @IpcHelper.IpcHandle("mods:set-enabled")
-    setModEnabled(_event: IpcMainInvokeEvent, modId: unknown, enabled: unknown) {
-        if (typeof modId !== "string" || !modId.trim() || modId.length > 100 || typeof enabled !== "boolean")
-            throw new Error("Invalid mod enabled-state request.");
+    @IpcHelper.IpcHandle("mod:open-folder")
+    async openModFolder(_event: IpcMainInvokeEvent, value: unknown) {
+        const modId = this.parseModId(value);
+        await this.modLibrary.openFolder(modId);
+    }
 
-        if (!this.modRepository.setEnabled(modId, enabled))
-            throw new Error("The selected mod could not be found.");
+    @IpcHelper.IpcHandle("mod:delete")
+    async deleteMod(_event: IpcMainInvokeEvent, value: unknown) {
+        const modId = this.parseModId(value);
+        await this.modLibrary.delete(modId);
+    }
+
+    @IpcHelper.IpcHandle("mod:rename")
+    async renameMod(_event: IpcMainInvokeEvent, value: unknown) {
+        if (!TypeCheck.isRecord(value) || !TypeCheck.isValidString(value.modId, 100) || !TypeCheck.isValidString(value.directoryName, 100))
+            throw new ModLibraryError("Invalid mod rename request.");
+
+        await this.modLibrary.rename(value.modId, value.directoryName);
     }
 
     private async inspectSource(filePath: string): Promise<StoredModSource | null> {
@@ -195,18 +217,8 @@ export class ModController {
     private parseExtractionRequest(value: unknown): ModExtractionRequest | null {
         if (!TypeCheck.isRecord(value))
             return null;
-
-        if (
-            typeof value.sessionId !== "string" ||
-            value.sessionId.length > 100 ||
-            typeof value.deleteOriginals !== "boolean" ||
-            !Array.isArray(value.sources) ||
-            value.sources.length === 0 ||
-            value.sources.length > 100
-        )
-        {
+        if (!TypeCheck.isValidString(value.sessionId, 100) || !TypeCheck.isBoolean(value.deleteOriginals) || !TypeCheck.isValidArray(value.sources, 100))
             return null;
-        }
 
         const sourceIds = new Set<string>();
         const sources: ModExtractionRequest["sources"] = [];
@@ -215,12 +227,9 @@ export class ModController {
         {
             if (
                 !TypeCheck.isRecord(source) ||
-                typeof source.sourceId !== "string" ||
-                source.sourceId.length > 100 ||
-                typeof source.password !== "string" ||
-                source.password.length > 1024 ||
-                typeof source.directoryName !== "string" ||
-                source.directoryName.length > 100 ||
+                !TypeCheck.isValidString(source.sourceId, 100) ||
+                !TypeCheck.isValidString(source.password, 1024) ||
+                !TypeCheck.isValidString(source.directoryName, 100) ||
                 sourceIds.has(source.sourceId)
             )
             {
@@ -241,6 +250,13 @@ export class ModController {
             sources,
             deleteOriginals: value.deleteOriginals
         };
+    }
+
+    private parseModId(value: unknown): string {
+        if (!TypeCheck.isValidString(value, 100))
+            throw new ModLibraryError("Invalid mod identifier.");
+
+        return value;
     }
 
     private pruneExpiredSessions() {

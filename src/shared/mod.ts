@@ -95,3 +95,8 @@ export type PersistedMod = Readonly<{
 export type InstalledMod = PersistedMod & Readonly<{
     verification: ModVerification;
 }>;
+
+export type ModRenameRequest = Readonly<{
+    modId: string;
+    directoryName: string;
+}>;

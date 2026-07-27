@@ -36,7 +36,7 @@ export class ModVerifier {
         const modsRoot = Paths.getModsPath();
         const modDirectory = path.join(modsRoot, mod.directoryName);
 
-        if (!this.isInsideModsDirectory(modsRoot, modDirectory))
+        if (!Paths.isSubpath(modsRoot, modDirectory))
         {
             return this.withVerification(mod, {
                 status: "unreadable",
@@ -70,11 +70,6 @@ export class ModVerifier {
                 missingAssets: [...mod.assetNames]
             });
         }
-    }
-
-    private isInsideModsDirectory(modsRoot: string, candidate: string): boolean {
-        const relative = path.relative(modsRoot, candidate);
-        return Boolean(relative && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
     }
 
     private withVerification(mod: PersistedMod, verification: ModVerification): InstalledMod {

@@ -1,5 +1,6 @@
 import type { PluginProgress } from "../../shared/plugin.js";
 
+import { TypeCheck } from "#utils/TypeCheck.js";
 import { createHash } from "node:crypto";
 import { Paths } from "#utils/Paths.js";
 import fsp from "node:fs/promises";
@@ -148,19 +149,19 @@ export class LOPluginDownloader {
     }
 
     private isGithubRelease(value: unknown): value is GitHubRelease {
-        if (!value || typeof value !== "object")
+        if (!TypeCheck.isRecord(value))
             return false;
 
         const release = value as Partial<GitHubRelease>;
 
         return (
-            typeof release.tag_name === "string" &&
-            Array.isArray(release.assets) &&
+            TypeCheck.isValidString(release.tag_name) &&
+            TypeCheck.isValidArray(release.assets) &&
             release.assets.every((asset) =>
                 asset &&
-                typeof asset.name === "string" &&
-                typeof asset.browser_download_url === "string" &&
-                typeof asset.size === "number"
+                TypeCheck.isValidString(asset.name) &&
+                TypeCheck.isValidString(asset.browser_download_url) &&
+                TypeCheck.isValidInteger(asset.size)
             )
         );
     }
@@ -189,27 +190,20 @@ export class LOPluginDownloader {
     }
 
     private parseVersionInfo(value: unknown): VersionInfo {
-        if (!value || typeof value !== "object")
+        if (!TypeCheck.isRecord(value))
             throw new Error(`${this.MANIFEST_NAME} is not a JSON object.`);
 
         const manifest = value as Partial<VersionInfo>;
 
-        if (typeof manifest.version !== "string" || !/^[0-9A-Za-z._-]+$/.test(manifest.version))
+        if (!TypeCheck.isValidString(manifest.version) || !/^[0-9A-Za-z._-]+$/.test(manifest.version))
             throw new Error(`${this.MANIFEST_NAME} contains an invalid version.`);
-
-        if (
-            !manifest.checksums ||
-            typeof manifest.checksums !== "object" ||
-            Array.isArray(manifest.checksums)
-        )
-        {
+        if (!TypeCheck.isRecord(manifest.checksums) || TypeCheck.isValidArray(manifest.checksums))
             throw new Error(`${this.MANIFEST_NAME} contains invalid checksums.`);
-        }
 
         if (
-            !Array.isArray(manifest.files) ||
+            !TypeCheck.isValidArray(manifest.files) ||
             manifest.files.length === 0 ||
-            manifest.files.some((file) => typeof file !== "string")
+            manifest.files.some((file) => !TypeCheck.isValidString(file))
         )
         {
             throw new Error(`${this.MANIFEST_NAME} contains an invalid files list.`);
@@ -223,7 +217,7 @@ export class LOPluginDownloader {
                 throw new Error(`Expected ${this.MANIFEST_NAME} to be a zip.`);
 
             const checksum = manifest.checksums[fileName];
-            if (typeof checksum !== "string" || !/^[a-fA-F0-9]{64}$/.test(checksum))
+            if (!TypeCheck.isValidString(checksum) || !/^[a-fA-F0-9]{64}$/.test(checksum))
                 throw new Error(`${this.MANIFEST_NAME} has no valid checksum for ${fileName}.`);
         }
 

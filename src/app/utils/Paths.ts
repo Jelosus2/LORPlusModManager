@@ -56,4 +56,25 @@ export class Paths {
             "lorplus-unity-worker.exe"
         );
     }
+
+    static isSubpath(parentPath: string, childPath: string): boolean {
+        const relative = path.relative(parentPath, childPath);
+        return Boolean(relative && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+    }
+
+    static sanitizeDirectoryName(name: string, defaultName: string, maxLength: number): string {
+        let sanitized = name
+            .normalize("NFKC")
+            .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
+            .replace(/[. ]+$/g, "")
+            .trim();
+
+        if (!sanitized)
+            sanitized = defaultName;
+
+        if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(sanitized))
+            sanitized = `_${sanitized}`;
+
+        return sanitized.slice(0, maxLength);
+    }
 }
