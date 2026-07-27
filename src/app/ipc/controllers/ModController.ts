@@ -3,6 +3,7 @@ import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
 import { ModImporter, ModImportError, type ModImportSource } from "#mod/ModImporter.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ModVerifier } from "#mod/ModVerifier.js";
 import { BrowserWindow, dialog } from "electron";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
@@ -24,6 +25,7 @@ export class ModController {
     private readonly SESSION_LIFETIME = 30 * 60 * 1000;
     private readonly modImporter = new ModImporter();
     private readonly modRepository = new ModRepository();
+    private readonly modVerifier = new ModVerifier();
 
     @IpcHelper.IpcHandle("mod:select-sources")
     async selectSources(event: IpcMainInvokeEvent, mode: ModImportMode): Promise<ModSourceSelectionResult> {
@@ -132,8 +134,9 @@ export class ModController {
     }
 
     @IpcHelper.IpcHandle("mod:get-all")
-    getMods(): readonly InstalledMod[] {
-        return this.modRepository.getAll();
+    getMods(): Promise<readonly InstalledMod[]> {
+        const mods = this.modRepository.getAll();
+        return this.modVerifier.verifyAll(mods);
     }
 
     @IpcHelper.IpcHandle("mods:set-enabled")

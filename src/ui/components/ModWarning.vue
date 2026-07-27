@@ -5,11 +5,16 @@ import WarningIcon from "./icons/WarningIcon.vue";
 
 import { nextTick, onBeforeUnmount, onMounted, ref, useId } from "vue";
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     message: string;
-}>();
+    heading?: string;
+    tone?: "warning" | "error";
+}>(), {
+    heading: "Conflicting enabled mods",
+    tone: "warning"
+});
 
-const tooltipId = `conflict-tooltip-${useId()}`;
+const tooltipId = `mod-warning-tooltip-${useId()}`;
 const trigger = ref<HTMLElement | null>(null);
 const tooltip = ref<HTMLElement | null>(null);
 const visible = ref(false);
@@ -63,10 +68,13 @@ onBeforeUnmount(() => {
 <template>
     <span
         ref="trigger"
-        class="conflict-warning"
+        :class="[
+            'mod-warning',
+            `mod-warning--${props.tone}`
+        ]"
         role="img"
         tabindex="0"
-        aria-label="Mod conflict warning"
+        :aria-label="props.heading"
         :aria-describedby="visible ? tooltipId : undefined"
         @mouseenter="showTooltip"
         @mouseleave="hideTooltip"
@@ -78,16 +86,19 @@ onBeforeUnmount(() => {
     </span>
 
     <Teleport to="body">
-        <Transition name="conflict-tooltip">
+        <Transition name="mod-warning-tooltip">
             <span
                 v-if="visible"
                 :id="tooltipId"
                 ref="tooltip"
-                class="conflict-tooltip"
+                :class="[
+                    'mod-warning-tooltip',
+                    `mod-warning-tooltip--${props.tone}`
+                ]"
                 role="tooltip"
                 :style="tooltipStyle"
             >
-                <strong>Conflicting enabled mods</strong>
+                <strong>{{ props.heading }}</strong>
                 <span>{{ props.message }}</span>
             </span>
         </Transition>
@@ -95,7 +106,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.conflict-warning {
+.mod-warning {
     display: inline-flex;
     width: 28px;
     height: 28px;
@@ -113,19 +124,19 @@ onBeforeUnmount(() => {
         transform 140ms ease;
 }
 
-.conflict-warning:hover,
-.conflict-warning:focus-visible {
+.mod-warning:hover,
+.mod-warning:focus-visible {
     color: #ffd19a;
     background: #432d1e;
     transform: translateY(-1px);
 }
 
-.conflict-warning:focus-visible {
+.mod-warning:focus-visible {
     outline: 2px solid #f2eee5;
     outline-offset: 2px;
 }
 
-.conflict-warning svg {
+.mod-warning svg {
     width: 19px;
     height: 19px;
     fill: none;
@@ -135,7 +146,7 @@ onBeforeUnmount(() => {
     stroke-linejoin: round;
 }
 
-.conflict-tooltip {
+.mod-warning-tooltip {
     position: fixed;
     z-index: 10000;
     display: flex;
@@ -154,29 +165,50 @@ onBeforeUnmount(() => {
     pointer-events: none;
 }
 
-.conflict-tooltip strong {
+.mod-warning-tooltip strong {
     color: #f0b36c;
     font-size: 13px;
     font-weight: 700;
 }
 
-.conflict-tooltip-enter-active,
-.conflict-tooltip-leave-active {
+.mod-warning-tooltip-enter-active,
+.mod-warning-tooltip-leave-active {
     transition:
         opacity 120ms ease,
         transform 120ms ease;
 }
 
-.conflict-tooltip-enter-from,
-.conflict-tooltip-leave-to {
+.mod-warning-tooltip-enter-from,
+.mod-warning-tooltip-leave-to {
     opacity: 0;
     transform: translateY(3px);
 }
 
+.mod-warning--error {
+    color: #f0a29a;
+    background: #361d1b;
+    box-shadow: inset 0 0 0 1px #66332f;
+}
+
+.mod-warning--error:hover,
+.mod-warning--error:focus-visible {
+    color: #ffc0b9;
+    background: #462421;
+}
+
+.mod-warning-tooltip--error {
+    border-color: #633936;
+    background: #211514;
+}
+
+.mod-warning-tooltip--error strong {
+    color: #f0a29a;
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .conflict-warning,
-    .conflict-tooltip-enter-active,
-    .conflict-tooltip-leave-active {
+    .mod-warning,
+    .mod-warning-tooltip-enter-active,
+    .mod-warning-tooltip-leave-active {
         transition: none;
     }
 }

@@ -1,4 +1,4 @@
-import type { ModSourceKind, InstalledMod } from "../../../shared/mod.js";
+import type { ModSourceKind, PersistedMod } from "../../../shared/mod.js";
 
 import { AppDatabase } from "#database/AppDatabase.js";
 
@@ -59,7 +59,7 @@ export class ModRepository {
         insertAll(mods);
     }
 
-    getAll(): readonly InstalledMod[] {
+    getAll(): readonly PersistedMod[] {
         const rows = AppDatabase.connection.prepare<[], StoredModRow>(`
             SELECT
                 mods.id,

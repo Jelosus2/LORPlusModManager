@@ -2,9 +2,10 @@
 import type { CharacterSkin } from "../../shared/characters";
 import type { InstalledMod } from "../../shared/mod";
 
-import ConflictWarning from "./ConflictWarning.vue";
+import ModWarning from "./ModWarning.vue";
 import SearchIcon from "./icons/SearchIcon.vue";
 import CheckIcon from "./icons/CheckIcon.vue";
+import RefreshIcon from "./icons/RefreshIcon.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
 import { useModStore, createCatalogIdentity } from "@/stores/modStore";
@@ -56,6 +57,8 @@ const sortKey = ref<SortKey>("importedAt");
 const sortDirection = ref<SortDirection>("descending");
 const currentPage = ref(1);
 const selectedModIds = ref(new Set<string>());
+const isRefreshing = ref(false);
+const refreshErrorMessage = ref("");
 
 let knownModIds = new Set<string>();
 
@@ -97,7 +100,7 @@ const conflictMessages = computed(() => {
 
     for (const row of rows.value)
     {
-        if (!selectedModIds.value.has(row.mod.id))
+        if (!selectedModIds.value.has(row.mod.id) || row.mod.verification.status !== "valid")
             continue;
 
             const key = [
@@ -235,8 +238,17 @@ const hasActiveFilters = computed(() =>
     )
 );
 
-const isLoading = computed(() => modStore.isLoading || catalogStore.isLoading);
-const loadErrorMessage = computed(() => modStore.errorMessage || catalogStore.errorMessage);
+const isLoading = computed(() => catalogStore.isLoading || (modStore.isLoading && modStore.mods.length === 0));
+const loadErrorMessage = computed(() =>
+    catalogStore.errorMessage ||
+    (
+        modStore.mods.length === 0
+            ? modStore.errorMessage
+            : ""
+    )
+);
+
+const invalidModCount = computed(() => modStore.mods.filter((mod) => mod.verification.status !== "valid").length);
 
 watch([modNameFilter, characterFilter, modTypeFilter, skinTypeFilter, importedFrom, importedTo], () => {
     currentPage.value = 1;
@@ -248,6 +260,12 @@ watch(() => modStore.mods, (mods) => {
 
     for (const mod of mods)
     {
+        if (mod.verification.status !== "valid")
+        {
+            nextSelection.delete(mod.id);
+            continue;
+        }
+
         if (!knownModIds.has(mod.id) && mod.enabled)
             nextSelection.add(mod.id);
     }
@@ -260,6 +278,25 @@ watch(totalPages, (pageCount) => {
     if (currentPage.value > pageCount)
         currentPage.value = pageCount;
 });
+
+async function refreshMods() {
+    if (isRefreshing.value)
+        return;
+
+    isRefreshing.value = true;
+    refreshErrorMessage.value = "";
+
+    try
+    {
+        const refreshed = await modStore.load(true);
+        if (!refreshed)
+            refreshErrorMessage.value = "The mods could not be refreshed.";
+    }
+    finally
+    {
+        isRefreshing.value = false;
+    }
+}
 
 function getModType(mod: InstalledMod): ModType {
     return StringUtils.normalize(mod.skin2dId).endsWith("_dam")
@@ -324,6 +361,23 @@ function toggleMod(modId: string, event: Event) {
     selectedModIds.value = nextSelection;
 }
 
+function getVerificationMessage(mod: InstalledMod): string {
+    switch(mod.verification.status)
+    {
+        case "missing-directory":
+            return `The mod directory "${mod.directoryName}" no longer exists. Restore it and refresh the mod list.`;
+        case "missing-assets":
+        {
+            const missingAssets = mod.verification.missingAssets.join(", ");
+            return `Required mod files are missing: ${missingAssets}. Restore them and refresh the mod list.`;
+        }
+        case "unreadable":
+            return `The mod directory "${mod.directoryName}" could not be read. Check its permissions and refresh the mod list.`;
+        case "valid":
+            return "";
+    }
+}
+
 function isModSelected(modId: string) {
     return selectedModIds.value.has(modId);
 }
@@ -353,15 +407,30 @@ function retryLoading() {
                 <h1 id="mods-title">Mods</h1>
             </div>
 
-            <button
-                class="add-mod-button"
-                type="button"
-                aria-haspopup="dialog"
-                popovertarget="add-mod-popover"
-            >
-                <span aria-hidden="true">+</span>
-                Add mod
-            </button>
+            <div class="mods-header-actions">
+                <button
+                    v-if="modStore.mods.length > 0"
+                    class="refresh-mods-button"
+                    type="button"
+                    :disabled="isRefreshing"
+                    @click="refreshMods"
+                >
+                    <RefreshIcon
+                        :class="{ 'refresh-icon--spinning': isRefreshing }"
+                    />
+                    {{ isRefreshing ? "Refreshing..." : "Refresh mods" }}
+                </button>
+
+                <button
+                    class="add-mod-button"
+                    type="button"
+                    aria-haspopup="dialog"
+                    popovertarget="add-mod-popover"
+                >
+                    <span aria-hidden="true">+</span>
+                    Add mod
+                </button>
+            </div>
         </header>
 
         <form
@@ -467,10 +536,22 @@ function retryLoading() {
         </div>
 
         <template v-else>
+            <div
+                v-if="refreshErrorMessage"
+                class="refresh-error"
+                role="alert"
+            >
+                {{ refreshErrorMessage }}
+            </div>
+
             <div class="table-summary">
                 <p>
                     {{ filteredRows.length }}
                     {{ filteredRows.length === 1 ? "mod" : "mods" }}
+
+                    <span v-if="invalidModCount > 0" class="invalid-mod-count">
+                        · {{ invalidModCount }} need attention
+                    </span>
                 </p>
 
                 <button
@@ -581,8 +662,8 @@ function retryLoading() {
                             v-for="row in visibleRows"
                             :key="row.mod.id"
                             :class="{
-                                'mod-row--disabled':
-                                    !isModSelected(row.mod.id)
+                                'mod-row--disabled': !isModSelected(row.mod.id),
+                                'mod-row--invalid': row.mod.verification.status !== 'valid'
                             }"
                         >
                             <td>
@@ -597,12 +678,9 @@ function retryLoading() {
                                     >
                                         <input
                                             type="checkbox"
-                                            :checked="
-                                                isModSelected(row.mod.id)
-                                            "
-                                            @change="
-                                                toggleMod(row.mod.id, $event)
-                                            "
+                                            :checked="isModSelected(row.mod.id)"
+                                            :disabled="row.mod.verification.status !== 'valid'"
+                                            @change="toggleMod(row.mod.id, $event)"
                                         />
                                         <span aria-hidden="true">
                                             <CheckIcon
@@ -617,13 +695,16 @@ function retryLoading() {
                                         {{ row.mod.directoryName }}
                                     </strong>
 
-                                    <ConflictWarning
-                                        v-if="
-                                            conflictMessages.has(row.mod.id)
-                                        "
-                                        :message="
-                                            conflictMessages.get(row.mod.id)!
-                                        "
+                                    <ModWarning
+                                        v-if="row.mod.verification.status !== 'valid'"
+                                        heading="Mod files missing"
+                                        tone="error"
+                                        :message="getVerificationMessage(row.mod)"
+                                    />
+
+                                    <ModWarning
+                                        v-if="conflictMessages.has(row.mod.id)"
+                                        :message="conflictMessages.get(row.mod.id)!"
                                     />
                                 </div>
                             </td>
@@ -1079,8 +1160,9 @@ h1 {
 }
 
 .enabled-toggle input:disabled + span {
-    cursor: wait;
-    opacity: 0.5;
+    border-color: #633936;
+    cursor: not-allowed;
+    opacity: 0.65;
 }
 
 .enabled-toggle svg {
@@ -1178,7 +1260,7 @@ h1 {
     opacity: 0.4;
 }
 
-.update-error {
+.refresh-error {
     margin-top: 14px;
     padding: 11px 13px;
     border-radius: 6px;
@@ -1218,6 +1300,69 @@ h1 {
     white-space: nowrap;
 }
 
+.mods-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.refresh-mods-button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    color: #d8d4cb;
+    background: #171b18;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.refresh-mods-button:hover:not(:disabled) {
+    background: #202622;
+}
+
+.refresh-mods-button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.refresh-mods-button svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.refresh-icon--spinning {
+    animation: refresh-icon-spin 700ms linear infinite;
+}
+
+.invalid-mod-count {
+    color: #e69b93;
+    font-weight: 600;
+}
+
+.mod-row--invalid {
+    background: #110d0c;
+}
+
+.mod-row--invalid:hover {
+    background: #18100f;
+}
+
+.mod-row--invalid .enabled-toggle {
+    cursor: not-allowed;
+}
+
 @media (max-width: 1280px) {
     .mod-filters {
         grid-template-columns: repeat(2, minmax(180px, 1fr));
@@ -1243,6 +1388,12 @@ h1 {
         grid-column: auto;
     }
 
+    .mods-header-actions {
+        width: 100%;
+        flex-direction: column-reverse;
+    }
+
+    .refresh-mods-button,
     .add-mod-button {
         width: 100%;
     }
@@ -1251,6 +1402,10 @@ h1 {
 @media (prefers-reduced-motion: reduce) {
     .mods-table tbody tr {
         transition: none;
+    }
+
+    .refresh-icon--spinning {
+        animation: none;
     }
 }
 </style>

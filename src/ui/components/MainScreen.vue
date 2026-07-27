@@ -422,8 +422,7 @@ onMounted(() => {
     content: "";
 }
 
-.navigation-item:focus-visible,
-.add-mod-button:focus-visible {
+.navigation-item:focus-visible {
     outline: 2px solid #f2eee5;
     outline-offset: 2px;
 }
@@ -433,63 +432,6 @@ onMounted(() => {
     min-width: 0;
     flex-direction: column;
     padding: clamp(32px, 5vw, 64px);
-}
-
-.content-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 28px;
-    padding-bottom: 28px;
-}
-
-.content-label {
-    margin: 0 0 6px;
-    color: #9bc2d9;
-    font-size: 13px;
-    font-weight: 650;
-}
-
-h1 {
-    margin: 0;
-    color: #f2eee5;
-    font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
-    font-size: clamp(34px, 4vw, 44px);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-}
-
-.add-mod-button {
-    display: inline-flex;
-    min-height: 46px;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-    padding: 0 19px;
-    border: 0;
-    border-radius: 8px;
-    color: #172027;
-    background: #86aec7;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 650;
-    cursor: pointer;
-    transition: background-color 150ms ease, transform 150ms ease;
-}
-
-.add-mod-button:hover {
-    background: #9bbfd5;
-}
-
-.add-mod-button:active {
-    transform: translateY(1px);
-}
-
-.add-mod-symbol {
-    font-size: 21px;
-    font-weight: 400;
-    line-height: 1;
 }
 
 .add-mod-popover {
@@ -715,35 +657,6 @@ h1 {
     }
 }
 
-.mods-content {
-    display: flex;
-    min-height: 360px;
-    flex: 1;
-    align-items: center;
-    justify-content: center;
-    border-top: 1px solid #292e2b;
-}
-
-.empty-state {
-    max-width: 380px;
-    padding: 42px 24px;
-    text-align: center;
-}
-
-.empty-state h2 {
-    margin: 0;
-    color: #e4e0d7;
-    font-size: 21px;
-    font-weight: 650;
-}
-
-.empty-state p {
-    margin: 10px 0 0;
-    color: #979b95;
-    font-size: 15px;
-    line-height: 1.55;
-}
-
 @media (max-width: 720px) {
     .app-shell {
         grid-template-columns: minmax(0, 1fr);
@@ -784,16 +697,6 @@ h1 {
 }
 
 @media (max-width: 480px) {
-    .content-header {
-        align-items: stretch;
-        flex-direction: column;
-        gap: 22px;
-    }
-
-    .add-mod-button {
-        width: 100%;
-    }
-
     .add-mod-header {
         padding: 22px 22px 0;
     }
@@ -815,7 +718,6 @@ h1 {
 
 @media (prefers-reduced-motion: reduce) {
     .navigation-item,
-    .add-mod-button,
     .import-option {
         transition: none;
     }

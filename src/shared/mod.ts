@@ -69,7 +69,18 @@ export type ModExtractionResult = {
     issues: ModImportIssue[];
 };
 
-export type InstalledMod = Readonly<{
+export type ModVerificationStatus =
+    | "valid"
+    | "missing-directory"
+    | "missing-assets"
+    | "unreadable";
+
+export type ModVerification = Readonly<{
+    status: ModVerificationStatus;
+    missingAssets: readonly string[];
+}>;
+
+export type PersistedMod = Readonly<{
     id: string;
     directoryName: string;
     sourceName: string;
@@ -79,4 +90,8 @@ export type InstalledMod = Readonly<{
     enabled: boolean;
     importedAt: string;
     assetNames: readonly string[];
+}>;
+
+export type InstalledMod = PersistedMod & Readonly<{
+    verification: ModVerification;
 }>;
