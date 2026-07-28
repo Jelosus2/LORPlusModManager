@@ -1,4 +1,4 @@
-import type { ModImportMode, ModSourceSelectionResult, ModExtractionRequest, ModExtractionResult, InstalledMod, ModRenameRequest } from "./mod.js";
+import type { ModImportMode, ModSourceSelectionResult, ModExtractionRequest, ModExtractionResult, InstalledMod, ModRenameRequest, BulkModDeletionResult } from "./mod.js";
 import type { PluginInstallResult, PluginProgress } from "./plugin.js";
 import type { GameLocationResult, SetupState } from "./setup.js";
 import type { CharacterCatalog } from "./characters.js";
@@ -15,4 +15,5 @@ export type IpcApi = {
     openModFolder: (modId: string) => Promise<void>;
     deleteMod: (modId: string) => Promise<void>;
     renameMod: (request: ModRenameRequest) => Promise<void>;
+    deleteMods: (modIds: readonly string[]) => Promise<BulkModDeletionResult>;
 };

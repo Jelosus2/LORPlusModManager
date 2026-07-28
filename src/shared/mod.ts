@@ -100,3 +100,13 @@ export type ModRenameRequest = Readonly<{
     modId: string;
     directoryName: string;
 }>;
+
+export type ModDeletionFailure = Readonly<{
+    modId: string;
+    message: string;
+}>;
+
+export type BulkModDeletionResult = Readonly<{
+    deletedModIds: readonly string[];
+    failures: readonly ModDeletionFailure[];
+}>;

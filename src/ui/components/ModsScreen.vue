@@ -43,6 +43,16 @@ type ModTableRow = {
     importedTimestamp: number;
 };
 
+type BulkDeleteSummary = Readonly<{
+    requestedCount: number;
+    deletedCount: number;
+    failures: readonly Readonly<{
+        directoryName: string;
+        message: string;
+    }>[];
+    requestError: string;
+}>;
+
 const PAGE_SIZE = 100;
 const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
 const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
@@ -71,6 +81,11 @@ const modPendingRename = ref<InstalledMod | null>(null);
 const renameDirectoryName = ref("");
 const renameErrorMessage = ref("");
 const isRenamingMod = ref(false);
+const isBulkDeleteMode = ref(false);
+const bulkDeleteModIds = ref(new Set<string>());
+const bulkDeleteResultDialog = ref<HTMLDialogElement | null>(null);
+const bulkDeleteSummary = ref<BulkDeleteSummary | null>(null);
+const isBulkDeleting = ref(false);
 
 let knownModIds = new Set<string>();
 
@@ -261,6 +276,7 @@ const loadErrorMessage = computed(() =>
 );
 
 const invalidModCount = computed(() => modStore.mods.filter((mod) => mod.verification.status !== "valid").length);
+const bulkDeleteSelectionCount = computed(() => bulkDeleteModIds.value.size);
 
 watch([modNameFilter, characterFilter, modTypeFilter, skinTypeFilter, importedFrom, importedTo], () => {
     currentPage.value = 1;
@@ -281,6 +297,10 @@ watch(() => modStore.mods, (mods) => {
         if (!knownModIds.has(mod.id) && mod.enabled)
             nextSelection.add(mod.id);
     }
+
+    bulkDeleteModIds.value = new Set([...bulkDeleteModIds.value].filter((id) => currentModIds.has(id)));
+    if (mods.length === 0)
+        isBulkDeleteMode.value = false;
 
     selectedModIds.value = nextSelection;
     knownModIds = currentModIds;
@@ -422,6 +442,76 @@ async function confirmModRename() {
     }
 }
 
+function requestBulkDeletion() {
+    isBulkDeleteMode.value = true;
+    bulkDeleteModIds.value = new Set();
+    bulkDeleteSummary.value = null;
+    actionErrorMessage.value = "";
+}
+
+async function confirmBulkDeletion() {
+    if (bulkDeleteModIds.value.size === 0 || isBulkDeleting.value)
+        return;
+
+    const requestedModIds = [...bulkDeleteModIds.value];
+    const namesById = new Map(modStore.mods.map((mod) => [mod.id, mod.directoryName]));
+
+    isBulkDeleting.value = true;
+    bulkDeleteSummary.value = null;
+    actionErrorMessage.value = "";
+
+    try
+    {
+        const result = await window.app.deleteMods(requestedModIds);
+
+        const nextSyncSelection = new Set(selectedModIds.value);
+
+        for (const modId of result.deletedModIds)
+            nextSyncSelection.delete(modId);
+
+        selectedModIds.value = nextSyncSelection;
+
+        bulkDeleteSummary.value = {
+            requestedCount: requestedModIds.length,
+            deletedCount: result.deletedModIds.length,
+            failures: result.failures.map((failure) => ({
+                directoryName: namesById.get(failure.modId) ?? "Unknown mod",
+                message: failure.message
+            })),
+            requestError: ""
+        };
+
+        isBulkDeleteMode.value = false;
+        bulkDeleteModIds.value = new Set();
+
+        const refreshed = await modStore.load(true);
+
+        if (!refreshed)
+            actionErrorMessage.value = "The mods were processed, but the list could not be refreshed.";
+
+        await nextTick();
+        bulkDeleteResultDialog.value?.showModal();
+    }
+    catch (error)
+    {
+        console.error("Could not delete the selected mods:", error);
+
+        bulkDeleteSummary.value = {
+            requestedCount: requestedModIds.length,
+            deletedCount: 0,
+            failures: [],
+            requestError: "The selected mods could not be deleted."
+        };
+
+        await nextTick();
+        bulkDeleteResultDialog.value?.showModal();
+    }
+    finally
+    {
+        isBulkDeleting.value = false;
+    }
+}
+
 function getModType(mod: InstalledMod): ModType {
     return StringUtils.normalize(mod.skin2dId).endsWith("_dam")
         ? "damaged"
@@ -485,6 +575,17 @@ function toggleMod(modId: string, event: Event) {
     selectedModIds.value = nextSelection;
 }
 
+function toggleBulkDeleteMod(modId: string) {
+    const nextSelection = new Set(bulkDeleteModIds.value);
+
+    if (nextSelection.has(modId))
+        nextSelection.delete(modId);
+    else
+        nextSelection.add(modId);
+
+    bulkDeleteModIds.value = nextSelection;
+}
+
 function getVerificationMessage(mod: InstalledMod): string {
     switch(mod.verification.status)
     {
@@ -533,6 +634,19 @@ function cancelModRename() {
     renameErrorMessage.value = "";
 }
 
+function cancelBulkDeletion() {
+    if (isBulkDeleting.value)
+        return;
+
+    isBulkDeleteMode.value = false;
+    bulkDeleteModIds.value = new Set();
+}
+
+function closeBulkDeleteResult() {
+    bulkDeleteResultDialog.value?.close();
+    bulkDeleteSummary.value = null;
+}
+
 function retryLoading() {
     void Promise.all([
         catalogStore.load(true),
@@ -554,7 +668,7 @@ function retryLoading() {
                     v-if="modStore.mods.length > 0"
                     class="refresh-mods-button"
                     type="button"
-                    :disabled="isRefreshing"
+                    :disabled="isRefreshing || isBulkDeleteMode"
                     @click="refreshMods"
                 >
                     <RefreshIcon
@@ -564,10 +678,24 @@ function retryLoading() {
                 </button>
 
                 <button
+                    v-if="
+                        modStore.mods.length > 1 &&
+                        !isBulkDeleteMode
+                    "
+                    class="bulk-delete-button"
+                    type="button"
+                    @click="requestBulkDeletion"
+                >
+                    <TrashIcon />
+                    Delete mods
+                </button>
+
+                <button
                     class="add-mod-button"
                     type="button"
                     aria-haspopup="dialog"
                     popovertarget="add-mod-popover"
+                    :disabled="isBulkDeleteMode"
                 >
                     <span aria-hidden="true">+</span>
                     Add mod
@@ -696,6 +824,18 @@ function retryLoading() {
                     </span>
                 </p>
 
+                <div
+                    v-if="isBulkDeleteMode"
+                    class="bulk-delete-instruction"
+                    role="status"
+                >
+                    <TrashIcon aria-hidden="true" />
+                    <span>
+                        <strong>Select mods to delete</strong>
+                        Use the checkboxes in the Mod name column.
+                    </span>
+                </div>
+
                 <button
                     v-if="hasActiveFilters"
                     type="button"
@@ -716,6 +856,9 @@ function retryLoading() {
             <div
                 v-if="visibleRows.length"
                 class="mods-table-wrapper"
+                :class="{
+                    'mods-table-wrapper--delete-mode': isBulkDeleteMode
+                }"
             >
                 <table class="mods-table">
                     <thead>
@@ -817,29 +960,57 @@ function retryLoading() {
                             :key="row.mod.id"
                             :class="{
                                 'mod-row--disabled': !isModSelected(row.mod.id),
-                                'mod-row--invalid': row.mod.verification.status !== 'valid'
+                                'mod-row--invalid': row.mod.verification.status !== 'valid',
+                                'mod-row--bulk-selected':
+                                    isBulkDeleteMode &&
+                                    bulkDeleteModIds.has(row.mod.id)
                             }"
                         >
                             <td>
                                 <div class="mod-name-cell">
                                     <label
                                         class="enabled-toggle"
+                                        :class="{
+                                            'enabled-toggle--delete':
+                                                isBulkDeleteMode
+                                        }"
                                         :title="
-                                            isModSelected(row.mod.id)
-                                                ? 'Remove from synchronization'
-                                                : 'Select for synchronization'
+                                            isBulkDeleteMode
+                                                ? (
+                                                    bulkDeleteModIds.has(row.mod.id)
+                                                        ? 'Remove from deletion'
+                                                        : 'Select for deletion'
+                                                )
+                                                : (
+                                                    isModSelected(row.mod.id)
+                                                        ? 'Remove from synchronization'
+                                                        : 'Select for synchronization'
+                                                )
                                         "
                                     >
                                         <input
                                             type="checkbox"
-                                            :checked="isModSelected(row.mod.id)"
-                                            :disabled="row.mod.verification.status !== 'valid'"
-                                            @change="toggleMod(row.mod.id, $event)"
+                                            :checked="
+                                                isBulkDeleteMode
+                                                    ? bulkDeleteModIds.has(row.mod.id)
+                                                    : isModSelected(row.mod.id)
+                                            "
+                                            :disabled="
+                                                !isBulkDeleteMode &&
+                                                row.mod.verification.status !== 'valid'
+                                            "
+                                            @change="
+                                                isBulkDeleteMode
+                                                    ? toggleBulkDeleteMod(row.mod.id)
+                                                    : toggleMod(row.mod.id, $event)
+                                            "
                                         />
                                         <span aria-hidden="true">
                                             <CheckIcon
                                                 v-if="
-                                                    isModSelected(row.mod.id)
+                                                    isBulkDeleteMode
+                                                        ? bulkDeleteModIds.has(row.mod.id)
+                                                        : isModSelected(row.mod.id)
                                                 "
                                             />
                                         </span>
@@ -911,6 +1082,7 @@ function retryLoading() {
                                         aria-label="Open mod folder"
                                         title="Open folder"
                                         :disabled="
+                                            isBulkDeleteMode ||
                                             row.mod.verification.status === 'missing-directory'
                                         "
                                         @click="openModFolder(row.mod)"
@@ -923,6 +1095,7 @@ function retryLoading() {
                                         aria-label="Rename mod"
                                         title="Rename mod"
                                         :disabled="
+                                            isBulkDeleteMode ||
                                             row.mod.verification.status === 'missing-directory'
                                         "
                                         @click="requestModRename(row.mod)"
@@ -935,6 +1108,7 @@ function retryLoading() {
                                         type="button"
                                         aria-label="Delete mod"
                                         title="Delete mod"
+                                        :disabled="isBulkDeleteMode"
                                         @click="requestModDeletion(row.mod)"
                                     >
                                         <TrashIcon />
@@ -954,15 +1128,15 @@ function retryLoading() {
             </div>
 
             <footer
-                v-if="sortedRows.length"
+                v-if="sortedRows.length || isBulkDeleteMode"
                 class="table-pagination"
             >
-                <p>
+                <p v-if="sortedRows.length">
                     Showing {{ firstVisibleResult }}–{{ lastVisibleResult }}
                     of {{ sortedRows.length }}
                 </p>
 
-                <div>
+                <div v-if="sortedRows.length">
                     <button
                         type="button"
                         :disabled="currentPage === 1"
@@ -981,6 +1155,45 @@ function retryLoading() {
                         @click="currentPage++"
                     >
                         Next
+                    </button>
+                </div>
+
+                <div
+                    v-if="isBulkDeleteMode"
+                    class="bulk-delete-floating-actions"
+                    aria-label="Bulk deletion controls"
+                >
+                    <p>
+                        <strong>{{ bulkDeleteSelectionCount }}</strong>
+                        {{
+                            bulkDeleteSelectionCount === 1
+                                ? "mod selected"
+                                : "mods selected"
+                        }}
+                    </p>
+
+                    <button
+                        type="button"
+                        :disabled="isBulkDeleting"
+                        @click="cancelBulkDeletion"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        class="bulk-delete-confirm-button"
+                        type="button"
+                        :disabled="
+                            isBulkDeleting || bulkDeleteSelectionCount === 0
+                        "
+                        @click="confirmBulkDeletion"
+                    >
+                        <TrashIcon />
+                        {{
+                            isBulkDeleting
+                                ? "Deleting..."
+                                : "Delete selected"
+                        }}
                     </button>
                 </div>
             </footer>
@@ -1091,10 +1304,106 @@ function retryLoading() {
             </div>
         </form>
     </dialog>
+
+    <dialog
+        ref="bulkDeleteResultDialog"
+        class="mod-action-dialog bulk-delete-result-dialog"
+        aria-labelledby="bulk-delete-result-title"
+        aria-describedby="bulk-delete-result-description"
+        @cancel.prevent="closeBulkDeleteResult"
+    >
+        <div v-if="bulkDeleteSummary" class="mod-dialog-content">
+            <p
+                class="mod-dialog-label"
+                :class="{
+                    'mod-dialog-label--danger':
+                        bulkDeleteSummary.requestError ||
+                        bulkDeleteSummary.failures.length > 0
+                }"
+            >
+                Deletion results
+            </p>
+
+            <h2 id="bulk-delete-result-title">
+                <template v-if="bulkDeleteSummary.requestError">
+                    Mods could not be deleted
+                </template>
+                <template v-else-if="bulkDeleteSummary.failures.length">
+                    Deletion completed with issues
+                </template>
+                <template v-else>
+                    {{ bulkDeleteSummary.deletedCount }}
+                    {{
+                        bulkDeleteSummary.deletedCount === 1
+                            ? "mod deleted"
+                            : "mods deleted"
+                    }}
+                </template>
+            </h2>
+
+            <p id="bulk-delete-result-description">
+                <template v-if="bulkDeleteSummary.requestError">
+                    {{ bulkDeleteSummary.requestError }}
+                </template>
+                <template v-else>
+                    {{ bulkDeleteSummary.deletedCount }} of
+                    {{ bulkDeleteSummary.requestedCount }}
+                    selected mods were deleted.
+                </template>
+            </p>
+
+            <div
+                v-if="!bulkDeleteSummary.requestError"
+                class="bulk-delete-result-counts"
+            >
+                <span>
+                    <strong>{{ bulkDeleteSummary.deletedCount }}</strong>
+                    Deleted
+                </span>
+                <span
+                    :class="{
+                        'bulk-delete-result-count--failed':
+                            bulkDeleteSummary.failures.length > 0
+                    }"
+                >
+                    <strong>{{ bulkDeleteSummary.failures.length }}</strong>
+                    Failed
+                </span>
+            </div>
+
+            <div
+                v-if="bulkDeleteSummary.failures.length"
+                class="bulk-delete-failures"
+            >
+                <p>Mods not deleted</p>
+
+                <ul>
+                    <li
+                        v-for="failure in bulkDeleteSummary.failures"
+                        :key="failure.directoryName"
+                    >
+                        <strong>{{ failure.directoryName }}</strong>
+                        <span>{{ failure.message }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="mod-dialog-actions">
+                <button
+                    type="button"
+                    autofocus
+                    @click="closeBulkDeleteResult"
+                >
+                    Done
+                </button>
+            </div>
+        </div>
+    </dialog>
 </template>
 
 <style scoped>
 .mods-view {
+    position: relative;
     display: flex;
     min-width: 0;
     min-height: 0;
@@ -1142,8 +1451,13 @@ h1 {
     cursor: pointer;
 }
 
-.add-mod-button:hover {
+.add-mod-button:hover:not(:disabled) {
     background: #9bbfd5;
+}
+
+.add-mod-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 .add-mod-button span {
@@ -1252,6 +1566,7 @@ h1 {
 }
 
 .table-summary {
+    position: relative;
     display: flex;
     min-height: 50px;
     align-items: center;
@@ -1278,6 +1593,7 @@ h1 {
 }
 
 .mods-table-wrapper {
+    position: relative;
     min-width: 0;
     min-height: 0;
     flex: 1;
@@ -1536,6 +1852,7 @@ h1 {
 }
 
 .table-pagination {
+    position: relative;
     display: flex;
     min-height: 64px;
     align-items: center;
@@ -1635,6 +1952,38 @@ h1 {
     font-size: 13px;
     font-weight: 650;
     cursor: pointer;
+}
+
+.bulk-delete-button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    color: #d9b0ac;
+    background: #1e1716;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.bulk-delete-button:hover {
+    color: #f0c2bd;
+    background: #2b1c1a;
+}
+
+.bulk-delete-button svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .refresh-mods-button:hover:not(:disabled) {
@@ -1775,7 +2124,10 @@ h1 {
     font-size: 22px;
 }
 
-.mod-dialog-content > p:not(.mod-dialog-label, .rename-mod-error) {
+.mod-dialog-content > p:not(
+    .mod-dialog-label,
+    .rename-mod-error
+) {
     margin: 14px 0 0;
     color: #a9ada7;
     font-size: 14px;
@@ -1864,6 +2216,233 @@ h1 {
     background: #a3c7dc;
 }
 
+.mods-table-wrapper--delete-mode {
+    border-color: #5b3834;
+}
+
+.bulk-delete-instruction {
+    position: absolute;
+    z-index: 3;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    width: fit-content;
+    max-width: 100%;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 13px;
+    border: 1px solid #603c38;
+    border-radius: 8px;
+    color: #d9b0ac;
+    background: #211716;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 38%);
+    transform: translate(-50%, -50%);
+}
+
+.bulk-delete-instruction svg {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+
+.bulk-delete-instruction span {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0 6px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.bulk-delete-instruction strong {
+    color: #f0c2bd;
+}
+
+.enabled-toggle--delete > span {
+    border-color: #6b4642;
+}
+
+.enabled-toggle--delete input:checked + span {
+    border-color: #c8746b;
+    color: #211413;
+    background: #c8746b;
+}
+
+.mod-row--bulk-selected,
+.mod-row--bulk-selected:hover {
+    background: #211413;
+}
+
+.mod-row--bulk-selected .mod-name-cell strong,
+.mod-row--bulk-selected .character-cell > span:last-child {
+    color: #f1d5d2;
+}
+
+.bulk-delete-floating-actions {
+    position: absolute;
+    z-index: 5;
+    right: auto;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px;
+    border: 1px solid #4e312e;
+    border-radius: 10px;
+    background: #111412;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 42%);
+    transform: translate(-50%, -50%);
+}
+
+.bulk-delete-floating-actions p {
+    margin: 0 9px 0 4px;
+    color: #aaafa9;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.bulk-delete-floating-actions p strong {
+    color: #f2eee5;
+    font-size: 14px;
+}
+
+.bulk-delete-floating-actions button {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 7px;
+    color: #d8d4cb;
+    background: #1b1f1c;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.bulk-delete-floating-actions button:hover:not(:disabled) {
+    background: #252a26;
+}
+
+.bulk-delete-floating-actions .bulk-delete-confirm-button {
+    color: #fff0ed;
+    background: #713d38;
+}
+
+.bulk-delete-floating-actions .bulk-delete-confirm-button:hover:not(:disabled) {
+    background: #854a44;
+}
+
+.bulk-delete-floating-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.bulk-delete-floating-actions button:focus-visible {
+    outline: 2px solid #f2eee5;
+    outline-offset: 2px;
+}
+
+.bulk-delete-floating-actions svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+
+.bulk-delete-result-dialog {
+    width: min(520px, calc(100vw - 32px));
+}
+
+.bulk-delete-result-counts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.bulk-delete-result-counts > span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 14px;
+    border-radius: 7px;
+    color: #a7aca6;
+    background: #151916;
+    font-size: 12px;
+}
+
+.bulk-delete-result-counts strong {
+    color: #f2eee5;
+    font-size: 22px;
+    line-height: 1.1;
+}
+
+.bulk-delete-result-counts .bulk-delete-result-count--failed {
+    color: #d9a29d;
+    background: #1d1413;
+}
+
+.bulk-delete-result-count--failed strong {
+    color: #efa39b;
+}
+
+.bulk-delete-failures {
+    margin-top: 18px;
+}
+
+.bulk-delete-failures > p {
+    margin: 0 0 8px;
+    color: #e69b93;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.bulk-delete-failures ul {
+    display: grid;
+    max-height: 220px;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    list-style: none;
+}
+
+.bulk-delete-failures li {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: #1b1312;
+}
+
+.bulk-delete-failures li strong,
+.bulk-delete-failures li span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bulk-delete-failures li strong {
+    color: #edc3bf;
+    font-size: 13px;
+}
+
+.bulk-delete-failures li span {
+    color: #b4938f;
+    font-size: 12px;
+}
+
 @media (max-width: 1280px) {
     .mod-filters {
         grid-template-columns: repeat(2, minmax(180px, 1fr));
@@ -1895,8 +2474,34 @@ h1 {
     }
 
     .refresh-mods-button,
+    .bulk-delete-button,
     .add-mod-button {
         width: 100%;
+    }
+
+    .bulk-delete-instruction {
+        width: calc(100% - 20px);
+        max-width: none;
+        box-sizing: border-box;
+    }
+
+    .bulk-delete-floating-actions {
+        position: static;
+        right: 0;
+        top: auto;
+        left: 0;
+        flex-wrap: wrap;
+        transform: none;
+    }
+
+    .bulk-delete-floating-actions p {
+        flex: 1 1 100%;
+        margin: 0;
+        text-align: center;
+    }
+
+    .bulk-delete-floating-actions button {
+        flex: 1;
     }
 }
 

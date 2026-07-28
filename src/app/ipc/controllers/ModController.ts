@@ -162,6 +162,26 @@ export class ModController {
         await this.modLibrary.delete(modId);
     }
 
+    @IpcHelper.IpcHandle("mod:delete-many")
+    async deleteMods(_event: IpcMainInvokeEvent, value: unknown) {
+        if (!TypeCheck.isValidArray(value))
+            throw new ModLibraryError("Invalid bulk deletion request.");
+
+        const modIds: string[] = [];
+        const uniqueIds = new Set<string>();
+
+        for (const modId of value)
+        {
+            if (!TypeCheck.isValidString(modId, 100) || uniqueIds.has(modId))
+                throw new ModLibraryError("Invalid bulk deletion request.");
+
+            uniqueIds.add(modId);
+            modIds.push(modId);
+        }
+
+        return this.modLibrary.deleteMany(modIds);
+    }
+
     @IpcHelper.IpcHandle("mod:rename")
     async renameMod(_event: IpcMainInvokeEvent, value: unknown) {
         if (!TypeCheck.isRecord(value) || !TypeCheck.isValidString(value.modId, 100) || !TypeCheck.isValidString(value.directoryName, 100))

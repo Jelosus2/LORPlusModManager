@@ -1,3 +1,5 @@
+import type { BulkModDeletionResult } from "../../shared/mod.js";
+
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { randomUUID } from "node:crypto";
 import { Paths } from "#utils/Paths.js";
@@ -80,6 +82,36 @@ export class ModLibraryService {
         {
             console.error("Could not clean the deleted mod directory:", error);
         }
+    }
+
+    async deleteMany(modIds: readonly string[]): Promise<BulkModDeletionResult> {
+        const deletedModIds: string[] = [];
+        const failures: BulkModDeletionResult["failures"][number][] = [];
+
+        for (const modId of modIds)
+        {
+            try
+            {
+                await this.delete(modId);
+                deletedModIds.push(modId);
+            }
+            catch (error)
+            {
+                console.error(`Could not delete mod ${modId}:`, error);
+
+                failures.push({
+                    modId,
+                    message: error instanceof ModLibraryError
+                        ? error.message
+                        : "The mod could not be deleted."
+                });
+            }
+        }
+
+        return {
+            deletedModIds,
+            failures
+        };
     }
 
     async rename(modId: string, requestedDirectoryName: string) {

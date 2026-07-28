@@ -24,7 +24,8 @@ const modManagerApi: IpcApi = {
     getMods: () => ipcRenderer.invoke("mod:get-all"),
     openModFolder: (modId) => ipcRenderer.invoke("mod:open-folder", modId),
     deleteMod: (modId) => ipcRenderer.invoke("mod:delete", modId),
-    renameMod: (request) => ipcRenderer.invoke("mod:rename", request)
+    renameMod: (request) => ipcRenderer.invoke("mod:rename", request),
+    deleteMods: (modIds) => ipcRenderer.invoke("mod:delete-many", modIds),
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);
