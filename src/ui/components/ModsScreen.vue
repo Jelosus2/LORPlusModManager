@@ -1100,6 +1100,7 @@ function retryLoading() {
     min-height: 0;
     flex: 1;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .mods-header {
@@ -1278,6 +1279,8 @@ h1 {
 
 .mods-table-wrapper {
     min-width: 0;
+    min-height: 0;
+    flex: 1;
     overflow: auto;
     border: 1px solid #292e2b;
     border-radius: 9px;
@@ -1317,6 +1320,12 @@ h1 {
     border-bottom: 1px solid #303532;
     background: #101311;
     text-align: left;
+}
+
+.mods-table thead {
+    position: sticky;
+    z-index: 1;
+    top: 0;
 }
 
 .mods-table th button {

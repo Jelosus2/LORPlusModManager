@@ -7,14 +7,19 @@ export class TypeCheck {
         return Boolean(value && typeof value === "object" && "code" in value);
     }
 
-    static isValidString(value: unknown, maxLength?: number): value is string {
-        if (typeof value !== "string")
-            return false;
-        if (maxLength === undefined)
-            return true;
+    static isString(value: unknown, maxLength?: number): value is string {
+        return (
+            typeof value === "string" &&
+            (maxLength === undefined || value.length <= maxLength)
+        );
+    }
 
-        const trimmedLength = value.trim().length;
-        return trimmedLength > 0 && trimmedLength <= maxLength;
+    static isValidString(value: unknown, maxLength?: number): value is string {
+        return (
+            typeof value === "string" &&
+            value.trim().length > 0 &&
+            (maxLength === undefined || value.length <= maxLength)
+        );
     }
 
     static isValidArray(value: unknown, maxLength?: number): value is unknown[] {

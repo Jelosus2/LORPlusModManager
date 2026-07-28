@@ -335,6 +335,7 @@ function retryLoading() {
     min-height: 0;
     flex: 1;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .characters-header {
@@ -543,10 +544,13 @@ h1 {
 
 .character-grid {
     display: grid;
+    min-height: 0;
+    flex: 1;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr));
     align-content: start;
     gap: 10px;
     padding-bottom: 36px;
+    overflow: auto;
 }
 
 .character-entry {

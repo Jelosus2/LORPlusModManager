@@ -228,8 +228,8 @@ export class ModController {
             if (
                 !TypeCheck.isRecord(source) ||
                 !TypeCheck.isValidString(source.sourceId, 100) ||
-                !TypeCheck.isValidString(source.password, 1024) ||
-                !TypeCheck.isValidString(source.directoryName, 100) ||
+                !TypeCheck.isString(source.password, 1024) ||
+                !TypeCheck.isString(source.directoryName, 100) ||
                 sourceIds.has(source.sourceId)
             )
             {

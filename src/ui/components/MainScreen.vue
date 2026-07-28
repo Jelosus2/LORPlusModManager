@@ -255,7 +255,7 @@ onMounted(() => {
             />
 
             <ModsScreen
-                v-show="
+                v-if="
                     activeSection === 'mods' &&
                     modsView === 'library'
                 "
@@ -362,10 +362,11 @@ onMounted(() => {
 .app-shell {
     display: grid;
     width: 100%;
+    height: 100vh;
     max-width: 100vw;
-    min-height: 100vh;
+    min-height: 0;
     grid-template-columns: clamp(190px, 18vw, 230px) minmax(0, 1fr);
-    overflow-x: hidden;
+    overflow: hidden;
     color: #f2eee5;
     background: #090b0a;
 }
@@ -430,7 +431,9 @@ onMounted(() => {
 .main-content {
     display: flex;
     min-width: 0;
+    min-height: 0;
     flex-direction: column;
+    overflow: hidden;
     padding: clamp(32px, 5vw, 64px);
 }
 
