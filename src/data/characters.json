@@ -38,7 +38,9 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_BloodyPanther_NS1_Dam.png",
+        "FullbodyIMG_BR_BloodyPanther_NS1_Dam_R+.png",
         "FullbodyIMG_BR_BloodyPanther_NS1_Dam_parts2.png",
+        "FullbodyIMG_BR_BloodyPanther_NS1_Dam_parts2_R+.png",
         "Circle.png"
       ]
     },
@@ -1029,6 +1031,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_Azaz_NS1_Dam.png",
+        "FullbodyIMG_PECS_Azaz_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -1335,6 +1338,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_Babariana_NS2_Dam.png",
+        "FullbodyIMG_PECS_Babariana_NS2_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -1480,7 +1484,8 @@
       "isAnimatorSkin": true,
       "isStaticSkin": false,
       "assets": [
-        "FullbodyIMG_3P_BlackLilith_NS2_part3.png"
+        "FullbodyIMG_3P_BlackLilith_NS2_part3.png",
+        "FullbodyIMG_3P_BlackLilith_NS2_part3_R+.png"
       ]
     },
     {
@@ -1494,7 +1499,9 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_BlackLilith_NS2_Dam.png",
+        "FullbodyIMG_3P_BlackLilith_NS2_Dam_R+.png",
         "FullbodyIMG_3P_BlackLilith_NS2_Dam_part1.png",
+        "FullbodyIMG_3P_BlackLilith_NS2_Dam_part1_R+.png",
         "box.png",
         "Circle.png"
       ]
@@ -1568,7 +1575,9 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_BlackWyrm_Ns1_Dam.png",
+        "FullbodyIMG_3P_BlackWyrm_Ns1_Dam_R+.png",
         "FullbodyIMG_3P_BlackWyrm_Ns1_Dam_parts2.png",
+        "FullbodyIMG_3P_BlackWyrm_Ns1_Dam_parts2_R+.png",
         "Circle.png"
       ]
     },
@@ -1792,9 +1801,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
+        "FullbodyIMG_BR_Scarabya_NS2_part1.png",
         "FullbodyIMG_BR_Scarabya_NS2_part1_R+.png",
-        "Circle.png",
-        "FullbodyIMG_BR_Scarabya_NS2_part2_R+.png"
+        "FullbodyIMG_BR_Scarabya_NS2_part2.png",
+        "FullbodyIMG_BR_Scarabya_NS2_part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -1808,8 +1819,10 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Scarabya_NS2_Dam_part1.png",
-        "Circle.png",
-        "FullbodyIMG_BR_Scarabya_NS2_Dam_part2.png"
+        "FullbodyIMG_BR_Scarabya_NS2_Dam_part1_R+.png",
+        "FullbodyIMG_BR_Scarabya_NS2_Dam_part2.png",
+        "FullbodyIMG_BR_Scarabya_NS2_Dam_part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -2048,6 +2061,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_Cerberus_NS1_Dam.png",
+        "FullbodyIMG_PECS_Cerberus_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -2279,6 +2293,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Cheona_NS1_Dam.png",
+        "FullbodyIMG_BR_Cheona_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -2870,6 +2885,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_Daphne_NS3.png",
+        "FullbodyIMG_3P_Daphne_NS3_R+.png",
         "Circle.png"
       ]
     },
@@ -2884,6 +2900,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_Daphne_NS3_Dam_part1.png",
+        "FullbodyIMG_3P_Daphne_NS3_Dam_part1_R+.png",
         "Circle.png",
         "FullbodyIMG_3P_Daphne_NS3_Dam_part2.png"
       ]
@@ -3041,6 +3058,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_Dione_NS1_dam.png",
+        "FullbodyIMG_PECS_Dione_NS1_dam_R+.png",
         "Circle.png"
       ]
     },
@@ -3531,6 +3549,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_ElvenForestMaker_NS1_dam.png",
+        "FullbodyIMG_PECS_ElvenForestMaker_NS1_dam_R+.png",
         "Circle.png"
       ]
     },
@@ -3862,6 +3881,7 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
+        "FullbodyIMG_3P_Eternity_NS4_Dam_part1.png",
         "FullbodyIMG_3P_Eternity_NS4_DAM_part1_R+.png",
         "Circle.png",
         "FullbodyIMG_3P_Eternity_NS4_Dam_part2.png"
@@ -4111,6 +4131,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_Fotia_NS2.png",
+        "FullbodyIMG_3P_Fotia_NS2_R+.png",
         "Circle.png"
       ]
     },
@@ -4125,6 +4146,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_Fotia_NS2_Dam.png",
+        "FullbodyIMG_3P_Fotia_NS2_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -4534,9 +4556,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "Circle.png",
         "FullbodyIMG_BR_Phoenix_NS2_part1.png",
-        "FullbodyIMG_BR_Phoenix_NS2_part2.png"
+        "FullbodyIMG_BR_Phoenix_NS2_part1_R+.png",
+        "FullbodyIMG_BR_Phoenix_NS2_part2.png",
+        "FullbodyIMG_BR_Phoenix_NS2_part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -4549,9 +4573,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "Circle.png",
         "FullbodyIMG_BR_Phoenix_NS2_Dam_part1.png",
-        "FullbodyIMG_BR_Phoenix_NS2_Dam_part2.png"
+        "FullbodyIMG_BR_Phoenix_NS2_Dam_part1_R+.png",
+        "FullbodyIMG_BR_Phoenix_NS2_Dam_part2.png",
+        "FullbodyIMG_BR_Phoenix_NS2_Dam_part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -4743,9 +4769,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "Circle.png",
         "FullbodyIMG_PECS_Hathor_NS1_part1.png",
-        "FullbodyIMG_PECS_Hathor_NS1_part2.png"
+        "FullbodyIMG_PECS_Hathor_NS1_part1_R+.png",
+        "FullbodyIMG_PECS_Hathor_NS1_part2.png",
+        "FullbodyIMG_PECS_Hathor_NS1_part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -4758,9 +4786,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "Circle.png",
         "FullbodyIMG_PECS_Hathor_NS1_Dam_part1.png",
-        "FullbodyIMG_PECS_Hathor_NS1_Dam_part2.png"
+        "FullbodyIMG_PECS_Hathor_NS1_Dam_part1_R+.png",
+        "FullbodyIMG_PECS_Hathor_NS1_Dam_part2.png",
+        "FullbodyIMG_PECS_Hathor_NS1_Dam_part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -4917,6 +4947,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_HongRyun_NS1_Dam.png",
+        "FullbodyIMG_BR_HongRyun_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -5177,6 +5208,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Marie_NS3.png",
+        "FullbodyIMG_BR_Marie_NS3_R+.png",
         "Circle.png"
       ]
     },
@@ -5191,6 +5223,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Marie_NS3_Dam.png",
+        "FullbodyIMG_BR_Marie_NS3_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -5443,6 +5476,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_JangHwa_NS1.png",
+        "FullbodyIMG_BR_JangHwa_NS1_R+.png",
         "Circle.png"
       ]
     },
@@ -5457,6 +5491,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_JangHwa_NS1_Dam_Part1.png",
+        "FullbodyIMG_BR_JangHwa_NS1_Dam_Part1_R+.png",
         "FullbodyIMG_BR_JangHwa_NS1_Dam_Part2.png",
         "Circle.png"
       ]
@@ -5660,9 +5695,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "Circle.png",
         "FullbodyIMG_BR_Khan_NS4_Part1.png",
-        "FullbodyIMG_BR_Khan_NS4_Part2.png"
+        "FullbodyIMG_BR_Khan_NS4_Part1_R+.png",
+        "FullbodyIMG_BR_Khan_NS4_Part2.png",
+        "FullbodyIMG_BR_Khan_NS4_Part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -5676,6 +5713,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Khan_NS4_Dam_part1.png",
+        "FullbodyIMG_BR_Khan_NS4_Dam_part1_R+.png",
         "Circle.png"
       ]
     },
@@ -5817,6 +5855,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_DS_KunoichiKaen_NS1_Dam.png",
+        "FullbodyIMG_DS_KunoichiKaen_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -5976,6 +6015,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_DS_KunoichiZero_NS1_Dam_part1.png",
+        "FullbodyIMG_DS_KunoichiZero_NS1_Dam_part1_R+.png",
         "FullbodyIMG_DS_KunoichiZero_NS1_Dam_part2.png",
         "Circle.png"
       ]
@@ -6227,6 +6267,7 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
+        "FullbodyIMG_PECS_LemonadeBeta_NS1_Dam.png",
         "FullbodyIMG_PECS_LemonadeBeta_NS1_Dam_R+.png",
         "Circle.png"
       ]
@@ -6449,6 +6490,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Leona_NS1_Dam.png",
+        "FullbodyIMG_BR_Leona_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -6736,6 +6778,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_DS_Baekto_NS1_Dam.png",
+        "FullbodyIMG_DS_Baekto_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -6915,6 +6958,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_Maria_NS3_Dam.png",
+        "FullbodyIMG_3P_Maria_NS3_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -6955,6 +6999,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_May_NS1_Dam.png",
+        "FullbodyIMG_BR_May_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -7082,6 +7127,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_Melt_NS1_Dam_Part1.png",
+        "FullbodyIMG_PECS_Melt_NS1_Dam_Part1_R+.png",
         "FullbodyIMG_PECS_Melt_NS1_Dam_Part2.png",
         "Circle.png"
       ]
@@ -7253,6 +7299,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_MightyR_NS1.png",
+        "FullbodyIMG_PECS_MightyR_NS1_R+.png",
         "Circle.png"
       ]
     },
@@ -7267,6 +7314,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_MightyR_NS1_Dam.png",
+        "FullbodyIMG_PECS_MightyR_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -7635,6 +7683,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_NickyTracy_NS1_part1.png",
+        "FullbodyIMG_BR_NickyTracy_NS1_part1_R+.png",
         "FullbodyIMG_BR_NickyTracy_NS1_part2.png",
         "box.png",
         "Circle.png"
@@ -7651,7 +7700,9 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_NickyTracy_NS1_Dam_part1.png",
+        "FullbodyIMG_BR_NickyTracy_NS1_Dam_part1_R+.png",
         "FullbodyIMG_BR_NickyTracy_NS1_Dam_part2.png",
+        "FullbodyIMG_BR_NickyTracy_NS1_Dam_part2_R+.png",
         "box.png",
         "Circle.png"
       ]
@@ -7718,7 +7769,8 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "FullbodyIMG_3P_Rhea_NS3.png"
+        "FullbodyIMG_3P_Rhea_NS3.png",
+        "FullbodyIMG_3P_Rhea_NS3_R+.png"
       ]
     },
     {
@@ -7731,9 +7783,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "Circle.png",
         "FullbodyIMG_3P_Rhea_NS3_dam_part1.png",
-        "FullbodyIMG_3P_Rhea_NS3_dam_part2.png"
+        "FullbodyIMG_3P_Rhea_NS3_dam_part1_R+.png",
+        "FullbodyIMG_3P_Rhea_NS3_dam_part2.png",
+        "FullbodyIMG_3P_Rhea_NS3_dam_part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -7843,7 +7897,9 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Sylphid_NS1_part2.png",
-        "FullbodyIMG_BR_Sylphid_NS1_part1.png"
+        "FullbodyIMG_BR_Sylphid_NS1_part2_R+.png",
+        "FullbodyIMG_BR_Sylphid_NS1_part1.png",
+        "FullbodyIMG_BR_Sylphid_NS1_part1_R+.png"
       ]
     },
     {
@@ -7857,6 +7913,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Sylphid_NS1_Dam.png",
+        "FullbodyIMG_BR_Sylphid_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -8075,6 +8132,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Undine_NS2.png",
+        "FullbodyIMG_BR_Undine_NS2_R+.png",
         "Circle.png"
       ]
     },
@@ -8089,6 +8147,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Undine_NS2_Dam.png",
+        "FullbodyIMG_BR_Undine_NS2_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -8516,8 +8575,9 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "Circle.png",
         "FullbodyIMG_3P_Labiata_NS5_Part1.png",
+        "FullbodyIMG_3P_Labiata_NS5_Part1_R+.png",
+        "Circle.png",
         "FullbodyIMG_3P_Labiata_NS5_BG.png",
         "FullbodyIMG_3P_Labiata_NS5_multi.png",
         "FullbodyIMG_3P_Labiata_NS5_screen.png",
@@ -8535,6 +8595,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_Labiata_NS5_Dam.png",
+        "FullbodyIMG_3P_Labiata_NS5_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -8629,6 +8690,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_QuickCamel_NS2_part1.png",
+        "FullbodyIMG_BR_QuickCamel_NS2_part1_R+.png",
         "FullbodyIMG_BR_QuickCamel_NS2_part2.png"
       ]
     },
@@ -8642,9 +8704,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "Circle.png",
         "FullbodyIMG_BR_QuickCamel_NS2_Dam_part1.png",
-        "FullbodyIMG_BR_QuickCamel_NS2_Dam_part2.png"
+        "FullbodyIMG_BR_QuickCamel_NS2_Dam_part1_R+.png",
+        "FullbodyIMG_BR_QuickCamel_NS2_Dam_part2.png",
+        "FullbodyIMG_BR_QuickCamel_NS2_Dam_part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -9339,7 +9403,8 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "FullbodyIMG_3P_ScissorsLise_NS3.png"
+        "FullbodyIMG_3P_ScissorsLise_NS3.png",
+        "FullbodyIMG_3P_ScissorsLise_NS3_R+.png"
       ]
     },
     {
@@ -9353,6 +9418,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_ScissorsLise_NS3_Dam.png",
+        "FullbodyIMG_3P_ScissorsLise_NS3_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -9469,6 +9535,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_Alice_NS3_part1.png",
+        "FullbodyIMG_3P_Alice_NS3_part1_R+.png",
         "Circle.png",
         "FullbodyIMG_3P_Alice_NS3_part2.png"
       ]
@@ -9484,6 +9551,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_Alice_NS3_Dam.png",
+        "FullbodyIMG_3P_Alice_NS3_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -9626,6 +9694,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_Sonia_NS2_Dam_part1.png",
+        "FullbodyIMG_PECS_Sonia_NS2_Dam_part1_R+.png",
         "Circle.png",
         "FullbodyIMG_PECS_Sonia_NS2_Dam_part2.png",
         "FullbodyIMG_PECS_Sonia_NS2_Dam_part3.png"
@@ -9668,6 +9737,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_Sowan_NS1_dam.png",
+        "FullbodyIMG_3P_Sowan_NS1_dam_R+.png",
         "Circle.png"
       ]
     },
@@ -9970,7 +10040,8 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "FullbodyIMG_BR_Bheur_NS2.png"
+        "FullbodyIMG_BR_Bheur_NS2.png",
+        "FullbodyIMG_BR_Bheur_NS2_R+.png"
       ]
     },
     {
@@ -9983,6 +10054,7 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
+        "FullbodyIMG_BR_Bheur_NS2_Dam.png",
         "FullbodyIMG_BR_Bheur_NS2_Dam_R+.png",
         "Circle.png"
       ]
@@ -10199,7 +10271,9 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Gnome_NS2_Dam_part1.png",
+        "FullbodyIMG_BR_Gnome_NS2_Dam_Part1_R+.png",
         "FullbodyIMG_BR_Gnome_NS2_Dam_part2.png",
+        "FullbodyIMG_BR_Gnome_NS2_Dam_Part2_R+.png",
         "Circle.png"
       ]
     },
@@ -10282,6 +10356,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Leprechaun_RS2_Dam.png",
+        "FullbodyIMG_BR_Leprechaun_RS2_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -10376,7 +10451,8 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "FullbodyIMG_BR_Hyena_NS2_part1.png"
+        "FullbodyIMG_BR_Hyena_NS2_part1.png",
+        "FullbodyIMG_BR_Hyena_NS2_part1_R+.png"
       ]
     },
     {
@@ -10389,9 +10465,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "Circle.png",
+        "FullbodyIMG_BR_Hyena_NS2_Dam_part1.png",
         "FullbodyIMG_BR_Hyena_NS2_Dam_part1_R+.png",
-        "FullbodyIMG_BR_Hyena_NS2_Dam_part2_R+.png"
+        "FullbodyIMG_BR_Hyena_NS2_Dam_part2.png",
+        "FullbodyIMG_BR_Hyena_NS2_Dam_part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -10443,7 +10521,8 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "FullbodyIMG_BR_Bulgasari_NS2.png"
+        "FullbodyIMG_BR_Bulgasari_NS2.png",
+        "FullbodyIMG_BR_Bulgasari_NS2_R+.png"
       ]
     },
     {
@@ -10457,6 +10536,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Bulgasari_NS2_dam.png",
+        "FullbodyIMG_BR_Bulgasari_NS2_dam_R+.png",
         "Circle.png"
       ]
     },
@@ -10720,6 +10800,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Thetis_NS2.png",
+        "FullbodyIMG_BR_Thetis_NS2_R+.png",
         "Circle.png"
       ]
     },
@@ -10734,6 +10815,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Thetis_NS2_Dam.png",
+        "FullbodyIMG_BR_Thetis_NS2_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -10908,6 +10990,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Tomoe_NS2_part1.png",
+        "FullbodyIMG_BR_Tomoe_NS2_part1_R+.png",
         "FullbodyIMG_BR_Tomoe_NS2_part2.png",
         "FullbodyIMG_BR_Tomoe_NS2_part3.png"
       ]
@@ -10922,9 +11005,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "Circle.png",
         "FullbodyIMG_BR_Tomoe_NS2_Dam_part1.png",
-        "FullbodyIMG_BR_Tomoe_NS2_Dam_part2.png"
+        "FullbodyIMG_BR_Tomoe_NS2_Dam_part1_R+.png",
+        "FullbodyIMG_BR_Tomoe_NS2_Dam_part2.png",
+        "FullbodyIMG_BR_Tomoe_NS2_Dam_part2_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -11059,6 +11144,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Daika_NS1_Dam_Part1.png",
+        "FullbodyIMG_BR_Daika_NS1_Dam_Part1_R+.png",
         "FullbodyIMG_BR_Daika_NS1_Dam_Part2.png",
         "Circle.png"
       ]
@@ -11153,6 +11239,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_3P_VanillaA_NS1_Dam.png",
+        "FullbodyIMG_3P_VanillaA_NS1_Dam_R+.png",
         "Circle.png"
       ]
     },
@@ -11427,6 +11514,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Wraithy_NS2.png",
+        "FullbodyIMG_BR_Wraithy_NS2_R+.png",
         "Circle.png"
       ]
     },
@@ -11441,6 +11529,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Wraithy_NS2_Dam.png",
+        "FullbodyIMG_BR_Wraithy_NS2_Dam_R+.png",
         "Circle.png"
       ]
     },
