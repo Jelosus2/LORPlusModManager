@@ -458,6 +458,7 @@ onMounted(() => {
     flex-direction: column;
     overflow: hidden;
     padding: clamp(32px, 5vw, 64px);
+    padding-bottom: 24px;
 }
 
 .add-mod-popover {

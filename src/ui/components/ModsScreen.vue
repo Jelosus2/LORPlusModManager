@@ -66,6 +66,7 @@ const modTypeFilter = ref<ModTypeFilter>("all");
 const skinTypeFilter = ref<SkinTypeFilter>("all");
 const importedFrom = ref("");
 const importedTo = ref("");
+const areFiltersVisible = ref(true);
 const sortKey = ref<SortKey>("directoryName");
 const sortDirection = ref<SortDirection>("ascending");
 const currentPage = ref(1);
@@ -277,6 +278,10 @@ const loadErrorMessage = computed(() =>
 
 const invalidModCount = computed(() => modStore.mods.filter((mod) => mod.verification.status !== "valid").length);
 const bulkDeleteSelectionCount = computed(() => bulkDeleteModIds.value.size);
+const areAllFilteredModsSelected = computed(() =>
+    filteredRows.value.length > 0 &&
+    filteredRows.value.every((row) => bulkDeleteModIds.value.has(row.mod.id))
+);
 
 watch([modNameFilter, characterFilter, modTypeFilter, skinTypeFilter, importedFrom, importedTo], () => {
     currentPage.value = 1;
@@ -586,6 +591,20 @@ function toggleBulkDeleteMod(modId: string) {
     bulkDeleteModIds.value = nextSelection;
 }
 
+function toggleAllFilteredModsForBulkDeletion() {
+    const nextSelection = new Set(bulkDeleteModIds.value);
+
+    for (const row of filteredRows.value)
+    {
+        if (areAllFilteredModsSelected.value)
+            nextSelection.delete(row.mod.id);
+        else
+            nextSelection.add(row.mod.id);
+    }
+
+    bulkDeleteModIds.value = nextSelection;
+}
+
 function getVerificationMessage(mod: InstalledMod): string {
     switch(mod.verification.status)
     {
@@ -667,6 +686,9 @@ function retryLoading() {
                 <button
                     v-if="modStore.mods.length > 0"
                     class="refresh-mods-button"
+                    :class="{
+                        'refresh-mods-button--busy': isRefreshing
+                    }"
                     type="button"
                     :disabled="isRefreshing || isBulkDeleteMode"
                     @click="refreshMods"
@@ -704,7 +726,8 @@ function retryLoading() {
         </header>
 
         <form
-            v-if="modStore.mods.length"
+            v-show="modStore.mods.length && areFiltersVisible"
+            id="mod-filters"
             class="mod-filters"
             @submit.prevent
         >
@@ -836,13 +859,38 @@ function retryLoading() {
                     </span>
                 </div>
 
-                <button
-                    v-if="hasActiveFilters"
-                    type="button"
-                    @click="clearFilters"
-                >
-                    Clear filters
-                </button>
+                <div class="table-summary-actions">
+                    <button
+                        class="filter-visibility-button"
+                        type="button"
+                        :aria-expanded="areFiltersVisible"
+                        aria-controls="mod-filters"
+                        @click="areFiltersVisible = !areFiltersVisible"
+                    >
+                        {{ areFiltersVisible ? "Hide filters" : "Show filters" }}
+                        <span
+                            class="filter-visibility-caret"
+                            :class="{
+                                'filter-visibility-caret--expanded':
+                                    areFiltersVisible
+                            }"
+                            aria-hidden="true"
+                        ></span>
+                        <span
+                            v-if="hasActiveFilters && !areFiltersVisible"
+                            class="active-filters-indicator"
+                            aria-label="Filters are active"
+                        ></span>
+                    </button>
+
+                    <button
+                        v-if="hasActiveFilters"
+                        type="button"
+                        @click="clearFilters"
+                    >
+                        Clear filters
+                    </button>
+                </div>
             </div>
 
             <div
@@ -1130,6 +1178,9 @@ function retryLoading() {
             <footer
                 v-if="sortedRows.length || isBulkDeleteMode"
                 class="table-pagination"
+                :class="{
+                    'table-pagination--bulk-delete': isBulkDeleteMode
+                }"
             >
                 <p v-if="sortedRows.length">
                     Showing {{ firstVisibleResult }}–{{ lastVisibleResult }}
@@ -1171,6 +1222,25 @@ function retryLoading() {
                                 : "mods selected"
                         }}
                     </p>
+
+                    <button
+                        type="button"
+                        :disabled="
+                            isBulkDeleting || filteredRows.length === 0
+                        "
+                        :title="
+                            areAllFilteredModsSelected
+                                ? 'Deselect all mods in the current results'
+                                : 'Select all mods in the current results'
+                        "
+                        @click="toggleAllFilteredModsForBulkDeletion"
+                    >
+                        {{
+                            areAllFilteredModsSelected
+                                ? "Deselect all"
+                                : "Select all"
+                        }}
+                    </button>
 
                     <button
                         type="button"
@@ -1592,6 +1662,50 @@ h1 {
     cursor: pointer;
 }
 
+.table-summary-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding-right: 12px;
+}
+
+.table-summary button.filter-visibility-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #b9b8b1;
+}
+
+.filter-visibility-caret {
+    width: 6px;
+    height: 6px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 150ms ease;
+}
+
+.filter-visibility-caret--expanded {
+    transform: translateY(2px) rotate(225deg);
+}
+
+.active-filters-indicator {
+    position: absolute;
+    top: -2px;
+    right: -7px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #86aec7;
+}
+
+.table-summary button:focus-visible {
+    border-radius: 3px;
+    outline: 2px solid #f2eee5;
+    outline-offset: 3px;
+}
+
 .mods-table-wrapper {
     position: relative;
     min-width: 0;
@@ -1604,13 +1718,13 @@ h1 {
 
 .mods-table {
     width: 100%;
-    min-width: 1040px;
+    min-width: 1000px;
     border-collapse: collapse;
     table-layout: fixed;
 }
 
 .mods-table th:nth-child(1) {
-    width: 25%;
+    width: 24%;
 }
 
 .mods-table th:nth-child(2),
@@ -1619,15 +1733,15 @@ h1 {
 }
 
 .mods-table th:nth-child(4) {
-    width: 33%;
+    width: 31%;
 }
 
 .mods-table th:nth-child(5) {
-    width: 10%;
+    width: 12%;
 }
 
 .mods-table th:nth-child(6) {
-    width: 12%;
+    width: 13%;
 }
 
 .mods-table th {
@@ -1655,6 +1769,7 @@ h1 {
     font: inherit;
     font-size: 12px;
     font-weight: 650;
+    white-space: nowrap;
     cursor: pointer;
 }
 
@@ -1854,10 +1969,14 @@ h1 {
 .table-pagination {
     position: relative;
     display: flex;
-    min-height: 64px;
+    min-height: 52px;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
+}
+
+.table-pagination.table-pagination--bulk-delete {
+    min-height: 72px;
 }
 
 .table-pagination > div {
@@ -1991,8 +2110,12 @@ h1 {
 }
 
 .refresh-mods-button:disabled {
-    cursor: wait;
+    cursor: not-allowed;
     opacity: 0.65;
+}
+
+.refresh-mods-button--busy:disabled {
+    cursor: wait;
 }
 
 .refresh-mods-button svg {
@@ -2286,6 +2409,7 @@ h1 {
     z-index: 5;
     right: auto;
     top: 50%;
+    bottom: auto;
     left: 50%;
     display: flex;
     align-items: center;
@@ -2453,6 +2577,25 @@ h1 {
     }
 }
 
+@media (max-height: 850px) and (min-width: 721px) {
+    .mods-header {
+        padding-bottom: 22px;
+    }
+
+    .mod-filters {
+        padding-top: 14px;
+        padding-bottom: 14px;
+    }
+
+    .table-summary {
+        min-height: 44px;
+    }
+
+    .table-pagination {
+        min-height: 48px;
+    }
+}
+
 @media (max-width: 720px) {
     .mods-header,
     .table-pagination {
@@ -2489,6 +2632,7 @@ h1 {
         position: static;
         right: 0;
         top: auto;
+        bottom: auto;
         left: 0;
         flex-wrap: wrap;
         transform: none;

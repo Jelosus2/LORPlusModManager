@@ -373,7 +373,7 @@ h1 {
     display: grid;
     grid-template-columns: minmax(220px, 2fr) minmax(150px, 0.8fr) auto auto;
     gap: 10px;
-    padding: 18px 0;
+    padding: 18px 4px 18px 0;
     border-top: 1px solid #292e2b;
     border-bottom: 1px solid #292e2b;
 }
