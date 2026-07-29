@@ -12,6 +12,7 @@ import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
 import { ModImporter, ModImportError, type ModImportSource } from "#mod/ModImporter.js";
 import { ModLibraryService, ModLibraryError } from "#mod/ModLibraryService.js";
+import { ModRecoveryCoordinator } from "#mod/ModRecoveryCoordinator.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { ModVerifier } from "#mod/ModVerifier.js";
 import { BrowserWindow, dialog } from "electron";
@@ -196,6 +197,11 @@ export class ModController {
             throw new ModLibraryError("Invalid mod rename request.");
 
         await this.modLibrary.rename(value.modId, value.directoryName);
+    }
+
+    @IpcHelper.IpcHandle("mod:startup-recover")
+    async recoverMods() {
+        await ModRecoveryCoordinator.waitUntilReady();
     }
 
     private async inspectSource(filePath: string): Promise<StoredModSource | null> {

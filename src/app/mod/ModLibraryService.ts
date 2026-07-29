@@ -1,7 +1,7 @@
 import type { BulkModDeletionResult } from "../../shared/mod.js";
 
 import { ModRepository } from "#database/repositories/ModRepository.js";
-import { randomUUID } from "node:crypto";
+import { ModOperationJournal } from "./ModOperationJournal.js";
 import { Paths } from "#utils/Paths.js";
 import { shell } from "electron";
 import path from "node:path";
@@ -16,6 +16,7 @@ export class ModLibraryError extends Error {
 
 export class ModLibraryService {
     private readonly modRepository = new ModRepository();
+    private readonly operationJournal = new ModOperationJournal();
 
     async openFolder(modId: string) {
         const directoryName = this.getDirectoryName(modId);
@@ -33,9 +34,7 @@ export class ModLibraryService {
         const directoryName = this.getDirectoryName(modId);
         const directoryPath = this.resolveModDirectory(directoryName);
 
-        const modsRoot = Paths.getModsPath();
-        const trashRoot = path.join(modsRoot, ".trash");
-        const trashDirectory = path.join(trashRoot, randomUUID());
+        const operation = await this.operationJournal.beginDelete(modId, directoryName);
 
         let directoryMoved = false;
 
@@ -43,8 +42,8 @@ export class ModLibraryService {
         {
             if (await fse.exists(directoryPath))
             {
-                await fse.ensureDir(trashRoot);
-                await fse.move(directoryPath, trashDirectory);
+                await fse.ensureDir(path.dirname(operation.trashDirectory));
+                await fse.move(directoryPath, operation.trashDirectory);
                 directoryMoved = true;
             }
 
@@ -53,11 +52,14 @@ export class ModLibraryService {
         }
         catch (error)
         {
+            let rollbackSucceeded = !directoryMoved;
+
             if (directoryMoved)
             {
                 try
                 {
-                    await fse.move(trashDirectory, directoryPath);
+                    await fse.move(operation.trashDirectory, directoryPath);
+                    rollbackSucceeded = true;
                 }
                 catch (rollbackError)
                 {
@@ -65,23 +67,29 @@ export class ModLibraryService {
                 }
             }
 
+            if (rollbackSucceeded)
+                await this.completeOperationQuietly(operation.id);
+
             if (error instanceof ModLibraryError)
                 throw error;
 
             throw new ModLibraryError("The mod could not be deleted.", { cause: error });
         }
 
-        if (!directoryMoved)
-            return;
+        if (directoryMoved)
+        {
+            try
+            {
+                await fse.rm(operation.trashDirectory, { recursive: true, force: true });
+            }
+            catch (error)
+            {
+                console.error("Could not clean the deleted mod directory:", error);
+                return;
+            }
+        }
 
-        try
-        {
-            await fse.rm(trashDirectory, { recursive: true, force: true });
-        }
-        catch (error)
-        {
-            console.error("Could not clean the deleted mod directory:", error);
-        }
+        await this.completeOperationQuietly(operation.id);
     }
 
     async deleteMany(modIds: readonly string[]): Promise<BulkModDeletionResult> {
@@ -133,18 +141,18 @@ export class ModLibraryService {
         if (!caseOnlyRename && await fse.exists(destinationPath))
             throw new ModLibraryError("A directory with that name already exists.");
 
+        const operation = await this.operationJournal.beginRename(modId, previousName, directoryName, caseOnlyRename);
+
         let currentPath = previousPath;
 
         try
         {
-            if (caseOnlyRename)
+            if (operation.temporaryDirectory)
             {
-                const tempPath = this.resolveModDirectory(`.rename-${randomUUID()}`);
+                await fse.move(previousPath, operation.temporaryDirectory);
+                currentPath = operation.temporaryDirectory;
 
-                await fse.move(previousPath, tempPath);
-                currentPath = tempPath;
-
-                await fse.move(tempPath, destinationPath);
+                await fse.move(operation.temporaryDirectory, destinationPath);
                 currentPath = destinationPath;
             }
             else
@@ -158,11 +166,14 @@ export class ModLibraryService {
         }
         catch (error)
         {
+            let rollbackSucceeded = currentPath === previousPath;
+
             if (currentPath !== previousPath && await fse.exists(currentPath))
             {
                 try
                 {
                     await fse.move(currentPath, previousPath);
+                    rollbackSucceeded = true;
                 }
                 catch (rollbackError)
                 {
@@ -170,10 +181,26 @@ export class ModLibraryService {
                 }
             }
 
+            if (rollbackSucceeded)
+                await this.completeOperationQuietly(operation.id);
+
             if (error instanceof ModLibraryError)
                 throw error;
 
             throw new ModLibraryError("The mod could not be renamed.", { cause: error });
+        }
+
+        await this.completeOperationQuietly(operation.id);
+    }
+
+    private async completeOperationQuietly(operationId: string) {
+        try
+        {
+            await this.operationJournal.complete(operationId);
+        }
+        catch (error)
+        {
+            console.error(`Could not complete mod operation ${operationId}:`, error);
         }
     }
 

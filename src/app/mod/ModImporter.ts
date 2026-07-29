@@ -6,6 +6,7 @@ import { UnityWorkerClient, UnityWorkerError } from "./UnityWorkerClient.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { characterCatalog } from "#utils/CharacterCatalogService.js";
 import { AssetBundleModMatcher } from "./AssetBundleModMatcher.js";
+import { ModOperationJournal } from "./ModOperationJournal.js";
 import { ZipModMatcher } from "./ZipModMatcher.js";
 import { ZipArchive } from "#utils/ZipArchive.js";
 import { ErrorUtils } from "#utils/ErrorUtils.js";
@@ -66,6 +67,7 @@ export class ModImporter {
     private readonly unityWorker = new UnityWorkerClient();
     private readonly assetBundleMatcher = new AssetBundleModMatcher();
     private readonly modRepository = new ModRepository();
+    private readonly operationJournal = new ModOperationJournal();
 
     async extract(sources: readonly ModImportSource[], deleteOriginals: boolean, reportProgress: ModImportProgressCallback): Promise<ModExtractionResult> {
         if (sources.length === 0)
@@ -145,6 +147,7 @@ export class ModImporter {
         const extractionIssues: ModImportIssue[] = [];
 
         let extractedMatches = 0;
+        let operationId: string | null = null;
 
         try
         {
@@ -227,6 +230,16 @@ export class ModImporter {
                 };
             }
 
+            const operation = await this.operationJournal.beginImport(
+                stagingRoot,
+                plannedMods.map(({ record }) => ({
+                    modId: record.id,
+                    directoryName: record.directoryName
+                }))
+            );
+
+            operationId = operation.id;
+
             for (let i = 0; i < plannedMods.length; i++)
             {
                 const plannedMod = plannedMods[i];
@@ -251,14 +264,41 @@ export class ModImporter {
         }
         catch (error)
         {
-            await Promise.allSettled(
+            const rollbackResults = await Promise.allSettled(
                 movedDirectories.map((directory) => fse.rm(directory, { recursive: true, force: true }))
             );
+            const rollbackSucceeded = rollbackResults.every((result) => result.status === "fulfilled");
+
+            if (operationId && rollbackSucceeded)
+            {
+                try
+                {
+                    await this.operationJournal.complete(operationId);
+                    operationId = null;
+                }
+                catch (recoveryError)
+                {
+                    console.error("Could not remove the rolled-back import operation:", recoveryError);
+                }
+            }
 
             if (error instanceof ModImportError)
                 throw error;
 
             throw new ModImportError("The extracted mods could not be committed.", { cause: error });
+        }
+
+        if (operationId)
+        {
+            try
+            {
+                await this.operationJournal.complete(operationId);
+                operationId = null;
+            }
+            catch (error)
+            {
+                console.error("Could not complete the import operation journal:", error);
+            }
         }
 
         const warnings: string[] = [];

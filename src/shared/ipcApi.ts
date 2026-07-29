@@ -26,4 +26,5 @@ export type IpcApi = {
     renameMod: (request: ModRenameRequest) => Promise<void>;
     deleteMods: (modIds: readonly string[]) => Promise<BulkModDeletionResult>;
     onModImportProgress: (callback: (progress: ModImportProgress) => void) => () => void;
+    recoverInterruptedModOperations: () => Promise<void>;
 };

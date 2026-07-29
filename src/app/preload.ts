@@ -37,7 +37,8 @@ const modManagerApi: IpcApi = {
         return () => {
             ipcRenderer.removeListener("mod:import-progress", listener);
         };
-    }
+    },
+    recoverInterruptedModOperations: () => ipcRenderer.invoke("mod:startup-recover")
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

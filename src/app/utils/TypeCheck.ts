@@ -45,4 +45,11 @@ export class TypeCheck {
     static isBoolean(value: unknown): value is boolean {
         return typeof value === "boolean";
     }
+
+    static isUuid(value: unknown): value is string {
+        return (
+            TypeCheck.isValidString(value) &&
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+        );
+    }
 }

@@ -1,3 +1,4 @@
+import { TypeCheck } from "./TypeCheck.js";
 import { fileURLToPath } from "node:url";
 import { app } from "electron";
 import path from "node:path";
@@ -57,6 +58,18 @@ export class Paths {
         );
     }
 
+    static getModsTrashRoot() {
+        return path.join(Paths.getModsPath(), ".trash");
+    }
+
+    static getOperationsRoot() {
+        return path.join(Paths.getModsPath(), ".operations");
+    }
+
+    static getOperationsManifestPath(id: string) {
+        return path.join(this.getOperationsRoot(), `${id}.json`);
+    }
+
     static isSubpath(parentPath: string, childPath: string): boolean {
         const relative = path.relative(parentPath, childPath);
         return Boolean(relative && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
@@ -72,9 +85,35 @@ export class Paths {
         if (!sanitized)
             sanitized = defaultName;
 
-        if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(sanitized))
+        if (sanitized.startsWith(".") || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(sanitized))
             sanitized = `_${sanitized}`;
 
         return sanitized.slice(0, maxLength);
+    }
+
+    static getDirectChildName(parent: string, child: string): string | null {
+        const relative = path.relative(parent, child);
+
+        if (!Paths.isSubpath(parent, child) || relative.includes(path.sep))
+            return null;
+
+        return relative;
+    }
+
+    static normalizeDirectoryName(value: string) {
+        return value.toLocaleLowerCase("en-US");
+    }
+
+    static isSafeDirectoryName(value: unknown): value is string {
+        return (
+            TypeCheck.isValidString(value, 100) &&
+            value !== "." &&
+            value !== ".." &&
+            path.basename(value) === value
+        );
+    }
+
+    static isSafeModDirectoryName(value: unknown): value is string {
+        return Paths.isSafeDirectoryName(value) && !value.startsWith(".");
     }
 }
