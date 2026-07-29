@@ -26,7 +26,7 @@ type StoredModSource = SelectedModSource & {
 };
 
 type ImportSession = {
-    createdAt: number;
+    lastAccessedAt: number;
     sources: Map<string, StoredModSource>;
 };
 
@@ -76,7 +76,7 @@ export class ModController {
         const sessionId = randomUUID();
 
         this.sessions.set(sessionId, {
-            createdAt: Date.now(),
+            lastAccessedAt: Date.now(),
             sources: new Map(sources.map((source) => [source.id, source]))
         });
 
@@ -95,7 +95,7 @@ export class ModController {
     }
 
     @IpcHelper.IpcHandle("mod:extract")
-    async extractMods(_event: IpcMainInvokeEvent, value: unknown): Promise<ModExtractionResult> {
+    async extractMods(event: IpcMainInvokeEvent, value: unknown): Promise<ModExtractionResult> {
         const request = this.parseExtractionRequest(value);
         if (!request)
             return this.extractionFailure("Invalid mod extraction request.", "invalid");
@@ -105,6 +105,8 @@ export class ModController {
         const session = this.sessions.get(request.sessionId);
         if (!session)
             return this.extractionFailure("The import session has expired. Select the files again.", "session");
+
+        session.lastAccessedAt = Date.now();
 
         const sources: ModImportSource[] = [];
 
@@ -126,9 +128,15 @@ export class ModController {
 
         try
         {
-            const result = await this.modImporter.extract(sources, request.deleteOriginals);
+            const result = await this.modImporter.extract(sources, request.deleteOriginals, (progress) => {
+                if (!event.sender.isDestroyed())
+                    event.sender.send("mod:import-progress", progress);
+            });
+
             if (result.success)
                 this.sessions.delete(request.sessionId);
+            else
+                session.lastAccessedAt = Date.now();
 
             return result;
         }
@@ -280,11 +288,11 @@ export class ModController {
     }
 
     private pruneExpiredSessions() {
-        const expirationTime = Date.now() - this.SESSION_LIFETIME;
+        const now = Date.now();
 
         for (const [sessionId, session] of this.sessions)
         {
-            if (session.createdAt < expirationTime)
+            if (now - session.lastAccessedAt > this.SESSION_LIFETIME)
                 this.sessions.delete(sessionId);
         }
     }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ModImportIssueKind, SelectedModSource, ModExtractionResult } from "../../shared/mod.ts";
+import type { ModImportIssueKind, SelectedModSource, ModExtractionResult, ModImportProgress } from "../../shared/mod.ts";
 
 import WarningIcon from "./icons/WarningIcon.vue";
 import CheckIcon from "./icons/CheckIcon.vue";
@@ -12,6 +12,7 @@ const props = defineProps<{
     busy: boolean;
     result: ModExtractionResult | null;
     sources: SelectedModSource[];
+    progress: ModImportProgress | null;
 }>();
 
 defineEmits<{
@@ -24,6 +25,7 @@ const characterCatalog = useCharacterCatalogStore();
 
 const issues = computed(() => props.result?.issues ?? []);
 const sourceCount = computed(() => props.sources.length);
+const displayedProgress = computed(() => Math.min(100, Math.max(0, Math.round(props.progress?.progress ?? 0))));
 const importedAssetCount = computed(() => props.result?.mods.reduce((total, mod) => total + mod.assetCount, 0) ?? 0);
 const characterIcons = computed(() => {
     const icons = new Map<string, string>();
@@ -77,17 +79,46 @@ function issueLabel(kind: ModImportIssueKind): string {
             </button>
         </header>
 
-        <div v-if="busy" class="processing-panel" role="status" aria-live="polite">
-            <span class="spinner" aria-hidden="true"></span>
+        <div
+            v-if="busy"
+            class="processing-panel"
+            role="status"
+            aria-live="polite"
+        >
+            <div class="processing-heading">
+                <div>
+                    <h2>
+                        {{ progress?.status ?? "Preparing import" }}
+                    </h2>
+                    <p>
+                        {{
+                            progress?.detail ??
+                            `Preparing ${sourceCount} ${sourceCount === 1 ? "file" : "files"}`
+                        }}
+                    </p>
+                </div>
 
-            <div>
-                <h2>Checking and extracting files</h2>
-                <p>
-                    Reading {{ sourceCount }}
-                    {{ sourceCount === 1 ? "file" : "files" }}.
-                    Keep the app open until this finishes.
-                </p>
+                <strong>{{ displayedProgress }}%</strong>
             </div>
+
+            <div
+                class="import-progress-track"
+                role="progressbar"
+                aria-label="Mod import progress"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                :aria-valuenow="displayedProgress"
+                :aria-valuetext="progress?.status ?? 'Preparing import'"
+            >
+                <span
+                    class="import-progress-fill"
+                    :style="{ width: `${displayedProgress}%` }"
+                ></span>
+            </div>
+
+            <p class="processing-note">
+                Keep the app open until the import finishes.
+            </p>
         </div>
 
         <template v-else-if="result">
@@ -118,170 +149,180 @@ function issueLabel(kind: ModImportIssueKind): string {
                 </div>
             </section>
 
-            <section v-if="result.mods.length > 0" class="result-section">
-                <div class="section-heading">
-                    <div>
-                        <h2>Imported mods</h2>
-                    </div>
-
-                    <span>{{ result.mods.length }}</span>
-                </div>
-
-                <div class="mod-grid">
-                    <article
-                        v-for="mod in result.mods"
-                        :key="`${mod.sourceName}-${mod.skin2dId}`"
-                        class="mod-card"
-                    >
-                        <span class="card-character-icon" aria-hidden="true">
-                            <img
-                                v-if="characterIcons.get(mod.skin2dId)"
-                                :src="characterIcons.get(mod.skin2dId)"
-                                alt=""
-                            />
-                            <CheckIcon v-else />
-                        </span>
-
-                        <div class="card-copy">
-                            <strong :title="`${mod.characterName}: ${mod.skinName}`">
-                                {{ mod.characterName }}: {{ mod.skinName }}
-                            </strong>
-                            <small :title="mod.sourceName">{{ mod.sourceName }}</small>
+            <div
+                class="result-details"
+                :class="{
+                    'result-details--mods-only':
+                        result.success &&
+                        issues.length === 0 &&
+                        result.warnings.length === 0
+                }"
+            >
+                <section v-if="result.mods.length > 0" class="result-section">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Imported mods</h2>
                         </div>
 
-                        <span class="asset-count">
-                            {{ mod.assetCount }}
-                            {{ mod.assetCount === 1 ? "asset" : "assets" }}
-                        </span>
-                    </article>
-                </div>
-            </section>
-
-            <section
-                v-if="issues.length > 0 || (!result.success && result.mods.length === 0)"
-                class="result-section"
-            >
-                <div class="section-heading">
-                    <div>
-                        <h2>Files not imported</h2>
+                        <span>{{ result.mods.length }}</span>
                     </div>
 
-                    <span>{{ Math.max(issues.length, 1) }}</span>
-                </div>
+                    <div class="mod-grid">
+                        <article
+                            v-for="mod in result.mods"
+                            :key="`${mod.sourceName}-${mod.skin2dId}`"
+                            class="mod-card"
+                        >
+                            <span class="card-character-icon" aria-hidden="true">
+                                <img
+                                    v-if="characterIcons.get(mod.skin2dId)"
+                                    :src="characterIcons.get(mod.skin2dId)"
+                                    alt=""
+                                />
+                                <CheckIcon v-else />
+                            </span>
 
-                <div v-if="issues.length > 0" class="issue-list">
-                    <article
-                        v-for="(issue, issueIndex) in issues"
-                        :key="`${issue.sourceId ?? issue.sourceName}-${issueIndex}`"
-                        class="issue-card"
-                    >
+                            <div class="card-copy">
+                                <strong :title="`${mod.characterName}: ${mod.skinName}`">
+                                    {{ mod.characterName }}: {{ mod.skinName }}
+                                </strong>
+                                <small :title="mod.sourceName">{{ mod.sourceName }}</small>
+                            </div>
+
+                            <span class="asset-count">
+                                {{ mod.assetCount }}
+                                {{ mod.assetCount === 1 ? "asset" : "assets" }}
+                            </span>
+                        </article>
+                    </div>
+                </section>
+
+                <section
+                    v-if="issues.length > 0 || (!result.success && result.mods.length === 0)"
+                    class="result-section"
+                >
+                    <div class="section-heading">
+                        <div>
+                            <h2>Files not imported</h2>
+                        </div>
+
+                        <span>{{ Math.max(issues.length, 1) }}</span>
+                    </div>
+
+                    <div v-if="issues.length > 0" class="issue-list">
+                        <article
+                            v-for="(issue, issueIndex) in issues"
+                            :key="`${issue.sourceId ?? issue.sourceName}-${issueIndex}`"
+                            class="issue-card"
+                        >
+                            <div class="issue-heading">
+                                <span class="issue-icon" aria-hidden="true">
+                                    <WarningIcon />
+                                </span>
+
+                                <div>
+                                    <strong :title="issue.sourceName">
+                                        {{ issue.sourceName }}
+                                    </strong>
+                                    <span>{{ issueLabel(issue.kind) }}</span>
+                                </div>
+                            </div>
+
+                            <p>{{ issue.message }}</p>
+
+                            <div
+                                v-for="candidate in issue.candidates"
+                                :key="candidate.skin2dId"
+                                class="candidate"
+                            >
+                                <strong
+                                    :title="`${candidate.characterName}: ${candidate.skinName}`"
+                                >
+                                    {{ candidate.characterName }}: {{ candidate.skinName }}
+                                </strong>
+
+                                <div
+                                    v-if="candidate.missingAssets.length > 0"
+                                    class="asset-group"
+                                >
+                                    <span>Missing</span>
+                                    <div>
+                                        <code
+                                            v-for="asset in candidate.missingAssets"
+                                            :key="asset"
+                                            :title="asset"
+                                        >
+                                            {{ asset }}
+                                        </code>
+                                    </div>
+                                </div>
+
+                                <div
+                                    v-if="candidate.foundAssets.length > 0"
+                                    class="asset-group asset-group--found"
+                                >
+                                    <span>Found</span>
+                                    <div>
+                                        <code
+                                            v-for="asset in candidate.foundAssets"
+                                            :key="asset"
+                                            :title="asset"
+                                        >
+                                            {{ asset }}
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <article v-else class="issue-card issue-card--generic">
                         <div class="issue-heading">
                             <span class="issue-icon" aria-hidden="true">
                                 <WarningIcon />
                             </span>
 
                             <div>
-                                <strong :title="issue.sourceName">
-                                    {{ issue.sourceName }}
-                                </strong>
-                                <span>{{ issueLabel(issue.kind) }}</span>
+                                <strong>Import failed</strong>
+                                <span>Extraction failed</span>
                             </div>
                         </div>
 
-                        <p>{{ issue.message }}</p>
-
-                        <div
-                            v-for="candidate in issue.candidates"
-                            :key="candidate.skin2dId"
-                            class="candidate"
-                        >
-                            <strong
-                                :title="`${candidate.characterName}: ${candidate.skinName}`"
-                            >
-                                {{ candidate.characterName }}: {{ candidate.skinName }}
-                            </strong>
-
-                            <div
-                                v-if="candidate.missingAssets.length > 0"
-                                class="asset-group"
-                            >
-                                <span>Missing</span>
-                                <div>
-                                    <code
-                                        v-for="asset in candidate.missingAssets"
-                                        :key="asset"
-                                        :title="asset"
-                                    >
-                                        {{ asset }}
-                                    </code>
-                                </div>
-                            </div>
-
-                            <div
-                                v-if="candidate.foundAssets.length > 0"
-                                class="asset-group asset-group--found"
-                            >
-                                <span>Found</span>
-                                <div>
-                                    <code
-                                        v-for="asset in candidate.foundAssets"
-                                        :key="asset"
-                                        :title="asset"
-                                    >
-                                        {{ asset }}
-                                    </code>
-                                </div>
-                            </div>
-                        </div>
+                        <p>{{ result.message }}</p>
                     </article>
-                </div>
+                </section>
 
-                <article v-else class="issue-card issue-card--generic">
-                    <div class="issue-heading">
-                        <span class="issue-icon" aria-hidden="true">
-                            <WarningIcon />
-                        </span>
+                <section v-if="result.warnings.length > 0" class="warnings">
+                    <h2>Warnings</h2>
+                    <ul>
+                        <li v-for="warning in result.warnings" :key="warning">
+                            {{ warning }}
+                        </li>
+                    </ul>
+                </section>
 
-                        <div>
-                            <strong>Import failed</strong>
-                            <span>Extraction failed</span>
-                        </div>
-                    </div>
+                <footer class="screen-actions">
+                    <template v-if="result.success">
+                        <button class="primary-button" type="button" @click="$emit('done')">
+                            Back to mods
+                        </button>
+                    </template>
 
-                    <p>{{ result.message }}</p>
-                </article>
-            </section>
+                    <template v-else>
+                        <button
+                            class="secondary-button"
+                            type="button"
+                            @click="$emit('chooseAgain')"
+                        >
+                            Choose files again
+                        </button>
 
-            <section v-if="result.warnings.length > 0" class="warnings">
-                <h2>Warnings</h2>
-                <ul>
-                    <li v-for="warning in result.warnings" :key="warning">
-                        {{ warning }}
-                    </li>
-                </ul>
-            </section>
-
-            <footer class="screen-actions">
-                <template v-if="result.success">
-                    <button class="primary-button" type="button" @click="$emit('done')">
-                        Back to mods
-                    </button>
-                </template>
-
-                <template v-else>
-                    <button
-                        class="secondary-button"
-                        type="button"
-                        @click="$emit('chooseAgain')"
-                    >
-                        Choose files again
-                    </button>
-
-                    <button class="primary-button" type="button" @click="$emit('retry')">
-                        Retry import
-                    </button>
-                </template>
-            </footer>
+                        <button class="primary-button" type="button" @click="$emit('retry')">
+                            Retry import
+                        </button>
+                    </template>
+                </footer>
+            </div>
         </template>
     </section>
 </template>
@@ -290,8 +331,10 @@ function issueLabel(kind: ModImportIssueKind): string {
 .import-screen {
     display: flex;
     min-width: 0;
+    min-height: 0;
     flex: 1;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .screen-header {
@@ -362,17 +405,76 @@ function issueLabel(kind: ModImportIssueKind): string {
 
 .processing-panel,
 .result-summary {
-    display: flex;
-    align-items: flex-start;
-    gap: 18px;
     margin-top: 28px;
     padding: 22px;
     border-radius: 10px;
     background: #111513;
 }
 
+.processing-panel {
+    display: grid;
+    gap: 15px;
+}
+
 .result-summary {
+    display: flex;
+    flex: 0 0 auto;
     align-items: center;
+    gap: 18px;
+}
+
+.result-details {
+    min-height: 0;
+    flex: 1;
+    padding-right: 10px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.result-details--mods-only {
+    display: flex;
+    padding-right: 0;
+    overflow: hidden;
+    flex-direction: column;
+}
+
+.result-details--mods-only > .result-section {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+}
+
+.result-details--mods-only .mod-grid {
+    min-height: 0;
+    flex: 1;
+    padding-right: 10px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.result-details--mods-only .screen-actions {
+    display: none;
+}
+
+.processing-heading {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.processing-heading > div {
+    min-width: 0;
+}
+
+.processing-heading > strong {
+    flex: 0 0 auto;
+    color: #b9d7e8;
+    font-size: 17px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
 }
 
 .processing-panel h2,
@@ -391,15 +493,27 @@ function issueLabel(kind: ModImportIssueKind): string {
     line-height: 1.55;
 }
 
-.spinner {
-    width: 24px;
-    height: 24px;
-    flex: 0 0 auto;
-    margin-top: 1px;
-    border: 3px solid #293137;
-    border-top-color: #9bc2d9;
-    border-radius: 50%;
-    animation: spin 750ms linear infinite;
+.import-progress-track {
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #252b28;
+}
+
+.import-progress-fill {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: #86aec7;
+    transition: width 180ms ease-out;
+}
+
+.processing-panel .processing-note {
+    margin: -2px 0 0;
+    color: #7f857f;
+    font-size: 13px;
 }
 
 .summary-icon,
@@ -699,12 +813,6 @@ function issueLabel(kind: ModImportIssueKind): string {
     border-top: 1px solid #292e2b;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
 @media (max-width: 820px) {
     .mod-grid {
         grid-template-columns: minmax(0, 1fr);
@@ -741,8 +849,8 @@ function issueLabel(kind: ModImportIssueKind): string {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .spinner {
-        animation: none;
+    .import-progress-fill {
+        transition: none;
     }
 }
 </style>

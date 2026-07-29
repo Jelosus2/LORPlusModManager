@@ -1,17 +1,130 @@
 from importlib.metadata import version
+from contextlib import redirect_stdout
 from pathlib import Path
 import traceback
-import argparse
 import UnityPy
 import shutil
+import struct
 import json
 import sys
 import re
+import io
 
 PROTOCOL_VERSION = 1
 SUPPORTED_TYPES = {"Texture2D", "TextAsset"}
 INVALID_FILENAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 RESERVED_NAMES = re.compile(r"^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$", re.IGNORECASE)
+MAX_UNITY_HEADER_STRING = 256
+
+
+class BoundedFile(io.BufferedIOBase):
+    def __init__(self, file_path: Path, length: int):
+        super().__init__()
+
+        self._stream = file_path.open("rb")
+        self._length = length
+        self.name = str(file_path)
+
+    def readable(self) -> bool:
+        return True
+
+    def seekable(self) -> bool:
+        return True
+
+    def tell(self) -> int:
+        return self._stream.tell()
+
+    def read(self, size: int | None = -1) -> bytes:
+        remaining = self._length - self.tell()
+
+        if remaining <= 0:
+            return b""
+
+        if size is None or size < 0:
+            size = remaining
+        else:
+            size = min(size, remaining)
+
+        return self._stream.read(size)
+
+    def seek(self, offset: int, whence: int = io.SEEK_SET) -> int:
+        if whence == io.SEEK_SET:
+            target = offset
+        elif whence == io.SEEK_CUR:
+            target = self.tell() + offset
+        elif whence == io.SEEK_END:
+            target = self._length + offset
+        else:
+            raise ValueError("Invalid seek mode.")
+
+        if target < 0:
+            raise ValueError("Cannot seek before the beginning of the bundle.")
+
+        self._stream.seek(target, io.SEEK_SET)
+        return self.tell()
+
+    def close(self):
+        if not self.closed:
+            self._stream.close()
+
+        super().close()
+
+
+def read_exact(stream, size: int) -> bytes:
+    data = stream.read(size)
+
+    if len(data) != size:
+        raise ValueError("The UnityFS header is truncated.")
+
+    return data
+
+
+def skip_header_string(stream):
+    for _ in range(MAX_UNITY_HEADER_STRING):
+        if read_exact(stream, 1) == b"\0":
+            return
+
+    raise ValueError("The UnityFS header contains an invalid string.")
+
+
+def get_unityfs_declared_size(bundle_path: Path) -> int:
+    physical_size = bundle_path.stat().st_size
+
+    with bundle_path.open("rb") as bundle:
+        if read_exact(bundle, 8) != b"UnityFS\0":
+            return physical_size
+
+        read_exact(bundle, 4)
+
+        skip_header_string(bundle)
+        skip_header_string(bundle)
+
+        declared_size = struct.unpack(">Q", read_exact(bundle, 8))[0]
+        minimum_size = bundle.tell() + 12
+
+    if declared_size < minimum_size:
+        raise ValueError("The UnityFS bundle declares an invalid size.")
+
+    if declared_size > physical_size:
+        raise ValueError("The UnityFS bundle is truncated.")
+
+    return declared_size
+
+
+def load_unity_environment(bundle_path: Path):
+    physical_size = bundle_path.stat().st_size
+    declared_size = get_unityfs_declared_size(bundle_path)
+
+    if declared_size == physical_size:
+        return UnityPy.load(str(bundle_path))
+
+    bounded_stream = BoundedFile(bundle_path, declared_size)
+
+    try:
+        return UnityPy.load(bounded_stream)
+    finally:
+        bounded_stream.close()
+
 
 def create_asset_id(serialized_file: str, path_id: int) -> str:
     return f"{serialized_file}:{path_id}"
@@ -30,7 +143,7 @@ def get_catalog_candidates(asset_type: str, name: str) -> list[str]:
 
 
 def inspect_bundle(bundle_path: Path) -> dict:
-    environment = UnityPy.load(str(bundle_path))
+    environment = load_unity_environment(bundle_path)
     assets: list[dict] = []
 
     for obj in environment.objects:
@@ -81,7 +194,7 @@ def extract_assets(bundle_path: Path, destination: Path, selections: object) -> 
     if len(selections) > 10:
         raise ValueError("Too many assets were selected.")
 
-    environment = UnityPy.load(str(bundle_path))
+    environment = load_unity_environment(bundle_path)
     objects_by_id: dict = {}
 
     for obj in environment.objects:
@@ -208,13 +321,14 @@ def main() -> int:
         if not bundle_path.is_file():
             raise ValueError("The bundle path is not a file.")
 
-        if command == "inspect":
-            result = inspect_bundle(bundle_path)
-        elif command == "extract":
-            destination = require_path(request, "destination", must_exist=False)
-            result = extract_assets(bundle_path, destination, request.get("assets"))
-        else:
-            raise ValueError("Unsupported worker command.")
+        with redirect_stdout(sys.stderr):
+            if command == "inspect":
+                result = inspect_bundle(bundle_path)
+            elif command == "extract":
+                destination = require_path(request, "destination", must_exist=False)
+                result = extract_assets(bundle_path, destination, request.get("assets"))
+            else:
+                raise ValueError("Unsupported worker command.")
 
         print(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
 

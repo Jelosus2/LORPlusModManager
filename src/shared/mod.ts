@@ -110,3 +110,9 @@ export type BulkModDeletionResult = Readonly<{
     deletedModIds: readonly string[];
     failures: readonly ModDeletionFailure[];
 }>;
+
+export type ModImportProgress = Readonly<{
+    progress: number;
+    status: string;
+    detail: string;
+}>;

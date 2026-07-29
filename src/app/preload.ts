@@ -1,3 +1,4 @@
+import type { ModImportProgress } from "../shared/mod.js";
 import type { PluginProgress } from "../shared/plugin.js";
 import type { IpcApi } from "../shared/ipcApi.js";
 
@@ -26,6 +27,17 @@ const modManagerApi: IpcApi = {
     deleteMod: (modId) => ipcRenderer.invoke("mod:delete", modId),
     renameMod: (request) => ipcRenderer.invoke("mod:rename", request),
     deleteMods: (modIds) => ipcRenderer.invoke("mod:delete-many", modIds),
+    onModImportProgress: (callback) => {
+        const listener = (_event: IpcRendererEvent, progress: ModImportProgress) => {
+            callback(progress);
+        }
+
+        ipcRenderer.on("mod:import-progress", listener);
+
+        return () => {
+            ipcRenderer.removeListener("mod:import-progress", listener);
+        };
+    }
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

@@ -1,4 +1,4 @@
-import type { ExtractedModSummary, ModExtractionResult, ModImportIssue, ModSourceKind } from "../../shared/mod.js";
+import type { ExtractedModSummary, ModExtractionResult, ModImportIssue, ModSourceKind, ModImportProgress } from "../../shared/mod.js";
 import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js";
 import type { ImportedModRecord } from "#database/repositories/ModRepository.js";
 
@@ -51,6 +51,8 @@ type PlannedMod = {
     record: ImportedModRecord;
 };
 
+type ModImportProgressCallback = (progress: ModImportProgress) => void;
+
 export class ModImportError extends Error {
     constructor(message: string, options?: ErrorOptions) {
         super(message, options);
@@ -65,9 +67,15 @@ export class ModImporter {
     private readonly assetBundleMatcher = new AssetBundleModMatcher();
     private readonly modRepository = new ModRepository();
 
-    async extract(sources: readonly ModImportSource[], deleteOriginals: boolean): Promise<ModExtractionResult> {
+    async extract(sources: readonly ModImportSource[], deleteOriginals: boolean, reportProgress: ModImportProgressCallback): Promise<ModExtractionResult> {
         if (sources.length === 0)
             throw new ModImportError("No mod files were provided.");
+
+        reportProgress({
+            progress: 0,
+            status: "Preparing import",
+            detail: `Preparing ${sources.length} ${sources.length === 1 ? "file" : "files"}`
+        });
 
         const modsRoot = Paths.getModsPath();
         const stagingRoot = path.join(modsRoot, `.staging-${randomUUID()}`);
@@ -75,23 +83,44 @@ export class ModImporter {
         await fse.ensureDir(modsRoot);
         await fse.mkdir(stagingRoot);
 
+        let result: ModExtractionResult;
+
         try
         {
-            return await this.extractInWorkspace(sources, deleteOriginals, modsRoot, stagingRoot);
+            result = await this.extractInWorkspace(sources, deleteOriginals, modsRoot, stagingRoot, reportProgress);
         }
         finally
         {
+            reportProgress({
+                progress: 99,
+                status: "Cleaning temporary files",
+                detail: "Finishing the import"
+            });
+
             await fse.rm(stagingRoot, { recursive: true, force: true });
         }
+
+        reportProgress({
+            progress: 100,
+            status: result.success
+                ? "Import complete"
+                : "Import needs attention",
+            detail: result.success
+                ? `${result.mods.length} ${result.mods.length === 1 ? "mod" : "mods"} imported`
+                : "Review the import results"
+        });
+
+        return result;
     }
 
     private async extractInWorkspace(
         sources: readonly ModImportSource[],
         deleteOriginals: boolean,
         modsRoot: string,
-        stagingRoot: string
+        stagingRoot: string,
+        reportProgress: ModImportProgressCallback
     ): Promise<ModExtractionResult> {
-        const analysis = await this.analyzeSources(sources, path.join(stagingRoot, "sources"));
+        const analysis = await this.analyzeSources(sources, path.join(stagingRoot, "sources"), reportProgress);
 
         if (analysis.issues.length > 0)
         {
@@ -108,11 +137,14 @@ export class ModImporter {
         }
 
         const analyzedSources = analysis.sources;
+        const totalMatches = analyzedSources.reduce((total, source) => total + source.matches.length, 0);
 
         const reservedDirectories = new Set<string>();
         const plannedMods: PlannedMod[] = [];
         const movedDirectories: string[] = [];
         const extractionIssues: ModImportIssue[] = [];
+
+        let extractedMatches = 0;
 
         try
         {
@@ -135,9 +167,16 @@ export class ModImporter {
                     const finalDirectory = await this.reserveDestination(modsRoot, requestedName, reservedDirectories);
                     const stagingDirectory = path.join(stagingRoot, "mods", randomUUID());
 
+                    reportProgress({
+                        progress: 40 + extractedMatches / Math.max(totalMatches, 1) * 45,
+                        status: `Extracting ${match.character.characterName}: ${match.character.skinName}`,
+                        detail: `${extractedMatches + 1} of ${totalMatches} mods · ${analyzed.source.name}`
+                    });
+
                     try
                     {
                         await match.extract(stagingDirectory);
+                        extractedMatches++;
                     }
                     catch (error)
                     {
@@ -188,11 +227,25 @@ export class ModImporter {
                 };
             }
 
-            for (const plannedMod of plannedMods)
+            for (let i = 0; i < plannedMods.length; i++)
             {
+                const plannedMod = plannedMods[i];
+
+                reportProgress({
+                    progress: 85 + i / Math.max(plannedMods.length, 1) * 9,
+                    status: `Saving ${plannedMod.record.directoryName}`,
+                    detail: `${i + 1} of ${plannedMods.length} mods`
+                })
+
                 await fse.move(plannedMod.stagingDirectory, plannedMod.finalDirectory);
                 movedDirectories.push(plannedMod.finalDirectory);
             }
+
+            reportProgress({
+                progress: 94,
+                status: "Registering imported mods",
+                detail: `Saving ${plannedMods.length} ${plannedMods.length === 1 ? "mod" : "mods"} to the library`
+            });
 
             this.modRepository.addImportedMods(plannedMods.map(({ record }) => record));
         }
@@ -212,8 +265,16 @@ export class ModImporter {
 
         if (deleteOriginals)
         {
-            for (const source of sources)
+            for (let i = 0; i < sources.length; i++)
             {
+                const source = sources[i];
+
+                reportProgress({
+                    progress: 95 + i / Math.max(sources.length, 1) * 3,
+                    status: `Removing ${source.name}`,
+                    detail: `${i + 1} of ${sources.length} original files`
+                });
+
                 try
                 {
                     await fse.unlink(source.filePath);
@@ -241,7 +302,7 @@ export class ModImporter {
         };
     }
 
-    private async analyzeSources(sources: readonly ModImportSource[], workspaceRoot: string): Promise<{
+    private async analyzeSources(sources: readonly ModImportSource[], workspaceRoot: string, reportProgress: ModImportProgressCallback): Promise<{
         sources: PreparedSource[];
         issues: ModImportIssue[];
     }> {
@@ -249,8 +310,16 @@ export class ModImporter {
         const analyzedSources: PreparedSource[] = [];
         const issues: ModImportIssue[] = [];
 
-        for (const source of sources)
+        for (let i = 0; i < sources.length; i++)
         {
+            const source = sources[i];
+
+            reportProgress({
+                progress: i / sources.length * 40,
+                status: `Checking ${source.name}`,
+                detail: `${i + 1} of ${sources.length} files`
+            });
+
             let preparation: SourcePreparation;
 
             try
@@ -277,6 +346,12 @@ export class ModImporter {
                 matches: preparation.matches
             });
         }
+
+        reportProgress({
+            progress: 40,
+            status: "File inspection complete",
+            detail: `${sources.length} ${sources.length === 1 ? "file" : "files"} checked`
+        });
 
         return {
             sources: analyzedSources,
@@ -319,8 +394,7 @@ export class ModImporter {
                         source.filePath,
                         destination,
                         match.entries,
-                        source.password,
-                        { maxTotalUncompressedBytes: 1024 ** 3 }
+                        source.password
                     );
                 }
             })),

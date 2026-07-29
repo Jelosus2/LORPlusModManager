@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ModImportMode, SelectedModSource, ModExtractionRequest, ModExtractionResult } from "../../shared/mod.ts";
+import type { ModImportMode, SelectedModSource, ModExtractionRequest, ModExtractionResult, ModImportProgress } from "../../shared/mod.ts";
 
 import CharactersScreen from "./CharactersScreen.vue";
 import ImportFileIcon from "./icons/ImportFileIcon.vue";
@@ -30,6 +30,7 @@ const directoryNames = ref<Record<string, string>>({});
 const deleteOriginals = ref(false);
 const isExtractingMods = ref(false);
 const extractionResult = ref<ModExtractionResult | null>(null);
+const modImportProgress = ref<ModImportProgress | null>(null);
 
 async function selectModSources(mode: ModImportMode) {
     if (isSelectingMods.value)
@@ -107,9 +108,20 @@ async function prepareModExtraction() {
 
     isExtractingMods.value = true;
     extractionResult.value = null;
+    modImportProgress.value = {
+        progress: 0,
+        status: "Preparing import",
+        detail:
+            `Preparing ${selectedSources.value.length} ` +
+            `${selectedSources.value.length === 1 ? "file" : "files"}`
+    };
     activeSection.value = "mods";
     modsView.value = "import";
     hidePopover("mod-extraction-popover");
+
+    const removeModImportProgressListener = window.app.onModImportProgress((progress) => {
+        modImportProgress.value = progress;
+    });
 
     try
     {
@@ -147,6 +159,7 @@ async function prepareModExtraction() {
     }
     finally
     {
+        removeModImportProgressListener();
         isExtractingMods.value = false;
     }
 }
@@ -159,6 +172,7 @@ function resetModExtraction() {
     deleteOriginals.value = false;
     isExtractingMods.value = false;
     extractionResult.value = null;
+    modImportProgress.value = null;
     modsView.value = "library";
 }
 
@@ -249,6 +263,7 @@ onMounted(() => {
                 :busy="isExtractingMods"
                 :result="extractionResult"
                 :sources="selectedSources"
+                :progress="modImportProgress"
                 @done="finishImport"
                 @retry="retryImport"
                 @choose-again="chooseImportFilesAgain"
@@ -342,6 +357,14 @@ onMounted(() => {
                 <p>Supported files</p>
                 <span>ZIP archives</span>
                 <span>Unity AssetBundles</span>
+
+                <div class="zip-limit-note">
+                    <strong>ZIP limits</strong>
+                    <span>
+                        20,000 entries · 1 GB per file ·
+                        2 GB total after extraction
+                    </span>
+                </div>
             </div>
         </section>
 
@@ -648,6 +671,32 @@ onMounted(() => {
     font-weight: 600;
 }
 
+.zip-limit-note {
+    display: flex;
+    width: 100%;
+    align-items: baseline;
+    gap: 9px;
+    margin-top: 7px;
+    padding-top: 11px;
+    border-top: 1px solid #242925;
+    color: #858a84;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.zip-limit-note strong {
+    flex: 0 0 auto;
+    color: #aeb4ae;
+    font-weight: 650;
+}
+
+.supported-files .zip-limit-note span {
+    padding: 0;
+    color: #858a84;
+    background: transparent;
+    font-weight: 500;
+}
+
 @keyframes add-mod-popover-in {
     from {
         opacity: 0;
@@ -716,6 +765,12 @@ onMounted(() => {
     .supported-files {
         margin-right: 22px;
         margin-left: 22px;
+    }
+
+    .zip-limit-note {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
     }
 }
 
