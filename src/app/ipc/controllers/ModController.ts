@@ -130,11 +130,16 @@ export class ModController {
         try
         {
             const result = await this.modImporter.extract(sources, request.deleteOriginals, (progress) => {
+                session.lastAccessedAt = Date.now();
+
                 if (!event.sender.isDestroyed())
                     event.sender.send("mod:import-progress", progress);
             });
 
-            if (result.success)
+            for (const sourceId of result.importedSourceIds)
+                session.sources.delete(sourceId);
+
+            if (session.sources.size === 0)
                 this.sessions.delete(request.sessionId);
             else
                 session.lastAccessedAt = Date.now();
@@ -317,6 +322,7 @@ export class ModController {
         return {
             success: false,
             message,
+            importedSourceIds: [],
             mods: [],
             warnings: [],
             issues: [

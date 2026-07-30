@@ -27,6 +27,7 @@ const issues = computed(() => props.result?.issues ?? []);
 const sourceCount = computed(() => props.sources.length);
 const displayedProgress = computed(() => Math.min(100, Math.max(0, Math.round(props.progress?.progress ?? 0))));
 const importedAssetCount = computed(() => props.result?.mods.reduce((total, mod) => total + mod.assetCount, 0) ?? 0);
+const progressIsIndeterminate = computed(() => props.progress?.indeterminate === true);
 const characterIcons = computed(() => {
     const icons = new Map<string, string>();
 
@@ -98,21 +99,39 @@ function issueLabel(kind: ModImportIssueKind): string {
                     </p>
                 </div>
 
-                <strong>{{ displayedProgress }}%</strong>
+                <strong>
+                    {{
+                        progressIsIndeterminate
+                            ? "Working…"
+                            : `${displayedProgress}%`
+                    }}
+                </strong>
             </div>
 
             <div
                 class="import-progress-track"
+                :class="{
+                    'import-progress-track--indeterminate':
+                        progressIsIndeterminate
+                }"
                 role="progressbar"
                 aria-label="Mod import progress"
                 aria-valuemin="0"
                 aria-valuemax="100"
-                :aria-valuenow="displayedProgress"
+                :aria-valuenow="
+                    progressIsIndeterminate
+                        ? undefined
+                        : displayedProgress
+                "
                 :aria-valuetext="progress?.status ?? 'Preparing import'"
             >
                 <span
                     class="import-progress-fill"
-                    :style="{ width: `${displayedProgress}%` }"
+                    :style="
+                        progressIsIndeterminate
+                            ? undefined
+                            : { width: `${displayedProgress}%` }
+                    "
                 ></span>
             </div>
 
@@ -142,7 +161,7 @@ function issueLabel(kind: ModImportIssueKind): string {
                     </h2>
                     <p v-if="!result.success">{{ result.message }}</p>
 
-                    <span v-if="result.success" class="summary-detail">
+                    <span v-if="result.mods.length > 0" class="summary-detail">
                         {{ importedAssetCount }}
                         {{ importedAssetCount === 1 ? "asset" : "assets" }} extracted
                     </span>
@@ -426,9 +445,14 @@ function issueLabel(kind: ModImportIssueKind): string {
 .result-details {
     min-height: 0;
     flex: 1;
+    margin-top: 24px;
     padding-right: 10px;
     overflow-y: auto;
     overscroll-behavior: contain;
+}
+
+.result-details > .result-section:first-child {
+    margin-top: 0;
 }
 
 .result-details--mods-only {
@@ -448,6 +472,8 @@ function issueLabel(kind: ModImportIssueKind): string {
 .result-details--mods-only .mod-grid {
     min-height: 0;
     flex: 1;
+    align-content: start;
+    grid-auto-rows: max-content;
     padding-right: 10px;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -508,6 +534,21 @@ function issueLabel(kind: ModImportIssueKind): string {
     border-radius: inherit;
     background: #86aec7;
     transition: width 180ms ease-out;
+}
+
+.import-progress-track--indeterminate .import-progress-fill {
+    width: 35%;
+    animation: import-progress-indeterminate 1.1s ease-in-out infinite;
+}
+
+@keyframes import-progress-indeterminate {
+    from {
+        transform: translateX(-120%);
+    }
+
+    to {
+        transform: translateX(320%);
+    }
 }
 
 .processing-panel .processing-note {
@@ -851,6 +892,12 @@ function issueLabel(kind: ModImportIssueKind): string {
 @media (prefers-reduced-motion: reduce) {
     .import-progress-fill {
         transition: none;
+    }
+
+    .import-progress-track--indeterminate .import-progress-fill {
+        width: 100%;
+        opacity: 0.55;
+        animation: none;
     }
 }
 </style>

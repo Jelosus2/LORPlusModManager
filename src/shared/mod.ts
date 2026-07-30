@@ -64,6 +64,7 @@ export type ModImportIssue = {
 export type ModExtractionResult = {
     success: boolean;
     message: string;
+    importedSourceIds: string[];
     mods: ExtractedModSummary[];
     warnings: string[];
     issues: ModImportIssue[];
@@ -115,4 +116,5 @@ export type ModImportProgress = Readonly<{
     progress: number;
     status: string;
     detail: string;
+    indeterminate?: boolean;
 }>;

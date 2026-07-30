@@ -129,13 +129,25 @@ async function prepareModExtraction() {
 
         extractionResult.value = result;
 
+        if (result.mods.length > 0)
+            await modStore.load(true);
+
+        const importedSourceIds = new Set(result.importedSourceIds);
+
+        selectedSources.value = selectedSources.value.filter((source) => !importedSourceIds.has(source.id));
+
+        for (const sourceId of importedSourceIds)
+        {
+            delete zipPasswords.value[sourceId];
+            delete directoryNames.value[sourceId];
+        }
+
         if (!result.success)
             return;
 
         importSessionId.value = null;
         zipPasswords.value = {};
-
-        await modStore.load(true);
+        directoryNames.value = {};
     }
     catch (error)
     {
@@ -144,6 +156,7 @@ async function prepareModExtraction() {
         extractionResult.value = {
             success: false,
             message: "The selected mod files could not be imported.",
+            importedSourceIds: [],
             mods: [],
             warnings: [],
             issues: [

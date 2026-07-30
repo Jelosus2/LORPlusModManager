@@ -174,7 +174,8 @@ export class ZipArchive {
         destinationDirectory: string,
         signature: Buffer,
         password?: string,
-        limits: Partial<ZipExtractionLimits> = {}
+        limits: Partial<ZipExtractionLimits> = {},
+        reportProgress?: (progress: ZipExtractionProgress) => void
     ): Promise<ExtractedZipEntry[]> {
         if (signature.length === 0 || signature.length > 64)
             throw new Error("Invalid file signature.");
@@ -214,6 +215,7 @@ export class ZipArchive {
             return [];
 
         let matchedEntries = 0;
+        let completedEntries = 0;
 
         return this.extractPlannedEntries(
             destinationDirectory,
@@ -247,6 +249,15 @@ export class ZipArchive {
                         filePath: bundlePath,
                         uncompressedSize: entry.uncompressedSize
                     };
+                },
+                onEntryComplete: ({ entryPath }) => {
+                    completedEntries++;
+
+                    reportProgress?.({
+                        completedEntries,
+                        totalEntries: plans.length,
+                        currentEntry: entryPath
+                    });
                 }
             }
         );
