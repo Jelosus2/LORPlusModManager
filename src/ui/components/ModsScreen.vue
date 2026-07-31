@@ -487,7 +487,15 @@ async function confirmModRename() {
     catch (error)
     {
         console.error("Could not rename the mod:", error);
-        renameErrorMessage.value = "The mod could not be renamed. Another mod or folder may already use that name.";
+
+        const message = error instanceof Error
+            ? error.message
+            : "";
+
+        if (message)
+            renameErrorMessage.value = message;
+        else
+            renameErrorMessage.value = "The mod could not be renamed. Another mod or folder may already use that name.";
     }
     finally
     {

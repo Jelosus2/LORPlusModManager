@@ -8,6 +8,8 @@ import { Paths } from "#utils/Paths.js";
 import path from "node:path";
 import fse from "fs-extra";
 
+export type ModSyncInstallMethod = Exclude<ModSyncMethod, "unsync">;
+
 type ProgressReporter = (progress: ModSyncProgress) => void;
 
 export class ModSynchronizer {
@@ -36,8 +38,7 @@ export class ModSynchronizer {
         if (!await fse.exists(gameLocation))
             throw new Error("The configured game location no longer exists.");
 
-        const targetRoot = await this.prepareTargetRoot(gameLocation);
-        const workRoot = Paths.getGameSyncWorkRoot(gameLocation);
+        const { targetRoot, workRoot } = await this.getSynchronizationRoots();
 
         const entries: ModSyncLogEntry[] = [];
 
@@ -81,6 +82,58 @@ export class ModSynchronizer {
                 : `Synchronization completed with ${failedCount} ${failedCount === 1 ? "failure" : "failures"}`,
             entries
         };
+    }
+
+    async getInstallationMethod(modId: string): Promise<ModSyncInstallMethod | null> {
+        const mod = this.getMod(modId);
+        if (!mod.enabled)
+            return null;
+
+        const { targetRoot } = await this.getSynchronizationRoots();
+        const destination = path.join(targetRoot, mod.directoryName);
+
+        if (!Paths.isSubpath(targetRoot, destination))
+            throw new Error("The synchronized mod directory is invalid.");
+
+        try
+        {
+            const stats = await fse.lstat(destination);
+
+            if (stats.isSymbolicLink())
+                return "symlink";
+            if (stats.isDirectory())
+                return "copy";
+
+            throw new Error("The synchronized mod destination is not a directory.");
+        }
+        catch (error)
+        {
+            if (TypeCheck.isNodeError(error) && error.code === "ENOENT")
+                return null;
+
+            throw error;
+        }
+    }
+
+    async detachMod(modId: string): Promise<ModSyncInstallMethod | null> {
+        const mod = this.getMod(modId);
+        if (!mod.enabled)
+            return null;
+
+        const { targetRoot, workRoot } = await this.getSynchronizationRoots();
+        const method = await this.getInstallationMethod(modId);
+
+        await this.removeMod(mod, targetRoot, workRoot);
+        return method;
+    }
+
+    async attachMod(modId: string, method: ModSyncInstallMethod) {
+        const mod = this.getMod(modId);
+        if (mod.enabled)
+            return;
+
+        const { targetRoot, workRoot } = await this.getSynchronizationRoots();
+        await this.installMod(mod, method, targetRoot, workRoot);
     }
 
     private async processMod(
@@ -324,6 +377,28 @@ export class ModSynchronizer {
         {
             console.error(`Could not finish synchronization operation ${operationId}:`, error);
         }
+    }
+
+    private async getSynchronizationRoots() {
+        const gameLocation = this.settingsRepository.getGameLocation();
+
+        if (!gameLocation)
+            throw new Error("The game location has not been configured.");
+        if (!await fse.exists(gameLocation))
+            throw new Error("The configured game location no longer exists.");
+
+        return {
+            targetRoot: await this.prepareTargetRoot(gameLocation),
+            workRoot: Paths.getGameSyncWorkRoot(gameLocation)
+        };
+    }
+
+    private getMod(modId: string): PersistedMod {
+        const mod = this.modRepository.getAll().find((candidate) => candidate.id === modId);
+        if (!mod)
+            throw new Error("The selected mod could not be found.");
+
+        return mod;
     }
 
     private errorMessage(error: unknown): string {
