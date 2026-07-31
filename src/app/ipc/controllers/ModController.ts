@@ -6,14 +6,18 @@ import type {
     SelectedModSource,
     ModExtractionRequest,
     ModExtractionResult,
-    InstalledMod
+    InstalledMod,
+    ModSyncRequest,
+    ModSyncResult
 } from "../../../shared/mod.js";
 import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
 import { ModImporter, ModImportError, type ModImportSource } from "#mod/ModImporter.js";
 import { ModLibraryService, ModLibraryError } from "#mod/ModLibraryService.js";
 import { ModRecoveryCoordinator } from "#mod/ModRecoveryCoordinator.js";
+import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ModSynchronizer } from "#mod/ModSynchronizer.js";
 import { ModVerifier } from "#mod/ModVerifier.js";
 import { BrowserWindow, dialog } from "electron";
 import { TypeCheck } from "#utils/TypeCheck.js";
@@ -38,6 +42,8 @@ export class ModController {
     private readonly modRepository = new ModRepository();
     private readonly modVerifier = new ModVerifier();
     private readonly modLibrary = new ModLibraryService();
+    private readonly modSynchronizer = new ModSynchronizer();
+    private isSynchronizing = false;
 
     @IpcHelper.IpcHandle("mod:select-sources")
     async selectSources(event: IpcMainInvokeEvent, mode: ModImportMode): Promise<ModSourceSelectionResult> {
@@ -232,6 +238,33 @@ export class ModController {
         };
     }
 
+    @IpcHelper.IpcHandle("mod:sync")
+    async synchronizeMods(event: IpcMainInvokeEvent, value: unknown): Promise<ModSyncResult> {
+        const request = this.parseSyncRequest(value);
+
+        if (!request)
+            throw new Error("Invalid mod synchronization request.");
+        if (this.isSynchronizing)
+            throw new Error("Mod synchronization is already running.");
+
+        this.isSynchronizing = true;
+
+        try
+        {
+            if (request.method === "symlink" && !await AdminPrivilegeService.hasAdminPrivileges())
+                throw new Error("Administrator privileges are required to use symbolic links.");
+
+            return await this.modSynchronizer.synchronize(request, (progress) => {
+                if (!event.sender.isDestroyed())
+                    event.sender.send("mod:sync-progress", progress);
+            });
+        }
+        finally
+        {
+            this.isSynchronizing = false;
+        }
+    }
+
     private detectSourceKind(header: Buffer): ModSourceKind | null {
         const isZip =
             header.length >= 4 &&
@@ -288,6 +321,34 @@ export class ModController {
             sessionId: value.sessionId,
             sources,
             deleteOriginals: value.deleteOriginals
+        };
+    }
+
+    private parseSyncRequest(value: unknown): ModSyncRequest | null {
+        if (!TypeCheck.isRecord(value))
+            return null;
+        if (value.method !== "copy" && value.method !== "symlink" && value.method !== "unsync")
+            return null;
+        if (!Array.isArray(value.enabledModIds))
+            return null;
+
+        const enabledModIds: string[] = [];
+        const uniqueIds = new Set<string>();
+
+        for (const modId of value.enabledModIds)
+        {
+            if (!TypeCheck.isUuid(modId) || uniqueIds.has(modId))
+                return null;
+
+            uniqueIds.add(modId);
+            enabledModIds.push(modId);
+        }
+
+        return {
+            method: value.method,
+            enabledModIds: value.method === "unsync"
+                ? []
+                : enabledModIds
         };
     }
 

@@ -31,6 +31,7 @@ const deleteOriginals = ref(false);
 const isExtractingMods = ref(false);
 const extractionResult = ref<ModExtractionResult | null>(null);
 const modImportProgress = ref<ModImportProgress | null>(null);
+const hasAdminPrivileges = ref(false);
 
 async function selectModSources(mode: ModImportMode) {
     if (isSelectingMods.value)
@@ -223,10 +224,23 @@ function hidePopover(id: string) {
         popover.hidePopover();
 }
 
+async function loadAdminPrivilegeState() {
+    try
+    {
+        hasAdminPrivileges.value = await window.app.hasAdminPrivileges();
+    }
+    catch (error)
+    {
+        console.error("Could not check administrator privileges:", error);
+        hasAdminPrivileges.value = false;
+    }
+}
+
 onMounted(() => {
     void Promise.all([
         characterCatalog.load(),
-        modStore.load()
+        modStore.load(),
+        loadAdminPrivilegeState()
     ]);
 });
 </script>
@@ -287,6 +301,7 @@ onMounted(() => {
                     activeSection === 'mods' &&
                     modsView === 'library'
                 "
+                :has-admin-privileges="hasAdminPrivileges"
             />
         </main>
 

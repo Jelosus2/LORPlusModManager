@@ -1,13 +1,17 @@
 <script setup lang="ts">
+import type { InstalledMod, ModSyncLogEntry, ModSyncMethod, ModSyncRequest } from "../../shared/mod";
 import type { CharacterSkin } from "../../shared/characters";
-import type { InstalledMod } from "../../shared/mod";
 
+import ModSyncProgressDialog from "./ModSyncProgressDialog.vue";
 import RefreshIcon from "./icons/RefreshIcon.vue";
 import SearchIcon from "./icons/SearchIcon.vue";
 import FolderIcon from "./icons/FolderIcon.vue";
 import RenameIcon from "./icons/RenameIcon.vue";
 import CheckIcon from "./icons/CheckIcon.vue";
 import TrashIcon from "./icons/TrashIcon.vue";
+import SyncIcon from "./icons/SyncIcon.vue";
+import CopyIcon from "./icons/CopyIcon.vue";
+import LinkIcon from "./icons/LinkIcon.vue";
 import ModWarning from "./ModWarning.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
@@ -30,6 +34,10 @@ type SortKey =
     | "importedAt";
 
 type SortDirection = "ascending" | "descending";
+
+const props = defineProps<{
+    hasAdminPrivileges: boolean;
+}>();
 
 type ModTableRow = {
     mod: InstalledMod;
@@ -87,6 +95,13 @@ const bulkDeleteModIds = ref(new Set<string>());
 const bulkDeleteResultDialog = ref<HTMLDialogElement | null>(null);
 const bulkDeleteSummary = ref<BulkDeleteSummary | null>(null);
 const isBulkDeleting = ref(false);
+const syncMethodDialog = ref<HTMLDialogElement | null>(null);
+const syncProgressDialog = ref<InstanceType<typeof ModSyncProgressDialog> | null>(null);
+const isSynchronizing = ref(false);
+const syncProgress = ref(0);
+const syncStatus = ref("");
+const syncDetail = ref("");
+const syncLogEntries = ref<ModSyncLogEntry[]>([]);
 
 let knownModIds = new Set<string>();
 
@@ -276,7 +291,46 @@ const loadErrorMessage = computed(() =>
     )
 );
 
+const syncedModCount = computed(() => modStore.mods.filter((mod) => mod.enabled).length);
+const hasSynchronizationState = computed(() => syncedModCount.value > 0 || selectedModIds.value.size > 0);
+
 const invalidModCount = computed(() => modStore.mods.filter((mod) => mod.verification.status !== "valid").length);
+const selectedInvalidModCount = computed(() =>
+    rows.value.filter((row) => selectedModIds.value.has(row.mod.id) && row.mod.verification.status !== "valid").length
+);
+
+const hasSelectedConflicts = computed(() => conflictMessages.value.size > 0);
+const isSynchronizationBlocked = computed(() => hasSelectedConflicts.value || selectedInvalidModCount.value > 0);
+
+const synchronizationBlockHeading = computed(() => hasSelectedConflicts.value && selectedInvalidModCount.value > 0
+    ? "Synchronization blocked"
+    : hasSelectedConflicts.value
+        ? "Conflicting selected mods"
+        : "Invalid selected mods"
+);
+
+const synchronizationBlockMessage = computed(() => {
+    const reasons: string[] = [];
+
+    if (hasSelectedConflicts.value)
+        reasons.push("Resolve the conflicting selections so only one mod targets each character appearance.");
+
+    if (selectedInvalidModCount.value > 0)
+    {
+        reasons.push(
+            `${selectedInvalidModCount.value} selected ${
+                selectedInvalidModCount.value === 1 ? "mod has" : "mods have"
+            } missing or unreadable files. Restore ${
+                selectedInvalidModCount.value === 1 ? "it" : "them"
+            }, refresh the library, or deselect ${
+                selectedInvalidModCount.value === 1 ? "it" : "them"
+            }.`
+        );
+    }
+
+    return reasons.join(" ");
+});
+
 const bulkDeleteSelectionCount = computed(() => bulkDeleteModIds.value.size);
 const areAllFilteredModsSelected = computed(() =>
     filteredRows.value.length > 0 &&
@@ -293,12 +347,6 @@ watch(() => modStore.mods, (mods) => {
 
     for (const mod of mods)
     {
-        if (mod.verification.status !== "valid")
-        {
-            nextSelection.delete(mod.id);
-            continue;
-        }
-
         if (!knownModIds.has(mod.id) && mod.enabled)
             nextSelection.add(mod.id);
     }
@@ -517,6 +565,85 @@ async function confirmBulkDeletion() {
     }
 }
 
+async function synchronizeMods(method: ModSyncMethod) {
+    if (isSynchronizing.value)
+        return;
+
+    const request: ModSyncRequest = {
+        method,
+        enabledModIds: method === "unsync"
+            ? []
+            : [...selectedModIds.value]
+    };
+
+    closeSyncMethodDialog();
+
+    isSynchronizing.value = true;
+    syncProgress.value = 0;
+    syncStatus.value = "Preparing synchronization";
+    syncDetail.value = "Reading the selected mod state";
+    syncLogEntries.value = [];
+
+    await nextTick();
+    syncProgressDialog.value?.showModal();
+
+    const removeSyncProgressListener = window.app.onModSyncProgress((progress) => {
+        syncProgress.value = progress.progress;
+        syncStatus.value = progress.status;
+        syncDetail.value = progress.detail;
+
+        if (!progress.entry)
+            return;
+
+        syncLogEntries.value = [...syncLogEntries.value, progress.entry];
+    });
+
+    try
+    {
+        const result = await window.app.syncMods(request);
+
+        syncProgress.value = 100;
+        syncStatus.value = result.success
+            ? "Synchronization complete"
+            : "Synchronization completed with issues";
+        syncDetail.value = result.message;
+        syncLogEntries.value = [...result.entries];
+    }
+    catch (error)
+    {
+        console.error("Could not synchronize mods:", error);
+
+        syncProgress.value = 100;
+        syncStatus.value = "Synchronization failed";
+        syncDetail.value = error instanceof Error
+            ? error.message
+            : "The synchronization request could not be completed.";
+
+        syncLogEntries.value = [
+            ...syncLogEntries.value,
+            {
+                modId: "synchronization-request",
+                directoryName: "Synchronization",
+                status: "failed",
+                message: syncDetail.value
+            }
+        ];
+    }
+    finally
+    {
+        removeSyncProgressListener();
+        isSynchronizing.value = false;
+        await modStore.load(true);
+    }
+}
+
+function clearSynchronizationResult() {
+    syncProgress.value = 0;
+    syncStatus.value = "";
+    syncDetail.value = "";
+    syncLogEntries.value = [];
+}
+
 function getModType(mod: InstalledMod): ModType {
     return StringUtils.normalize(mod.skin2dId).endsWith("_dam")
         ? "damaged"
@@ -672,6 +799,29 @@ function retryLoading() {
         modStore.load(true)
     ]);
 }
+
+function openSyncMethodDialog() {
+    if (isSynchronizationBlocked.value)
+        return;
+
+    syncMethodDialog.value?.showModal();
+}
+
+function closeSyncMethodDialog() {
+    syncMethodDialog.value?.close();
+}
+
+function selectSyncMethod(method: Exclude<ModSyncMethod, "unsync">) {
+    if (method === "symlink" && !props.hasAdminPrivileges)
+        return;
+
+    void synchronizeMods(method);
+}
+
+function unsyncMods() {
+    selectedModIds.value = new Set();
+    void synchronizeMods("unsync");
+}
 </script>
 
 <template>
@@ -698,6 +848,33 @@ function retryLoading() {
                     />
                     {{ isRefreshing ? "Refreshing..." : "Refresh mods" }}
                 </button>
+
+                <div
+                    v-if="modStore.mods.length > 0"
+                    class="sync-mods-control"
+                >
+                    <button
+                        class="sync-mods-button"
+                        type="button"
+                        aria-haspopup="dialog"
+                        :disabled="
+                            isBulkDeleteMode ||
+                            isSynchronizationBlocked ||
+                            !hasSynchronizationState
+                        "
+                        @click="openSyncMethodDialog"
+                    >
+                        <SyncIcon />
+                        Sync mods
+                    </button>
+
+                    <ModWarning
+                        v-if="isSynchronizationBlocked"
+                        :heading="synchronizationBlockHeading"
+                        :message="synchronizationBlockMessage"
+                        tone="error"
+                    />
+                </div>
 
                 <button
                     v-if="
@@ -1045,7 +1222,8 @@ function retryLoading() {
                                             "
                                             :disabled="
                                                 !isBulkDeleteMode &&
-                                                row.mod.verification.status !== 'valid'
+                                                row.mod.verification.status !== 'valid' &&
+                                                !isModSelected(row.mod.id)
                                             "
                                             @change="
                                                 isBulkDeleteMode
@@ -1269,6 +1447,162 @@ function retryLoading() {
             </footer>
         </template>
     </section>
+
+    <dialog
+        ref="syncMethodDialog"
+        class="mod-action-dialog sync-method-dialog"
+        aria-labelledby="sync-method-title"
+        aria-describedby="sync-method-description"
+        @cancel.prevent="closeSyncMethodDialog"
+    >
+        <div class="mod-dialog-content">
+            <p class="mod-dialog-label">Synchronize mods</p>
+
+            <h2 id="sync-method-title">
+                Choose a synchronization method
+            </h2>
+
+            <p id="sync-method-description">
+                Both methods install the enabled mods. Choose how their assets
+                should be placed in the game folder.
+            </p>
+
+            <div class="sync-method-grid">
+                <article class="sync-method-card">
+                    <header class="sync-method-card-header">
+                        <span class="sync-method-icon">
+                            <CopyIcon />
+                        </span>
+
+                        <div>
+                            <h3>Copy</h3>
+                            <p>Place ordinary copies in the game folder.</p>
+                        </div>
+                    </header>
+
+                    <div class="sync-method-comparison">
+                        <section>
+                            <h4>Pros</h4>
+                            <ul>
+                                <li>No administrator privileges required</li>
+                                <li>Works like regular game files</li>
+                                <li>Broad compatibility with other tools</li>
+                            </ul>
+                        </section>
+
+                        <section>
+                            <h4>Cons</h4>
+                            <ul>
+                                <li>Uses additional disk space</li>
+                                <li>Large mod sets take longer to sync</li>
+                            </ul>
+                        </section>
+                    </div>
+
+                    <button
+                        class="sync-method-select-button"
+                        type="button"
+                        autofocus
+                        :disabled="!hasSynchronizationState"
+                        @click="selectSyncMethod('copy')"
+                    >
+                        Use copy
+                    </button>
+                </article>
+
+                <article
+                    class="sync-method-card"
+                    :class="{
+                        'sync-method-card--disabled':
+                            !props.hasAdminPrivileges
+                    }"
+                >
+                    <header class="sync-method-card-header">
+                        <span class="sync-method-icon">
+                            <LinkIcon />
+                        </span>
+
+                        <div>
+                            <h3>Symlink</h3>
+                            <p>Link game files to the mod library.</p>
+                        </div>
+                    </header>
+
+                    <div class="sync-method-comparison">
+                        <section>
+                            <h4>Pros</h4>
+                            <ul>
+                                <li>Uses very little additional disk space</li>
+                                <li>Faster for large mod sets</li>
+                                <li>Avoids storing duplicate assets</li>
+                            </ul>
+                        </section>
+
+                        <section>
+                            <h4>Cons</h4>
+                            <ul>
+                                <li>Requires administrator privileges</li>
+                                <li>Links depend on the mod library files</li>
+                            </ul>
+                        </section>
+                    </div>
+
+                    <button
+                        class="sync-method-select-button"
+                        type="button"
+                        :disabled="!props.hasAdminPrivileges || !hasSynchronizationState"
+                        @click="selectSyncMethod('symlink')"
+                    >
+                        {{
+                            props.hasAdminPrivileges
+                                ? "Use symlink"
+                                : "Administrator required"
+                        }}
+                    </button>
+                </article>
+            </div>
+
+            <div class="sync-unsync-action">
+                <div>
+                    <strong>Remove synchronized files</strong>
+                    <span>
+                        {{
+                            syncedModCount > 0
+                                ? "Imported mods will remain in your library."
+                                : "No mods are currently synchronized."
+                        }}
+                    </span>
+                </div>
+
+                <button
+                    type="button"
+                    :disabled="syncedModCount === 0"
+                    @click="unsyncMods"
+                >
+                    Unsync mods
+                </button>
+            </div>
+
+            <div class="mod-dialog-actions sync-method-dialog-actions">
+                <button
+                    type="button"
+                    @click="closeSyncMethodDialog"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <ModSyncProgressDialog
+        ref="syncProgressDialog"
+        :busy="isSynchronizing"
+        :progress="syncProgress"
+        :status="syncStatus"
+        :detail="syncDetail"
+        :entries="syncLogEntries"
+        @done="clearSynchronizationResult"
+    />
 
     <dialog
         ref="deleteDialog"
@@ -2056,6 +2390,71 @@ h1 {
     gap: 9px;
 }
 
+.sync-mods-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.sync-mods-button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    color: #c9dfeb;
+    background: #162127;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.sync-mods-button:hover:not(:disabled) {
+    color: #e0eef5;
+    background: #1d2d35;
+}
+
+.sync-mods-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.sync-mods-button svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.sync-method-icon {
+    display: inline-flex;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #a9cee2;
+    background: #19272e;
+}
+
+.sync-method-icon svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .refresh-mods-button {
     display: inline-flex;
     min-height: 46px;
@@ -2255,6 +2654,180 @@ h1 {
     color: #a9ada7;
     font-size: 14px;
     line-height: 1.55;
+}
+
+.sync-method-dialog {
+    width: min(760px, calc(100vw - 32px));
+}
+
+.sync-method-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.sync-method-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: 18px;
+    border: 1px solid #303632;
+    border-radius: 9px;
+    background: #121613;
+}
+
+.sync-method-card--disabled {
+    border-color: #292d2a;
+    background: #101210;
+}
+
+.sync-method-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sync-method-card-header h3,
+.sync-method-card-header p {
+    margin: 0;
+}
+
+.sync-method-card-header h3 {
+    color: #f0ece3;
+    font-size: 17px;
+}
+
+.sync-method-card-header p {
+    margin-top: 3px;
+    color: #969b95;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.sync-method-card--disabled .sync-method-icon {
+    color: #747c77;
+    background: #1a1e1c;
+}
+
+.sync-method-comparison {
+    display: grid;
+    align-content: start;
+    flex: 1;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.sync-method-comparison h4 {
+    margin: 0 0 7px;
+    color: #a9cbb8;
+    font-size: 12px;
+}
+
+.sync-method-comparison section:last-child h4 {
+    color: #d5b39e;
+}
+
+.sync-method-comparison ul {
+    display: grid;
+    gap: 5px;
+    margin: 0;
+    padding-left: 17px;
+    color: #a7aca6;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.sync-method-select-button {
+    width: 100%;
+    min-height: 40px;
+    margin-top: 20px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 7px;
+    color: #172027;
+    background: #86aec7;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.sync-method-select-button:hover:not(:disabled) {
+    background: #9bbfd5;
+}
+
+.sync-method-select-button:disabled {
+    color: #777c77;
+    background: #1c201d;
+    cursor: not-allowed;
+}
+
+.sync-method-select-button:focus-visible {
+    outline: 2px solid #f2eee5;
+    outline-offset: 2px;
+}
+
+.sync-unsync-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #151311;
+}
+
+.sync-unsync-action strong,
+.sync-unsync-action span {
+    display: block;
+}
+
+.sync-unsync-action strong {
+    color: #ddd7ce;
+    font-size: 13px;
+}
+
+.sync-unsync-action span {
+    margin-top: 3px;
+    color: #918d87;
+    font-size: 12px;
+}
+
+.sync-unsync-action button {
+    min-height: 38px;
+    flex: 0 0 auto;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 7px;
+    color: #e1b8b4;
+    background: #261918;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.sync-unsync-action button:hover:not(:disabled) {
+    color: #f0c6c2;
+    background: #321e1c;
+}
+
+.sync-unsync-action button:disabled {
+    color: #777c77;
+    background: #1c201d;
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.sync-unsync-action button:focus-visible {
+    outline: 2px solid #f2eee5;
+    outline-offset: 2px;
+}
+
+.sync-method-dialog-actions {
+    margin-top: 14px;
 }
 
 .mod-dialog-actions {
@@ -2616,9 +3189,35 @@ h1 {
         flex-direction: column-reverse;
     }
 
+    .sync-mods-button,
     .refresh-mods-button,
     .bulk-delete-button,
     .add-mod-button {
+        width: 100%;
+    }
+
+    .sync-mods-control {
+        width: 100%;
+    }
+
+    .sync-mods-control .sync-mods-button {
+        flex: 1;
+    }
+
+    .sync-method-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sync-method-dialog .mod-dialog-content {
+        padding: 20px;
+    }
+
+    .sync-unsync-action {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .sync-unsync-action button {
         width: 100%;
     }
 

@@ -1,4 +1,4 @@
-import type { ModImportProgress } from "../shared/mod.js";
+import type { ModImportProgress, ModSyncProgress } from "../shared/mod.js";
 import type { PluginProgress } from "../shared/plugin.js";
 import type { IpcApi } from "../shared/ipcApi.js";
 
@@ -30,7 +30,7 @@ const modManagerApi: IpcApi = {
     onModImportProgress: (callback) => {
         const listener = (_event: IpcRendererEvent, progress: ModImportProgress) => {
             callback(progress);
-        }
+        };
 
         ipcRenderer.on("mod:import-progress", listener);
 
@@ -38,7 +38,20 @@ const modManagerApi: IpcApi = {
             ipcRenderer.removeListener("mod:import-progress", listener);
         };
     },
-    recoverInterruptedModOperations: () => ipcRenderer.invoke("mod:startup-recover")
+    recoverInterruptedModOperations: () => ipcRenderer.invoke("mod:startup-recover"),
+    hasAdminPrivileges: () => ipcRenderer.invoke("app:has-admin-privileges"),
+    syncMods: (request) => ipcRenderer.invoke("mod:sync", request),
+    onModSyncProgress: (callback) => {
+        const listener = (_event: IpcRendererEvent, progress: ModSyncProgress) => {
+            callback(progress);
+        };
+
+        ipcRenderer.on("mod:sync-progress", listener);
+
+        return () => {
+            ipcRenderer.removeListener("mod:sync-progress", listener);
+        };
+    }
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

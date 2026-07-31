@@ -119,6 +119,11 @@ export class ModRepository {
         return [...mods.values()];
     }
 
+    deleteById(id: string): boolean {
+        const result = AppDatabase.connection.prepare(`DELETE FROM mods WHERE id = ?`).run(id);
+        return result.changes === 1;
+    }
+
     getDirectoryName(id: string): string | null {
         const row = AppDatabase.connection.prepare<[string], { directoryName: string }>(`
             SELECT directory_name AS directoryName FROM mods WHERE id = ?
@@ -140,8 +145,8 @@ export class ModRepository {
         return row !== undefined;
     }
 
-    deleteById(id: string): boolean {
-        const result = AppDatabase.connection.prepare(`DELETE FROM mods WHERE id = ?`).run(id);
+    setEnabled(id: string, enabled: boolean): boolean {
+        const result = AppDatabase.connection.prepare("UPDATE mods SET enabled = ? WHERE id = ?").run(enabled ? 1 : 0, id);
         return result.changes === 1;
     }
 

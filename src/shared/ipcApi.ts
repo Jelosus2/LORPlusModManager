@@ -6,7 +6,10 @@ import type {
     InstalledMod,
     ModRenameRequest,
     BulkModDeletionResult,
-    ModImportProgress
+    ModImportProgress,
+    ModSyncRequest,
+    ModSyncResult,
+    ModSyncProgress
 } from "./mod.js";
 import type { PluginInstallResult, PluginProgress } from "./plugin.js";
 import type { GameLocationResult, SetupState } from "./setup.js";
@@ -27,4 +30,7 @@ export type IpcApi = {
     deleteMods: (modIds: readonly string[]) => Promise<BulkModDeletionResult>;
     onModImportProgress: (callback: (progress: ModImportProgress) => void) => () => void;
     recoverInterruptedModOperations: () => Promise<void>;
+    hasAdminPrivileges: () => Promise<boolean>;
+    syncMods: (request: ModSyncRequest) => Promise<ModSyncResult>;
+    onModSyncProgress: (callback: (progress: ModSyncProgress) => void) => () => void;
 };

@@ -118,3 +118,36 @@ export type ModImportProgress = Readonly<{
     detail: string;
     indeterminate?: boolean;
 }>;
+
+export type ModSyncMethod = "copy" | "symlink" | "unsync";
+
+export type ModSyncLogStatus =
+    | "synced"
+    | "failed"
+    | "unsynced"
+    | "unchanged";
+
+export type ModSyncRequest = Readonly<{
+    method: ModSyncMethod;
+    enabledModIds: readonly string[];
+}>;
+
+export type ModSyncLogEntry = Readonly<{
+    modId: string;
+    directoryName: string;
+    status: ModSyncLogStatus;
+    message: string;
+}>;
+
+export type ModSyncProgress = Readonly<{
+    progress: number;
+    status: string;
+    detail: string;
+    entry: ModSyncLogEntry | null;
+}>;
+
+export type ModSyncResult = Readonly<{
+    success: boolean;
+    message: string;
+    entries: readonly ModSyncLogEntry[];
+}>;
