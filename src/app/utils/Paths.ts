@@ -70,6 +70,26 @@ export class Paths {
         return path.join(this.getOperationsRoot(), `${id}.json`);
     }
 
+    static getSyncOperationsRoot() {
+        return path.join(Paths.getModsPath(), ".sync-operations");
+    }
+
+    static getSyncOperationManifestPath(id: string) {
+        return path.join(Paths.getSyncOperationsRoot(), `${id}.json`);
+    }
+
+    static getGamePluginRoot(gameLocation: string) {
+        return path.join(gameLocation, "BepInEx", "plugins", "LOPlugin+");
+    }
+
+    static getGameModsPath(gameLocation: string) {
+        return path.join(Paths.getGamePluginRoot(gameLocation), "mods");
+    }
+
+    static getGameSyncWorkRoot(gameLocation: string) {
+        return path.join(Paths.getGamePluginRoot(gameLocation), ".lorplus-sync");
+    }
+
     static isSubpath(parentPath: string, childPath: string): boolean {
         const relative = path.relative(parentPath, childPath);
         return Boolean(relative && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));

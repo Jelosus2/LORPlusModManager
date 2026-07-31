@@ -2,8 +2,8 @@ import type { ModSyncLogEntry, ModSyncMethod, ModSyncProgress, ModSyncRequest, M
 
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ModSyncOperationJournal } from "./ModSyncOperationJournal.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
-import { randomUUID } from "node:crypto";
 import { Paths } from "#utils/Paths.js";
 import path from "node:path";
 import fse from "fs-extra";
@@ -13,6 +13,7 @@ type ProgressReporter = (progress: ModSyncProgress) => void;
 export class ModSynchronizer {
     private readonly settingsRepository = new SettingsRepository();
     private readonly modRepository = new ModRepository();
+    private readonly operationJournal = new ModSyncOperationJournal();
 
     async synchronize(request: ModSyncRequest, reportProgress: ProgressReporter): Promise<ModSyncResult> {
         const mods = this.modRepository.getAll();
@@ -28,8 +29,15 @@ export class ModSynchronizer {
             ? new Set<string>()
             : new Set(request.enabledModIds);
 
-        const targetRoot = await this.prepareTargetRoot();
-        const workRoot = path.join(path.dirname(targetRoot), ".lorplus-sync");
+        const gameLocation = this.settingsRepository.getGameLocation();
+
+        if (!gameLocation)
+            throw new Error("The game location has not been configured.");
+        if (!await fse.exists(gameLocation))
+            throw new Error("The configured game location no longer exists.");
+
+        const targetRoot = await this.prepareTargetRoot(gameLocation);
+        const workRoot = Paths.getGameSyncWorkRoot(gameLocation);
 
         const entries: ModSyncLogEntry[] = [];
 
@@ -147,25 +155,23 @@ export class ModSynchronizer {
 
         await this.verifySourceAssets(mod, source);
 
-        const operationRoot = path.join(workRoot, randomUUID());
+        if (await this.entryExists(destination))
+            throw new Error(`A directory named "${mod.directoryName}" already exists in the game mod folder.`);
+
+        const operation = await this.operationJournal.begin(mod.id, mod.directoryName, true, method);
+        const operationRoot = path.join(workRoot, operation.id);
         const incoming = path.join(operationRoot, "incoming");
 
         let incomingInstalled = false;
-        let preserveRecoveryFiles = false;
 
         await fse.ensureDir(operationRoot);
 
         try
         {
             if (method === "copy")
-                await fse.copy(source, incoming, { errorOnExist: true });
+                await fse.copy(source, incoming, { overwrite: false, errorOnExist: true });
             else
                 await fse.symlink(source, incoming, "dir");
-
-            if (await this.entryExists(destination))
-            {
-                throw new Error(`A directory named "${mod.directoryName}" already exists in the game mod folder.`);
-            }
 
             await fse.rename(incoming, destination);
             incomingInstalled = true;
@@ -182,17 +188,14 @@ export class ModSynchronizer {
             }
             catch (rollbackError)
             {
-                preserveRecoveryFiles = true;
                 throw new Error(`${this.errorMessage(error)} Rollback also failed: ${this.errorMessage(rollbackError)}`);
             }
 
+            await this.finishOperation(operation.id, operationRoot);
             throw error;
         }
-        finally
-        {
-            if (!preserveRecoveryFiles)
-                await fse.remove(operationRoot).catch(() => undefined);
-        }
+
+        await this.finishOperation(operation.id, operationRoot);
     }
 
     private async removeMod(mod: PersistedMod, targetRoot: string, workRoot: string) {
@@ -203,19 +206,28 @@ export class ModSynchronizer {
         if (!Paths.isSubpath(targetRoot, destination))
             throw new Error("The destination mod directory is invalid.");
 
+        const operation = await this.operationJournal.begin(mod.id, mod.directoryName, false, null);
+        const operationRoot = path.join(workRoot, operation.id);
+        const previous = path.join(operationRoot, "previous");
+
         if (!await this.entryExists(destination))
         {
-            if (!this.modRepository.setEnabled(mod.id, false))
-                throw new Error("The mod library entry could not be updated.");
+            try
+            {
+                if (!this.modRepository.setEnabled(mod.id, false))
+                    throw new Error("The mod library entry could not be updated.");
+            }
+            catch (error)
+            {
+                await this.finishOperation(operation.id, operationRoot);
+                throw error;
+            }
 
+            await this.finishOperation(operation.id, operationRoot);
             return;
         }
 
-        const operationRoot = path.join(workRoot, randomUUID());
-        const previous = path.join(operationRoot, "previous");
-
         let destinationMoved = false;
-        let preserveRecoveryFiles = false;
 
         await fse.ensureDir(operationRoot);
 
@@ -236,17 +248,14 @@ export class ModSynchronizer {
             }
             catch (rollbackError)
             {
-                preserveRecoveryFiles = true;
                 throw new Error(`${this.errorMessage(error)} Rollback also failed: ${this.errorMessage(rollbackError)}`);
             }
 
+            await this.finishOperation(operation.id, operationRoot);
             throw error;
         }
-        finally
-        {
-            if (!preserveRecoveryFiles)
-                await fse.remove(operationRoot).catch(() => undefined);
-        }
+
+        await this.finishOperation(operation.id, operationRoot);
     }
 
     private async verifySourceAssets(mod: PersistedMod, source: string) {
@@ -276,19 +285,12 @@ export class ModSynchronizer {
         }
     }
 
-    private async prepareTargetRoot(): Promise<string> {
-        const gameLocation = this.settingsRepository.getGameLocation();
-
-        if (!gameLocation)
-            throw new Error("The game location has not been configured.");
-        if (!await fse.exists(gameLocation))
-            throw new Error("The configured game location no longer exists.");
-
-        const pluginPath = path.join(gameLocation, "BepInEx", "plugins", "LOPlugin+", "LOPlugin+.dll");
+    private async prepareTargetRoot(gameLocation: string): Promise<string> {
+        const pluginPath = path.join(Paths.getGamePluginRoot(gameLocation), "LOPlugin+.dll");
         if (!await fse.exists(pluginPath))
-            throw new Error("The plugin is missing");
+            throw new Error("The plugin LOPlugin+ is missing.");
 
-        const targetRoot = path.join(path.dirname(pluginPath), "mods");
+        const targetRoot = Paths.getGameModsPath(gameLocation);
 
         if (!Paths.isSubpath(gameLocation, targetRoot))
             throw new Error("The synchronization directory is invalid.");
@@ -309,6 +311,18 @@ export class ModSynchronizer {
                 return false;
 
             throw error;
+        }
+    }
+
+    private async finishOperation(operationId: string, operationRoot: string) {
+        try
+        {
+            await fse.remove(operationRoot);
+            await this.operationJournal.complete(operationId);
+        }
+        catch (error)
+        {
+            console.error(`Could not finish synchronization operation ${operationId}:`, error);
         }
     }
 
