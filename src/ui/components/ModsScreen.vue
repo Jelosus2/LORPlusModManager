@@ -293,6 +293,7 @@ const loadErrorMessage = computed(() =>
 
 const syncedModCount = computed(() => modStore.mods.filter((mod) => mod.enabled).length);
 const hasSynchronizationState = computed(() => syncedModCount.value > 0 || selectedModIds.value.size > 0);
+const hasPendingSynchronizationChanges = computed(() => modStore.mods.some((mod) => selectedModIds.value.has(mod.id) !== mod.enabled));
 
 const invalidModCount = computed(() => modStore.mods.filter((mod) => mod.verification.status !== "valid").length);
 const selectedInvalidModCount = computed(() =>
@@ -370,6 +371,7 @@ async function refreshMods() {
 
     isRefreshing.value = true;
     refreshErrorMessage.value = "";
+    actionErrorMessage.value = "";
 
     try
     {
@@ -576,6 +578,8 @@ async function confirmBulkDeletion() {
 async function synchronizeMods(method: ModSyncMethod) {
     if (isSynchronizing.value)
         return;
+
+    actionErrorMessage.value = "";
 
     const request: ModSyncRequest = {
         method,
@@ -820,6 +824,8 @@ function closeSyncMethodDialog() {
 }
 
 function selectSyncMethod(method: Exclude<ModSyncMethod, "unsync">) {
+    if (!hasPendingSynchronizationChanges.value)
+        return;
     if (method === "symlink" && !props.hasAdminPrivileges)
         return;
 
@@ -1078,13 +1084,13 @@ function unsyncMods() {
                 </div>
             </div>
 
-            <div
+            <aside
                 v-if="actionErrorMessage"
                 class="action-error"
                 role="alert"
             >
                 {{ actionErrorMessage }}
-            </div>
+            </aside>
 
             <div
                 v-if="visibleRows.length"
@@ -1313,12 +1319,17 @@ function unsyncMods() {
                                 <div class="mod-actions">
                                     <button
                                         type="button"
-                                        aria-label="Open mod folder"
-                                        title="Open folder"
-                                        :disabled="
-                                            isBulkDeleteMode ||
-                                            row.mod.verification.status === 'missing-directory'
+                                        :aria-label="
+                                            row.mod.enabled
+                                                ? 'Open synchronized mod folder'
+                                                : 'Open mod folder'
                                         "
+                                        :title="
+                                            row.mod.enabled
+                                                ? 'Open synchronized folder'
+                                                : 'Open mod folder'
+                                        "
+                                        :disabled="isBulkDeleteMode"
                                         @click="openModFolder(row.mod)"
                                     >
                                         <FolderIcon />
@@ -1476,7 +1487,12 @@ function unsyncMods() {
             </p>
 
             <div class="sync-method-grid">
-                <article class="sync-method-card">
+                <article
+                    class="sync-method-card"
+                    :class="{
+                        'sync-method-card--disabled': !hasPendingSynchronizationChanges
+                    }"
+                >
                     <header class="sync-method-card-header">
                         <span class="sync-method-icon">
                             <CopyIcon />
@@ -1484,7 +1500,18 @@ function unsyncMods() {
 
                         <div>
                             <h3>Copy</h3>
-                            <p>Place ordinary copies in the game folder.</p>
+                            <p
+                                :class="{
+                                    'sync-method-disabled-reason':
+                                        !hasPendingSynchronizationChanges
+                                }"
+                            >
+                                {{
+                                    hasPendingSynchronizationChanges
+                                        ? "Place ordinary copies in the game folder."
+                                        : "The table selection is already synchronized."
+                                }}
+                            </p>
                         </div>
                     </header>
 
@@ -1511,18 +1538,21 @@ function unsyncMods() {
                         class="sync-method-select-button"
                         type="button"
                         autofocus
-                        :disabled="!hasSynchronizationState"
+                        :disabled="!hasPendingSynchronizationChanges"
                         @click="selectSyncMethod('copy')"
                     >
-                        Use copy
+                        {{
+                            hasPendingSynchronizationChanges
+                                ? "Use copy"
+                                : "Nothing to synchronize"
+                        }}
                     </button>
                 </article>
 
                 <article
                     class="sync-method-card"
                     :class="{
-                        'sync-method-card--disabled':
-                            !props.hasAdminPrivileges
+                        'sync-method-card--disabled': !props.hasAdminPrivileges || !hasPendingSynchronizationChanges
                     }"
                 >
                     <header class="sync-method-card-header">
@@ -1532,7 +1562,18 @@ function unsyncMods() {
 
                         <div>
                             <h3>Symlink</h3>
-                            <p>Link game files to the mod library.</p>
+                            <p
+                                :class="{
+                                    'sync-method-disabled-reason':
+                                        !hasPendingSynchronizationChanges
+                                }"
+                            >
+                                {{
+                                    hasPendingSynchronizationChanges
+                                        ? "Link game files to the mod library."
+                                        : "The table selection is already synchronized."
+                                }}
+                            </p>
                         </div>
                     </header>
 
@@ -1558,13 +1599,15 @@ function unsyncMods() {
                     <button
                         class="sync-method-select-button"
                         type="button"
-                        :disabled="!props.hasAdminPrivileges || !hasSynchronizationState"
+                        :disabled="!props.hasAdminPrivileges || !hasPendingSynchronizationChanges"
                         @click="selectSyncMethod('symlink')"
                     >
                         {{
-                            props.hasAdminPrivileges
-                                ? "Use symlink"
-                                : "Administrator required"
+                            !hasPendingSynchronizationChanges
+                                ? "Nothing to synchronize"
+                                : props.hasAdminPrivileges
+                                    ? "Use symlink"
+                                    : "Administrator required"
                         }}
                     </button>
                 </article>
@@ -2351,14 +2394,60 @@ h1 {
     opacity: 0.4;
 }
 
-.refresh-error,
-.action-error {
+.refresh-error {
     margin-top: 14px;
     padding: 11px 13px;
     border-radius: 6px;
     color: #efa3a3;
     background: #241717;
     font-size: 13px;
+}
+
+.action-error {
+    position: fixed;
+    right: clamp(20px, 3vw, 42px);
+    bottom: clamp(20px, 3vw, 34px);
+    z-index: 80;
+    display: flex;
+    width: min(440px, calc(100vw - 40px));
+    align-items: flex-start;
+    gap: 11px;
+    padding: 14px 16px;
+    border: 1px solid #623d3d;
+    border-radius: 8px;
+    color: #f2b2b2;
+    background: #241717;
+    box-shadow: 0 12px 30px rgb(0 0 0 / 38%);
+    font-size: 13px;
+    line-height: 1.45;
+    animation: action-error-enter 160ms ease-out;
+}
+
+.action-error::before {
+    display: grid;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    place-items: center;
+    border-radius: 50%;
+    color: #241717;
+    background: #d98e8e;
+    content: "!";
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+@keyframes action-error-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .view-message {
@@ -2711,6 +2800,10 @@ h1 {
     color: #969b95;
     font-size: 12px;
     line-height: 1.4;
+}
+
+.sync-method-card-header .sync-method-disabled-reason {
+    color: #b8aa8d;
 }
 
 .sync-method-card--disabled .sync-method-icon {
@@ -3257,7 +3350,9 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .action-error,
     .mods-table tbody tr {
+        animation: none;
         transition: none;
     }
 

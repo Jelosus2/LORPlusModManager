@@ -1,6 +1,7 @@
-import type { BulkModDeletionResult } from "../../shared/mod.js";
+import type { BulkModDeletionResult, PersistedMod } from "../../shared/mod.js";
 
 import { ModSynchronizer, type ModSyncInstallMethod } from "./ModSynchronizer.js";
+import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { ModOperationJournal } from "./ModOperationJournal.js";
@@ -25,20 +26,33 @@ export class ModLibraryError extends Error {
 }
 
 export class ModLibraryService {
+    private readonly settingsRepository = new SettingsRepository();
     private readonly modRepository = new ModRepository();
     private readonly operationJournal = new ModOperationJournal();
     private readonly modSynchronizer = new ModSynchronizer();
 
     async openFolder(modId: string) {
-        const directoryName = this.getDirectoryName(modId);
-        const directoryPath = this.resolveModDirectory(directoryName);
+        const mod = this.getMod(modId);
 
-        if (!await fse.exists(directoryPath))
-            throw new ModLibraryError("The mod directory no longer exists.");
+        if (mod.enabled)
+        {
+            const gameLocation = this.settingsRepository.getGameLocation();
 
-        const errorMessage = await shell.openPath(directoryPath);
-        if (errorMessage)
-            throw new ModLibraryError("The mod directory could not be opened.");
+            if (gameLocation)
+            {
+                const gameModsRoot = Paths.getGameModsPath(gameLocation);
+                const synchronizedDirectory = path.join(gameModsRoot, mod.directoryName);
+
+                if (Paths.isSubpath(gameModsRoot, synchronizedDirectory) && await this.tryOpenDirectory(synchronizedDirectory))
+                    return;
+            }
+        }
+
+        const importedDirectory = this.resolveModDirectory(mod.directoryName);
+        if (await this.tryOpenDirectory(importedDirectory))
+            return;
+
+        throw new ModLibraryError("Neither the synchronized nor imported mod directory could be opened.");
     }
 
     async delete(modId: string) {
@@ -329,6 +343,37 @@ export class ModLibraryService {
         {
             console.error(`Could not complete mod operation ${operationId}:`, error);
         }
+    }
+
+    private async tryOpenDirectory(directoryPath: string): Promise<boolean> {
+        try
+        {
+            const stats = await fse.stat(directoryPath);
+            if (!stats.isDirectory())
+                return false;
+
+            const errorMessage = await shell.openPath(directoryPath);
+            if (errorMessage)
+            {
+                console.log(`Could not open directory ${directoryPath}: ${errorMessage}`);
+                return false;
+            }
+
+            return true;
+        }
+        catch (error)
+        {
+            console.log(`Could not access directory ${directoryPath}:`, error);
+            return false;
+        }
+    }
+
+    private getMod(modId: string): PersistedMod {
+        const mod = this.modRepository.getAll().find((candidate) => candidate.id === modId);
+        if (!mod)
+            throw new ModLibraryError("The selected mod could not be found.");
+
+        return mod;
     }
 
     private getDirectoryName(modId: string): string {

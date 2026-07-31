@@ -145,6 +145,23 @@ export class ModSynchronizer {
     ): Promise<ModSyncLogEntry> {
         if (shouldBeEnabled === mod.enabled)
         {
+            if (shouldBeEnabled)
+            {
+                try
+                {
+                    await this.verifyExistingSynchronization(mod, targetRoot);
+                }
+                catch (error)
+                {
+                    return {
+                        modId: mod.id,
+                        directoryName: mod.directoryName,
+                        status: "failed",
+                        message: this.errorMessage(error)
+                    };
+                }
+            }
+
             return {
                 modId: mod.id,
                 directoryName: mod.directoryName,
@@ -312,30 +329,72 @@ export class ModSynchronizer {
     }
 
     private async verifySourceAssets(mod: PersistedMod, source: string) {
-        const sourceStats = await fse.stat(source);
-        if (!sourceStats.isDirectory())
-            throw new Error("The imported mod directory is missing.");
+        await this.verifyModAssets(mod, source, "imported");
+    }
+
+    private async verifyModAssets(mod: PersistedMod, directory: string, location: "imported" | "synchronized") {
+        const directoryDescription = location === "imported"
+            ? "The imported mod directory"
+            : "The synchronized mod directory";
+
+        let directoryStats: fse.Stats;
+
+        try
+        {
+            directoryStats = await fse.stat(directory);
+        }
+        catch (error)
+        {
+            if (TypeCheck.isNodeError(error) && error.code === "ENOENT")
+                throw new Error(`${directoryDescription} is missing.`);
+
+            throw error;
+        }
+
+        if (!directoryStats.isDirectory())
+            throw new Error(`${directoryDescription} is not a directory.`);
 
         for (const assetName of mod.assetNames)
         {
             if (path.basename(assetName) !== assetName)
                 throw new Error(`Invalid asset name: ${assetName}.`);
 
-            const assetPath = path.join(source, assetName);
-            if (!Paths.isSubpath(source, assetPath))
+            const assetPath = path.join(directory, assetName);
+            if (!Paths.isSubpath(directory, assetPath))
                 throw new Error(`Invalid asset path: ${assetName}.`);
 
             try
             {
                 const stats = await fse.stat(assetPath);
+
                 if (!stats.isFile())
-                    throw new Error();
+                    throw new Error(`Required ${location} mod asset is not a file: ${assetName}.`);
             }
-            catch
+            catch (error)
             {
-                throw new Error(`Required asset is missing: ${assetName}.`);
+                if (TypeCheck.isNodeError(error) && error.code === "ENOENT")
+                    throw new Error(`Required ${location} mod asset is missing: ${assetName}.`);
+
+                throw error;
             }
         }
+    }
+
+    private async verifyExistingSynchronization(mod: PersistedMod, targetRoot: string) {
+        if (!Paths.isSafeModDirectoryName(mod.directoryName))
+            throw new Error("The mod directory name is invalid.");
+
+        const modsRoot = Paths.getModsPath();
+        const source = path.join(modsRoot, mod.directoryName);
+        const destination = path.join(targetRoot, mod.directoryName);
+
+        if (!Paths.isSubpath(modsRoot, source))
+            throw new Error("The imported mod directory is invalid.");
+        if (!Paths.isSubpath(targetRoot, destination))
+            throw new Error("The synchronized mod directory is invalid.");
+
+        await this.verifyModAssets(mod, source, "imported");
+        await this.verifyModAssets(mod, destination, "synchronized");
     }
 
     private async prepareTargetRoot(gameLocation: string): Promise<string> {
