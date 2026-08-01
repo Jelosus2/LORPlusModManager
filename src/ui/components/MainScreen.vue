@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { ModImportMode, SelectedModSource, ModExtractionRequest, ModExtractionResult, ModImportProgress } from "../../shared/mod.ts";
 
-import CharactersScreen from "./CharactersScreen.vue";
-import ImportFileIcon from "./icons/ImportFileIcon.vue";
 import ImportFilesIcon from "./icons/ImportFilesIcon.vue";
-import ModImportScreen from "./ModImportScreen.vue";
 import ModExtractionModal from "./ModExtractionModal.vue";
+import ImportFileIcon from "./icons/ImportFileIcon.vue";
+import CharactersScreen from "./CharactersScreen.vue";
+import ModImportScreen from "./ModImportScreen.vue";
+import SettingsScreen from "./SettingsScreen.vue";
 import ModsScreen from "./ModsScreen.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
@@ -13,7 +14,7 @@ import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { useModStore } from "@/stores/modStore.ts";
 import { ref, onMounted } from "vue";
 
-type MainSection = "mods" | "characters";
+type MainSection = "mods" | "characters" | "settings";
 type ModsView = "library" | "import";
 
 const characterCatalog = useCharacterCatalogStore();
@@ -257,37 +258,63 @@ onMounted(() => {
     <div class="app-shell">
         <aside class="sidebar">
             <nav class="main-navigation" aria-label="Main navigation">
-                <button
-                    class="navigation-item"
-                    :class="{
-                        'navigation-item--active': activeSection === 'mods'
-                    }"
-                    type="button"
-                    :aria-current="activeSection === 'mods' ? 'page' : undefined"
-                    @click="activeSection = 'mods'"
-                >
-                    Mods
-                </button>
+                <section class="navigation-group" aria-labelledby="modding-navigation-label">
+                    <p id="modding-navigation-label" class="navigation-category">
+                        Modding
+                    </p>
 
-                <button
-                    class="navigation-item"
-                    :class="{
-                        'navigation-item--active': activeSection === 'characters'
-                    }"
-                    type="button"
-                    :aria-current="activeSection === 'characters' ? 'page' : undefined"
-                    @click="activeSection = 'characters'"
-                >
-                    Characters
-                </button>
+                    <div class="navigation-group-items">
+                        <button
+                            class="navigation-item"
+                            :class="{
+                                'navigation-item--active': activeSection === 'mods'
+                            }"
+                            type="button"
+                            :aria-current="activeSection === 'mods' ? 'page' : undefined"
+                            @click="activeSection = 'mods'"
+                        >
+                            Mods
+                        </button>
 
-                <button class="navigation-item" type="button">
-                    Settings
-                </button>
+                        <button
+                            class="navigation-item"
+                            :class="{
+                                'navigation-item--active': activeSection === 'characters'
+                            }"
+                            type="button"
+                            :aria-current="activeSection === 'characters' ? 'page' : undefined"
+                            @click="activeSection = 'characters'"
+                        >
+                            Characters
+                        </button>
+                    </div>
+                </section>
+
+                <section class="navigation-group" aria-labelledby="configuration-navigation-label">
+                    <p id="configuration-navigation-label" class="navigation-category">
+                        Configuration
+                    </p>
+
+                    <div class="navigation-group-items">
+                        <button
+                            class="navigation-item"
+                            :class="{
+                                'navigation-item--active': activeSection === 'settings'
+                            }"
+                            type="button"
+                            :aria-current="activeSection === 'settings' ? 'page' : undefined"
+                            @click="activeSection = 'settings'"
+                        >
+                            Settings
+                        </button>
+                    </div>
+                </section>
             </nav>
         </aside>
 
         <main class="main-content">
+            <SettingsScreen v-if="activeSection === 'settings'" />
+
             <CharactersScreen v-if="activeSection === 'characters'" />
 
             <ModImportScreen
@@ -443,7 +470,33 @@ onMounted(() => {
 .main-navigation {
     display: flex;
     flex-direction: column;
+    gap: 24px;
+}
+
+.navigation-group,
+.navigation-group-items {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.navigation-group {
+    gap: 7px;
+}
+
+.navigation-group-items {
     gap: 5px;
+}
+
+.navigation-category {
+    margin: 0;
+    padding: 0 14px;
+    color: #8eb9ce;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    text-transform: uppercase;
 }
 
 .navigation-item {
@@ -764,6 +817,16 @@ onMounted(() => {
     }
 
     .main-navigation {
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 18px;
+    }
+
+    .navigation-group {
+        gap: 4px;
+    }
+
+    .navigation-group-items {
         flex-direction: row;
     }
 
