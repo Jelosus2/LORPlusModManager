@@ -1,6 +1,7 @@
 import type { CharacterCatalog, CharacterSkin } from "../../shared/characters";
 
 import { computed, ref, shallowRef } from "vue";
+import { ErrorUtils } from "@/utils/ErrorUtils";
 import { defineStore } from "pinia";
 
 const EMPTY_CHARACTERS: readonly CharacterSkin[] = Object.freeze([]);
@@ -48,7 +49,7 @@ export const useCharacterCatalogStore = defineStore("character-catalog", () => {
             {
                 console.error("Failed to load the character catalog:", error);
 
-                errorMessage.value = "Could not load the character information.";
+                errorMessage.value = ErrorUtils.getUserErrorMessage(error, "Could not load the character information.");
                 return false;
             }
             finally

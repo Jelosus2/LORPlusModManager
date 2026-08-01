@@ -18,6 +18,7 @@ import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
 import { useModStore, createCatalogIdentity } from "@/stores/modStore";
 import { getCharacterIconUrl } from "@/data/characterIcons";
 import { StringUtils } from "@/utils/StringUtils";
+import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { computed, ref, watch, nextTick } from "vue";
 
 type ModType = "normal" | "damaged";
@@ -37,6 +38,7 @@ type SortDirection = "ascending" | "descending";
 
 const props = defineProps<{
     hasAdminPrivileges: boolean;
+    adminPrivilegeError: string;
 }>();
 
 type ModTableRow = {
@@ -377,7 +379,7 @@ async function refreshMods() {
     {
         const refreshed = await modStore.load(true);
         if (!refreshed)
-            refreshErrorMessage.value = "The mods could not be refreshed.";
+            refreshErrorMessage.value = modStore.errorMessage || "The mods could not be refreshed.";
     }
     finally
     {
@@ -395,7 +397,7 @@ async function openModFolder(mod: InstalledMod) {
     catch (error)
     {
         console.error("Could not open the mod folder:", error);
-        actionErrorMessage.value =  "The mod folder could not be opened. Refresh the list and try again.";
+        actionErrorMessage.value = ErrorUtils.getUserErrorMessage(error, "The mod folder could not be opened. Refresh the list and try again.");
     }
 }
 
@@ -428,12 +430,16 @@ async function confirmModDeletion() {
 
         const refreshed = await modStore.load(true);
         if (!refreshed)
-            actionErrorMessage.value = "The mod was deleted, but the list could not be refreshed.";
+        {
+            actionErrorMessage.value =
+                "The mod was deleted, but the list could not be refreshed. " +
+                (modStore.errorMessage || "Try refreshing it again.");
+        }
     }
     catch (error)
     {
         console.error("Could not delete the mod:", error);
-        actionErrorMessage.value = "The mod could not be deleted. Its files and library entry were left unchanged.";
+        actionErrorMessage.value = ErrorUtils.getUserErrorMessage(error, "The mod could not be deleted.");
     }
     finally
     {
@@ -484,7 +490,11 @@ async function confirmModRename() {
 
         const refreshed = await modStore.load(true);
         if (!refreshed)
-            actionErrorMessage.value = "The mod was renamed, but the list could not be refreshed.";
+        {
+            actionErrorMessage.value =
+                "The mod was renamed, but the list could not be refreshed. " +
+                (modStore.errorMessage || "Try refreshing it again.");
+        }
     }
     catch (error)
     {
@@ -497,7 +507,7 @@ async function confirmModRename() {
         if (message)
             renameErrorMessage.value = message;
         else
-            renameErrorMessage.value = "The mod could not be renamed. Another mod or folder may already use that name.";
+            renameErrorMessage.value = ErrorUtils.getUserErrorMessage(error, "The mod could not be renamed.");
     }
     finally
     {
@@ -550,7 +560,11 @@ async function confirmBulkDeletion() {
         const refreshed = await modStore.load(true);
 
         if (!refreshed)
-            actionErrorMessage.value = "The mods were processed, but the list could not be refreshed.";
+        {
+            actionErrorMessage.value =
+                "The mods were processed, but the list could not be refreshed. " +
+                (modStore.errorMessage || "Try refreshing it again.");;
+        }
 
         await nextTick();
         bulkDeleteResultDialog.value?.showModal();
@@ -563,7 +577,7 @@ async function confirmBulkDeletion() {
             requestedCount: requestedModIds.length,
             deletedCount: 0,
             failures: [],
-            requestError: "The selected mods could not be deleted."
+            requestError: ErrorUtils.getUserErrorMessage(error, "The selected mods could not be deleted.")
         };
 
         await nextTick();
@@ -627,9 +641,7 @@ async function synchronizeMods(method: ModSyncMethod) {
 
         syncProgress.value = 100;
         syncStatus.value = "Synchronization failed";
-        syncDetail.value = error instanceof Error
-            ? error.message
-            : "The synchronization request could not be completed.";
+        syncDetail.value = ErrorUtils.getUserErrorMessage(error, "The synchronization request could not be completed.");
 
         syncLogEntries.value = [
             ...syncLogEntries.value,
@@ -645,7 +657,13 @@ async function synchronizeMods(method: ModSyncMethod) {
     {
         removeSyncProgressListener();
         isSynchronizing.value = false;
-        await modStore.load(true);
+
+        const refreshed = await modStore.load(true);
+        if (!refreshed)
+        {
+            const refreshMessage = modStore.errorMessage || "The mod list could not be refreshed.";
+            syncDetail.value = `${syncDetail.value} ${refreshMessage}`.trim();
+        }
     }
 }
 
@@ -1552,7 +1570,12 @@ function unsyncMods() {
                 <article
                     class="sync-method-card"
                     :class="{
-                        'sync-method-card--disabled': !props.hasAdminPrivileges || !hasPendingSynchronizationChanges
+                        'sync-method-card--disabled':
+                            !props.hasAdminPrivileges ||
+                            !hasPendingSynchronizationChanges,
+                        'sync-method-card--error':
+                            hasPendingSynchronizationChanges &&
+                            Boolean(props.adminPrivilegeError)
                     }"
                 >
                     <header class="sync-method-card-header">
@@ -1565,13 +1588,18 @@ function unsyncMods() {
                             <p
                                 :class="{
                                     'sync-method-disabled-reason':
-                                        !hasPendingSynchronizationChanges
+                                        !hasPendingSynchronizationChanges,
+                                    'sync-method-error-reason':
+                                        hasPendingSynchronizationChanges &&
+                                        Boolean(props.adminPrivilegeError)
                                 }"
                             >
                                 {{
-                                    hasPendingSynchronizationChanges
-                                        ? "Link game files to the mod library."
-                                        : "The table selection is already synchronized."
+                                    !hasPendingSynchronizationChanges
+                                        ? "The table selection is already synchronized."
+                                        : props.adminPrivilegeError
+                                            ? props.adminPrivilegeError
+                                            : "Link game files to the mod library."
                                 }}
                             </p>
                         </div>
@@ -1605,9 +1633,11 @@ function unsyncMods() {
                         {{
                             !hasPendingSynchronizationChanges
                                 ? "Nothing to synchronize"
-                                : props.hasAdminPrivileges
-                                    ? "Use symlink"
-                                    : "Administrator required"
+                                : props.adminPrivilegeError
+                                    ? "Privilege check unavailable"
+                                    : props.hasAdminPrivileges
+                                        ? "Use symlink"
+                                        : "Administrator required"
                         }}
                     </button>
                 </article>
@@ -2804,6 +2834,14 @@ h1 {
 
 .sync-method-card-header .sync-method-disabled-reason {
     color: #b8aa8d;
+}
+
+.sync-method-card--error {
+    border-color: #5a3939;
+}
+
+.sync-method-card-header .sync-method-error-reason {
+    color: #dfa3a3;
 }
 
 .sync-method-card--disabled .sync-method-icon {

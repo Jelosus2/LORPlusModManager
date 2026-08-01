@@ -9,6 +9,7 @@ import ModExtractionModal from "./ModExtractionModal.vue";
 import ModsScreen from "./ModsScreen.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
+import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { useModStore } from "@/stores/modStore.ts";
 import { ref, onMounted } from "vue";
 
@@ -32,6 +33,7 @@ const isExtractingMods = ref(false);
 const extractionResult = ref<ModExtractionResult | null>(null);
 const modImportProgress = ref<ModImportProgress | null>(null);
 const hasAdminPrivileges = ref(false);
+const adminPrivilegeErrorMessage = ref("");
 
 async function selectModSources(mode: ModImportMode) {
     if (isSelectingMods.value)
@@ -74,7 +76,7 @@ async function selectModSources(mode: ModImportMode) {
         console.error("Couldn't process the mod sources:", error);
 
         importFailed.value = true;
-        importMessage.value = "The selected mods could not be read.";
+        importMessage.value = ErrorUtils.getUserErrorMessage(error, "The selected mods could not be read.");
     } finally {
         isSelectingMods.value = false;
     }
@@ -154,9 +156,11 @@ async function prepareModExtraction() {
     {
         console.error("Could not import the selected mod files:", error);
 
+        const message = ErrorUtils.getUserErrorMessage(error, "The selected mod files could not be imported.");
+
         extractionResult.value = {
             success: false,
-            message: "The selected mod files could not be imported.",
+            message,
             importedSourceIds: [],
             mods: [],
             warnings: [],
@@ -165,7 +169,7 @@ async function prepareModExtraction() {
                     sourceId: null,
                     sourceName: "Import",
                     kind: "extraction",
-                    message: "The selected mod files could not be imported.",
+                    message,
                     candidates: []
                 }
             ]
@@ -225,6 +229,8 @@ function hidePopover(id: string) {
 }
 
 async function loadAdminPrivilegeState() {
+    adminPrivilegeErrorMessage.value = "";
+
     try
     {
         hasAdminPrivileges.value = await window.app.hasAdminPrivileges();
@@ -232,7 +238,9 @@ async function loadAdminPrivilegeState() {
     catch (error)
     {
         console.error("Could not check administrator privileges:", error);
+
         hasAdminPrivileges.value = false;
+        adminPrivilegeErrorMessage.value = ErrorUtils.getUserErrorMessage(error, "Administrator privilege status could not be checked.");
     }
 }
 
@@ -302,6 +310,7 @@ onMounted(() => {
                     modsView === 'library'
                 "
                 :has-admin-privileges="hasAdminPrivileges"
+                :admin-privilege-error="adminPrivilegeErrorMessage"
             />
         </main>
 

@@ -2,6 +2,7 @@ import type { InstalledMod } from "../../shared/mod";
 
 import { computed, ref, shallowRef } from "vue";
 import { StringUtils } from "@/utils/StringUtils";
+import { ErrorUtils } from "@/utils/ErrorUtils";
 import { defineStore } from "pinia";
 
 const EMPTY_MODS: readonly InstalledMod[] = Object.freeze([]);
@@ -65,7 +66,7 @@ export const useModStore = defineStore("mods", () => {
             {
                 console.error("Failed to load installed mods:", error);
 
-                errorMessage.value = "Could not load the installed mods.";
+                errorMessage.value = ErrorUtils.getUserErrorMessage(error, "Could not load the installed mods.");
                 return false;
             }
             finally

@@ -4,6 +4,7 @@ import type { SetupState } from "../shared/setup.ts";
 import SetupScreen from "./components/SetupScreen.vue";
 import MainScreen from "./components/MainScreen.vue";
 
+import { ErrorUtils } from "./utils/ErrorUtils.ts";
 import { ref, onMounted } from "vue";
 
 const setupState = ref<SetupState | null>(null);
@@ -24,7 +25,7 @@ async function loadSetupState() {
         console.error("Failed to initialize the application:", error);
 
         setupState.value = null;
-        startupError.value = "Could not finish checking the mod library.";
+        startupError.value = ErrorUtils.getUserErrorMessage(error, "Could not finish checking the mod library.");
     }
     finally
     {
