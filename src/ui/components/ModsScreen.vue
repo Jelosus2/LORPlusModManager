@@ -36,6 +36,8 @@ type SortKey =
 
 type SortDirection = "ascending" | "descending";
 
+const ACTION_ERROR_DISMISS_DELAY = 6000;
+
 const props = defineProps<{
     hasAdminPrivileges: boolean;
     adminPrivilegeError: string;
@@ -366,6 +368,20 @@ watch(totalPages, (pageCount) => {
     if (currentPage.value > pageCount)
         currentPage.value = pageCount;
 });
+
+watch(actionErrorMessage, (message, _previousMessage, onCleanup) => {
+    if (!message)
+        return;
+
+    const timeoutId = window.setTimeout(() => {
+        if (actionErrorMessage.value === message)
+            actionErrorMessage.value = "";
+    }, ACTION_ERROR_DISMISS_DELAY);
+
+    onCleanup(() => {
+        window.clearTimeout(timeoutId);
+    });
+})
 
 async function refreshMods() {
     if (isRefreshing.value)
@@ -1102,13 +1118,15 @@ function unsyncMods() {
                 </div>
             </div>
 
-            <aside
-                v-if="actionErrorMessage"
-                class="action-error"
-                role="alert"
-            >
-                {{ actionErrorMessage }}
-            </aside>
+            <Transition name="action-toast">
+                <aside
+                    v-if="actionErrorMessage"
+                    class="action-error"
+                    role="alert"
+                >
+                    {{ actionErrorMessage }}
+                </aside>
+            </Transition>
 
             <div
                 v-if="visibleRows.length"
@@ -2450,7 +2468,6 @@ h1 {
     box-shadow: 0 12px 30px rgb(0 0 0 / 38%);
     font-size: 13px;
     line-height: 1.45;
-    animation: action-error-enter 160ms ease-out;
 }
 
 .action-error::before {
@@ -2468,16 +2485,17 @@ h1 {
     line-height: 1;
 }
 
-@keyframes action-error-enter {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
+.action-toast-enter-active,
+.action-toast-leave-active {
+    transition:
+        opacity 160ms ease,
+        transform 160ms ease;
+}
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.action-toast-enter-from,
+.action-toast-leave-to {
+    opacity: 0;
+    transform: translateY(8px);
 }
 
 .view-message {

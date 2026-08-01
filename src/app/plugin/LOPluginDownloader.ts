@@ -124,7 +124,15 @@ export class LOPluginDownloader {
         }
         catch (error)
         {
-            await fse.rm(downloadDirectory, { recursive: true, force: true });
+            try
+            {
+                await fse.rm(downloadDirectory, { recursive: true, force: true });
+            }
+            catch (cleanupError)
+            {
+                console.error("Could not clean the failed plugin download:", cleanupError);
+            }
+
             throw error;
         }
     }

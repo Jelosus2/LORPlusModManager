@@ -1,5 +1,6 @@
 import type { InstalledMod, ModVerification, PersistedMod } from "../../shared/mod.js";
 
+import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { Paths } from "#utils/Paths.js";
 import path from "node:path";
@@ -40,7 +41,8 @@ export class ModVerifier {
         {
             return this.withVerification(mod, {
                 status: "unreadable",
-                missingAssets: [...mod.assetNames]
+                missingAssets: [...mod.assetNames],
+                message: "The imported mod directory is not inside the mods directory."
             });
         }
 
@@ -54,7 +56,12 @@ export class ModVerifier {
                 status: missingAssets.length > 0
                     ? "missing-assets"
                     : "valid",
-                missingAssets
+                missingAssets: missingAssets.length > 0
+                    ? missingAssets
+                    : [],
+                message: missingAssets.length > 0
+                    ? `${missingAssets.length} required ${missingAssets.length === 1 ? "asset is" : "assets are"} missing: ${missingAssets.join(", ")}.`
+                    : ""
             });
         }
         catch (error)
@@ -63,11 +70,21 @@ export class ModVerifier {
                 ? error.code
                 : "";
 
+            let message: string;
+
+            if (code === "ENOENT")
+                message = "The imported mod directory no longer exists.";
+            else if (code === "ENOTDIR")
+                message = "Part of the imported mod path is not a directory.";
+            else
+                message = ErrorUtils.combineWithCause("The imported mod directory could not be read.", error);
+
             return this.withVerification(mod, {
                 status: code === "ENOENT" || code === "ENOTDIR"
                     ? "missing-directory"
                     : "unreadable",
-                missingAssets: [...mod.assetNames]
+                missingAssets: [...mod.assetNames],
+                message
             });
         }
     }

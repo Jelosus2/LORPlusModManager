@@ -1,4 +1,5 @@
 import { ipcMain, type IpcMainInvokeEvent } from "electron";
+import { ErrorUtils } from "#utils/ErrorUtils.js";
 
 type IpcHandler = (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown | Promise<unknown>;
 type IpcRoute = { channel: string; methodName: string | symbol };
@@ -36,9 +37,13 @@ export class IpcHelper {
                 try {
                     return await (handler as IpcHandler).call(controller, event, ...args);
                 } catch (error) {
-                    console.error(error)
+                    console.error(`IPC operation "${route.channel}" failed:`, error);
 
-                    throw error;
+                    throw new Error(ErrorUtils.getUserErrorMessage(error, "The requested operation failed unexpectedly."), {
+                        cause: error instanceof Error
+                            ? error
+                            : undefined
+                    });
                 }
             });
 

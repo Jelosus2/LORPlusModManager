@@ -1,5 +1,6 @@
 import { ModSyncOperationJournal } from "./ModSyncOperationJournal.js";
 import { ModOperationJournal } from "./ModOperationJournal.js";
+import { ErrorUtils } from "#utils/ErrorUtils.js";
 
 export class ModRecoveryCoordinator {
     private static recoveryPromise: Promise<void> | null = null;
@@ -9,8 +10,23 @@ export class ModRecoveryCoordinator {
         {
             ModRecoveryCoordinator.recoveryPromise = (
                 async () => {
-                    await new ModOperationJournal().recover();
-                    await new ModSyncOperationJournal().recover();
+                    try
+                    {
+                        await new ModOperationJournal().recover();
+                    }
+                    catch (error)
+                    {
+                        throw ErrorUtils.withContext("The mod library recovery could not finish.", error);
+                    }
+
+                    try
+                    {
+                        await new ModSyncOperationJournal().recover();
+                    }
+                    catch (error)
+                    {
+                        throw ErrorUtils.withContext("The synchronization recovery could not finish.", error);
+                    }
                 }
             )().catch((error) => {
                 ModRecoveryCoordinator.recoveryPromise = null;

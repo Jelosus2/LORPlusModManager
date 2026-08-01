@@ -2,14 +2,14 @@ import type { ExtractedModSummary, ModExtractionResult, ModImportIssue, ModSourc
 import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js";
 import type { ImportedModRecord } from "#database/repositories/ModRepository.js";
 
-import { UnityWorkerClient, UnityWorkerError } from "./UnityWorkerClient.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { characterCatalog } from "#utils/CharacterCatalogService.js";
 import { AssetBundleModMatcher } from "./AssetBundleModMatcher.js";
+import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
 import { ModOperationJournal } from "./ModOperationJournal.js";
+import { UnityWorkerClient } from "./UnityWorkerClient.js";
 import { ZipModMatcher } from "./ZipModMatcher.js";
 import { ZipArchive } from "#utils/ZipArchive.js";
-import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { randomUUID } from "node:crypto";
 import { Paths } from "#utils/Paths.js";
 import path from "node:path";
@@ -65,7 +65,7 @@ type SourceImportOutcome =
         issue: ModImportIssue;
     };
 
-export class ModImportError extends Error {
+export class ModImportError extends UserFacingError {
     constructor(message: string, options?: ErrorOptions) {
         super(message, options);
         this.name = "ModImportError";
@@ -183,10 +183,11 @@ export class ModImporter {
                 {
                     console.error(`Could not delete imported mod ${source.filePath}:`, error);
 
-                    let message = `${source.name} could not be deleted. `;
-                    message += ErrorUtils.getFsErrorMessage(error);
+                    const detail =
+                        ErrorUtils.getFsErrorMessage(error, "The original mod file") ||
+                        ErrorUtils.getUserErrorMessage(error, "An unexpected filesystem error occurred.");
 
-                    warnings.push(message.trim());
+                    warnings.push(`${source.name} was imported, but its original file could not be deleted. ${detail}`);
                 }
             }
         }
@@ -366,7 +367,7 @@ export class ModImporter {
                     sourceId: source.id,
                     sourceName: source.name,
                     kind: "extraction",
-                    message: "The extracted mods could not be saved.",
+                    message: ErrorUtils.combineWithCause("The extracted mods could not be saved.", error),
                     candidates: []
                 }
             };
@@ -635,26 +636,21 @@ export class ModImporter {
     private createExtractionIssue(source: ModImportSource, error: unknown): ModImportIssue {
         let message: string;
 
-        if (source.kind === "zip")
+        if (source.kind === "zip" && error instanceof Error && error.message === "MISSING_PASSWORD")
         {
-            message = "The archive could not be extracted.";
-
-            if (error instanceof Error)
-            {
-                if (error.message === "MISSING_PASSWORD")
-                    message = "A password is required to open this ZIP file.";
-                else if (error.message === "BAD_PASSWORD")
-                    message = "The password is incorrect or the ZIP encryption is unsupported.";
-                else
-                    message = "Make sure the archive is valid.";
-            }
+            message = "A password is required to open this ZIP file.";
+        }
+        else if (source.kind === "zip" && error instanceof Error && error.message === "BAD_PASSWORD")
+        {
+            message = "The password is incorrect or the ZIP encryption method is unsupported.";
         }
         else
         {
-            message = "The AssetBundle could not be extracted.";
+            const baseMessage = source.kind === "zip"
+                ? "The archive could not be extracted."
+                : "The AssetBundle could not be extracted.";
 
-            if (error instanceof UnityWorkerError)
-                message += ` ${error.message}`;
+            message = ErrorUtils.combineWithCause(baseMessage, error, "The file may be damaged or use an unsupported format.");
         }
 
         return {
@@ -670,18 +666,15 @@ export class ModImporter {
         if (source.kind === "zip" && error instanceof Error && ["MISSING_PASSWORD", "BAD_PASSWORD"].includes(error.message))
             return this.createExtractionIssue(source, error);
 
-        let message = source.kind === "zip"
-            ? "The archive could not be inspected. It may be invalid or corrupted."
-            : "The AssetBundle could not be inspected. It may be invalid or corrupted.";
-
-        if (source.kind === "asset-bundle" && error instanceof UnityWorkerError && error.message === "The Unity worker could not be started.")
-            message = "The AssetBundle extractor could not be started.";
+        const baseMessage = source.kind === "zip"
+            ? "The archive could not be inspected."
+            : "The AssetBundle could not be inspected.";
 
         return {
             sourceId: source.id,
             sourceName: source.name,
             kind: "invalid",
-            message,
+            message: ErrorUtils.combineWithCause(baseMessage, error, "The file may be damaged or use an unsupported format."),
             candidates: []
         };
     }

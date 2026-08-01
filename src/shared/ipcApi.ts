@@ -33,4 +33,5 @@ export type IpcApi = {
     hasAdminPrivileges: () => Promise<boolean>;
     syncMods: (request: ModSyncRequest) => Promise<ModSyncResult>;
     onModSyncProgress: (callback: (progress: ModSyncProgress) => void) => () => void;
+    openRecoveryFolder: () => Promise<void>;
 };

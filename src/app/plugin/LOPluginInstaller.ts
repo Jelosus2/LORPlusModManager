@@ -76,7 +76,14 @@ export class LOPluginInstaller {
         }
         finally
         {
-            await fse.rm(stagingDirectory, { recursive: true, force: true });
+            try
+            {
+                await fse.rm(stagingDirectory, { recursive: true, force: true });
+            }
+            catch (cleanupError)
+            {
+                console.error("Could not clean the staging directory:", cleanupError);
+            }
         }
     }
 

@@ -3,6 +3,7 @@ import type { IpcMainInvokeEvent } from "electron";
 
 import { LOPluginDownloader } from "#plugin/LOPluginDownloader.js";
 import { LOPluginInstaller } from "#plugin/LOPluginInstaller.js";
+import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
 
 export class PluginController {
@@ -46,9 +47,7 @@ export class PluginController {
 
             return {
                 success: false,
-                message: error instanceof Error
-                    ? error.message
-                    : "An unexpected installation error occurred."
+                message: ErrorUtils.getUserErrorMessage(error, "An unexpected LOPlugin+ installation error occurred.")
             };
         }
         finally

@@ -79,6 +79,7 @@ export type ModVerificationStatus =
 export type ModVerification = Readonly<{
     status: ModVerificationStatus;
     missingAssets: readonly string[];
+    message: string;
 }>;
 
 export type PersistedMod = Readonly<{

@@ -3,6 +3,7 @@ import type { ModSyncLogEntry, ModSyncMethod, ModSyncProgress, ModSyncRequest, M
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { ModSyncOperationJournal } from "./ModSyncOperationJournal.js";
+import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { Paths } from "#utils/Paths.js";
 import path from "node:path";
@@ -461,8 +462,6 @@ export class ModSynchronizer {
     }
 
     private errorMessage(error: unknown): string {
-        return error instanceof Error
-            ? error.message
-            : "An unexpected synchronization error occurred.";
+        return ErrorUtils.getUserErrorMessage(error, "An unexpected synchronization error occurred.");
     }
 }

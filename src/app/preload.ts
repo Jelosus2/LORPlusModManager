@@ -51,7 +51,8 @@ const modManagerApi: IpcApi = {
         return () => {
             ipcRenderer.removeListener("mod:sync-progress", listener);
         };
-    }
+    },
+    openRecoveryFolder: () => ipcRenderer.invoke("app:open-recovery-folder")
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

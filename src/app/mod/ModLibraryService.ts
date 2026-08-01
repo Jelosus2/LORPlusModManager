@@ -4,6 +4,7 @@ import { ModSynchronizer, type ModSyncInstallMethod } from "./ModSynchronizer.js
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
 import { ModOperationJournal } from "./ModOperationJournal.js";
 import { Paths } from "#utils/Paths.js";
 import { shell } from "electron";
@@ -18,9 +19,14 @@ type ModRenamePlan = Readonly<{
     caseOnlyRename: boolean;
 }>;
 
-export class ModLibraryError extends Error {
+type DirectoryOpenResult = Readonly<{
+    opened: boolean;
+    message: string;
+}>;
+
+export class ModLibraryError extends UserFacingError {
     constructor(message: string, options?: ErrorOptions) {
-        super(message, options);
+        super(ErrorUtils.combineWithCause(message, options?.cause), options);
         this.name = "ModLibraryError";
     }
 }
@@ -33,26 +39,45 @@ export class ModLibraryService {
 
     async openFolder(modId: string) {
         const mod = this.getMod(modId);
+        const failures: string[] = [];
 
         if (mod.enabled)
         {
             const gameLocation = this.settingsRepository.getGameLocation();
 
-            if (gameLocation)
+            if (!gameLocation)
+            {
+                failures.push("The synchronized directory could not be checked because the game location is not configured.");
+            }
+            else
             {
                 const gameModsRoot = Paths.getGameModsPath(gameLocation);
                 const synchronizedDirectory = path.join(gameModsRoot, mod.directoryName);
 
-                if (Paths.isSubpath(gameModsRoot, synchronizedDirectory) && await this.tryOpenDirectory(synchronizedDirectory))
-                    return;
+                if (!Paths.isSubpath(gameModsRoot, synchronizedDirectory))
+                {
+                    failures.push("The synchronized mod directory resolves outside the game mod directory.");
+                }
+                else
+                {
+                    const result = await this.tryOpenDirectory(synchronizedDirectory, "The synchronized mod directory");
+                    if (result.opened)
+                        return;
+
+                    failures.push(result.message);
+                }
             }
         }
 
         const importedDirectory = this.resolveModDirectory(mod.directoryName);
-        if (await this.tryOpenDirectory(importedDirectory))
+        const importedResult = await this.tryOpenDirectory(importedDirectory, "The imported mod directory");
+
+        if (importedResult.opened)
             return;
 
-        throw new ModLibraryError("Neither the synchronized nor imported mod directory could be opened.");
+        failures.push(importedResult.message);
+
+        throw new ModLibraryError(`${mod.enabled ? "Neither mod directory could be opened." : "The mod directory could not be opened."} ${failures.join(" ")}`);
     }
 
     async delete(modId: string) {
@@ -74,7 +99,7 @@ export class ModLibraryService {
                 {
                     throw new ModLibraryError(
                         "The mod could not be deleted, and its synchronized state could not be restored.",
-                        { cause: restoreError }
+                        { cause: new AggregateError([error, restoreError], "Deletion and synchronization restoration both failed.") }
                     );
                 }
             }
@@ -100,9 +125,7 @@ export class ModLibraryService {
 
                 failures.push({
                     modId,
-                    message: error instanceof ModLibraryError
-                        ? error.message
-                        : "The mod could not be deleted."
+                    message: ErrorUtils.getUserErrorMessage(error, "The mod could not be deleted.")
                 });
             }
         }
@@ -155,7 +178,7 @@ export class ModLibraryService {
             {
                 throw new ModLibraryError(
                     "The mod was renamed, but its synchronized state could not be restored. Refresh the mod list before trying again.",
-                    { cause: rollbackError }
+                    { cause: new AggregateError([error, rollbackError], "Synchronization restoration and rename rollback both failed.") }
                 );
             }
 
@@ -324,7 +347,9 @@ export class ModLibraryService {
             }
             catch (error)
             {
-                throw new ModLibraryError(`${message} Its synchronized state could not be restored.`, { cause: error });
+                throw new ModLibraryError(`${message} Its synchronized state could not be restored.`, {
+                    cause: new AggregateError([operationError, error], "The operation and synchronization restoration both failed.")
+                });
             }
         }
 
@@ -345,26 +370,42 @@ export class ModLibraryService {
         }
     }
 
-    private async tryOpenDirectory(directoryPath: string): Promise<boolean> {
+    private async tryOpenDirectory(directoryPath: string, description: string): Promise<DirectoryOpenResult> {
         try
         {
             const stats = await fse.stat(directoryPath);
             if (!stats.isDirectory())
-                return false;
-
-            const errorMessage = await shell.openPath(directoryPath);
-            if (errorMessage)
             {
-                console.log(`Could not open directory ${directoryPath}: ${errorMessage}`);
-                return false;
+                return {
+                    opened: false,
+                    message: `${description} exists, but it is not a directory.`
+                };
             }
 
-            return true;
+            const shellError = await shell.openPath(directoryPath);
+            if (shellError)
+            {
+                console.log(`Could not open directory ${directoryPath}: ${shellError}`);
+
+                return {
+                    opened: false,
+                    message: `${description} exists, but Windows could not open it. ${shellError.trim()}`
+                };
+            }
+
+            return {
+                opened: true,
+                message: ""
+            };
         }
         catch (error)
         {
             console.log(`Could not access directory ${directoryPath}:`, error);
-            return false;
+
+            return {
+                opened: false,
+                message: ErrorUtils.combineWithCause(`${description} could not be accessed.`, error, "An unexpected filesystem error occurred.")
+            };
         }
     }
 

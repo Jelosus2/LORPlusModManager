@@ -1,4 +1,5 @@
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { randomUUID } from "node:crypto";
 import { Paths } from "#utils/Paths.js";
@@ -141,39 +142,45 @@ export class ModOperationJournal {
         await fse.ensureDir(operationsRoot);
 
         const operationFiles = await fse.readdir(operationsRoot);
+        const failures: Error[] = [];
 
         for (const fileName of operationFiles)
         {
-            if (fileName.endsWith(".tmp"))
-            {
-                await fse.rm(path.join(operationsRoot, fileName), { force: true });
-                continue;
-            }
-
-            if (!fileName.endsWith(".json"))
+            if (!fileName.endsWith(".tmp") && !fileName.endsWith(".json"))
                 continue;
 
             const filePath = path.join(operationsRoot, fileName);
+            let operationDescription = `operation record "${fileName}"`;
 
             try
             {
+                if (fileName.endsWith(".tmp"))
+                {
+                    await fse.rm(filePath, { force: true });
+                    continue;
+                }
+
                 const value: unknown = await fse.readJson(filePath, { encoding: "utf-8" });
                 const expectedId = path.basename(fileName, ".json");
                 const manifest = this.parseManifest(value, expectedId);
 
                 if (!manifest)
-                {
-                    console.error(`Ignoring invalid mod operation manifest: ${filePath}`);
-                    continue;
-                }
+                    throw new Error("The recovery record is invalid or uses an unsupported format.");
 
+                operationDescription = this.describeOperation(manifest);
                 await this.recoverManifest(manifest);
             }
             catch (error)
             {
-                console.error(`Could not recover mod operation ${fileName}:`, error);
+                const failure = ErrorUtils.withContext(`Could not recover ${operationDescription}.`, error, "An unexpected recovery error occurred.");
+                failures.push(failure);
+
+                console.error(failure.message, error);
             }
         }
+
+        if (failures.length > 0)
+            throw new AggregateError(failures, "One or more interrupted mod operations could not be recovered.");
 
         await this.removeAbandonedStagingDirectories();
         await this.reportLegacyTemporaryDirectories();
@@ -464,6 +471,18 @@ export class ModOperationJournal {
             const trashEntries = await fse.readdir(trashRoot);
             if (trashEntries.length > 0)
                 console.log(`${trashEntries.length} unjournaled trash directories were left untouched.`);
+        }
+    }
+
+    private describeOperation(manifest: OperationManifest): string {
+        switch (manifest.kind)
+        {
+            case "import":
+                return `the interrupted import containing ${manifest.mods.length} ${manifest.mods.length === 1 ? "mod" : "mods"}`;
+            case "delete":
+                return `the interrupted deletion of "${manifest.directoryName}"`;
+            case "rename":
+                return `the interrupted rename from "${manifest.previousDirectoryName}" to "${manifest.nextDirectoryName}"`;
         }
     }
 }

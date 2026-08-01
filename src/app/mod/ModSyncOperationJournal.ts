@@ -2,6 +2,7 @@ import type { ModSyncMethod } from "../../shared/mod.js";
 
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { randomUUID } from "node:crypto";
 import { Paths } from "#utils/Paths.js";
@@ -68,42 +69,45 @@ export class ModSyncOperationJournal {
         await fse.ensureDir(operationsRoot);
 
         const files = await fse.readdir(operationsRoot);
-        let failureCount = 0;
+        const failures: Error[] = [];
 
         for (const fileName of files)
         {
-            if (fileName.endsWith(".tmp"))
-            {
-                await fse.rm(path.join(operationsRoot, fileName), { force: true });
-                continue;
-            }
-
-            if (!fileName.endsWith(".json"))
+            if (!fileName.endsWith(".tmp") && !fileName.endsWith(".json"))
                 continue;
 
             const manifestPath = path.join(operationsRoot, fileName);
+            let operationDescription = `synchronization record "${fileName}"`;
 
             try
             {
-                const value: unknown = await fse.readJson(manifestPath, { encoding: "utf-8" });
+                if (fileName.endsWith(".tmp"))
+                {
+                    await fse.rm(manifestPath, { force: true });
+                    continue;
+                }
 
+                const value: unknown = await fse.readJson(manifestPath, { encoding: "utf-8" });
                 const expectedId = path.basename(fileName, ".json");
                 const manifest = this.parseManifest(value, expectedId);
 
                 if (!manifest)
-                    throw new Error("The synchronization manifest is invalid.");
+                    throw new Error("The synchronization recovery record is invalid or uses an unsupported format.");
 
+                operationDescription = `the interrupted synchronization of "${manifest.directoryName}"`;
                 await this.recoverManifest(manifest);
             }
             catch (error)
             {
-                failureCount++;
-                console.error(`Could not recover synchronization operation ${fileName}:`, error);
+                const failure = ErrorUtils.withContext(`Could not recover ${operationDescription}.`, error, "An unexpected synchronization recovery error occurred.");
+                failures.push(failure);
+
+                console.error(failure.message, error);
             }
         }
 
-        if (failureCount > 0)
-            throw new Error(`${failureCount} interrupted synchronization ${failureCount === 1 ? "operation could" : "operations could"} not be recovered.`);
+        if (failures.length > 0)
+            throw new AggregateError(failures, "One or more interrupted synchronization operations could not be recovered.");
     }
 
     private async recoverManifest(manifest: SyncOperationManifest) {
