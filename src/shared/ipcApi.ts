@@ -11,8 +11,8 @@ import type {
     ModSyncResult,
     ModSyncProgress
 } from "./mod.js";
+import type { GameLocationResult, SetupState, GameLocationChangeProgress, GameLocationChangeResult, GameLocationSelectionResult } from "./setup.js";
 import type { PluginInstallResult, PluginProgress } from "./plugin.js";
-import type { GameLocationResult, SetupState } from "./setup.js";
 import type { CharacterCatalog } from "./characters.js";
 
 export type IpcApi = {
@@ -34,4 +34,8 @@ export type IpcApi = {
     syncMods: (request: ModSyncRequest) => Promise<ModSyncResult>;
     onModSyncProgress: (callback: (progress: ModSyncProgress) => void) => () => void;
     openRecoveryFolder: () => Promise<void>;
+    selectGameLocation: (manualSetup: boolean) => Promise<GameLocationSelectionResult>;
+    changeGameLocation: (gameLocation: string) => Promise<GameLocationChangeResult>;
+    onGameLocationChangeProgress: (callback: (progress: GameLocationChangeProgress) => void) => () => void;
+    openGameLocation: () => Promise<void>;
 };

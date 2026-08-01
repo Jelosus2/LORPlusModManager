@@ -1,4 +1,5 @@
 import type { ModImportProgress, ModSyncProgress } from "../shared/mod.js";
+import type { GameLocationChangeProgress } from "../shared/setup.js";
 import type { PluginProgress } from "../shared/plugin.js";
 import type { IpcApi } from "../shared/ipcApi.js";
 
@@ -52,7 +53,21 @@ const modManagerApi: IpcApi = {
             ipcRenderer.removeListener("mod:sync-progress", listener);
         };
     },
-    openRecoveryFolder: () => ipcRenderer.invoke("app:open-recovery-folder")
+    openRecoveryFolder: () => ipcRenderer.invoke("app:open-recovery-folder"),
+    selectGameLocation: (manualSetup) => ipcRenderer.invoke("setup:select-game-location", manualSetup),
+    changeGameLocation: (gameLocation) => ipcRenderer.invoke("setup:change-game-location", gameLocation),
+    onGameLocationChangeProgress: (callback) => {
+        const listener = (_event: IpcRendererEvent, progress: GameLocationChangeProgress) => {
+            callback(progress);
+        };
+
+        ipcRenderer.on("setup:game-location-change-progress", listener);
+
+        return () => {
+            ipcRenderer.removeListener("setup:game-location-change-progress", listener);
+        };
+    },
+    openGameLocation: () => ipcRenderer.invoke("setup:open-game-location"),
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

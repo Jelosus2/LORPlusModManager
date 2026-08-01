@@ -1,91 +1,255 @@
-import type { GameLocationResult, SetupState } from "../../../shared/setup.js";
+import type { GameLocationResult, SetupState, GameLocationChangeProgress, GameLocationChangeResult, GameLocationSelectionResult } from "../../../shared/setup.js";
 import type { IpcMainInvokeEvent } from "electron";
 
+import { LOPluginInstallationService } from "#plugin/LOPluginInstallationService.js";
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
-import { GameRegistry } from "#game/GameRegistry.js";
+import { GameInstallationService } from "#game/GameInstallationService.js";
+import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
+import { ModSynchronizer } from "#mod/ModSynchronizer.js";
+import { BrowserWindow, dialog, shell } from "electron";
+import { TypeCheck } from "#utils/TypeCheck.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
-import { BrowserWindow, dialog } from "electron";
+import { Paths } from "#utils/Paths.js";
 import path from "node:path";
 import fse from "fs-extra";
 
 export class SetupController {
     private readonly settingsRepository = new SettingsRepository();
+    private readonly modRepository = new ModRepository();
+    private readonly gameInstallation = new GameInstallationService();
+    private readonly pluginInstallation = new LOPluginInstallationService();
+    private readonly modSynchronizer = new ModSynchronizer();
+    private isChangingGameLocation = false;
 
     @IpcHelper.IpcHandle("setup:game-location")
-    async setupGameLocation(event: IpcMainInvokeEvent, manualSetup: boolean): Promise<GameLocationResult> {
-        const executableFileName = await GameRegistry.getExecutableFileName() ?? "LAST ORIGIN R+.exe";
+    async setupGameLocation(event: IpcMainInvokeEvent, value: unknown): Promise<GameLocationResult> {
+        const selection = await this.selectGameLocation(event, value);
 
-        if (manualSetup)
+        if (selection.canceled)
+            return this.locationFailure("The game location selection was canceled.");
+        if (!selection.success)
+            return this.locationFailure(selection.message);
+
+        this.settingsRepository.setGameLocation(selection.path);
+
+        return {
+            success: true,
+            path: selection.path,
+            message: ""
+        };
+    }
+
+    @IpcHelper.IpcHandle("setup:select-game-location")
+    async selectGameLocation(event: IpcMainInvokeEvent, value: unknown): Promise<GameLocationSelectionResult> {
+        if (!TypeCheck.isBoolean(value))
+            return this.selectionFailure("Invalid game location selection request.");
+
+        try
         {
-            const window = BrowserWindow.fromWebContents(event.sender) ?? BrowserWindow.getAllWindows()[0];
+            let installationPath: string;
 
-            const result = await dialog.showOpenDialog(window, {
-                title: "Select the Last Origin R+ game directory",
-                properties: ["openDirectory"]
-            });
+            if (value)
+            {
+                const window = BrowserWindow.fromWebContents(event.sender) ?? BrowserWindow.getAllWindows()[0];
+                const result = await dialog.showOpenDialog(window, {
+                    title: "Select the Last Origin R+ game directory",
+                    properties: ["openDirectory"]
+                });
 
-            if (result.canceled)
-                return this.setupGameLocationFailure("The game location selection was canceled.");
+                if (result.canceled)
+                    return this.selectionFailure("", true);
 
-            const installationPath = result.filePaths[0];
+                installationPath = await this.gameInstallation.validate(result.filePaths[0]);
+            }
+            else
+            {
+                installationPath = await this.gameInstallation.detect();
+            }
 
-            const isValidInstallationPath = (await fse.readdir(installationPath)).includes(executableFileName);
-            if (!isValidInstallationPath)
-                return this.setupGameLocationFailure("The selected location doesn't contain the game executable.");
+            return {
+                success: true,
+                canceled: false,
+                path: installationPath,
+                message: ""
+            };
+        }
+        catch (error)
+        {
+            return this.selectionFailure(ErrorUtils.getUserErrorMessage(error, "The selected game location could not be validated."));
+        }
+    }
 
-            return this.saveGameLocation(installationPath);
+    @IpcHelper.IpcHandle("setup:change-game-location")
+    async changeGameLocation(event: IpcMainInvokeEvent, value: unknown): Promise<GameLocationChangeResult> {
+        if (this.isChangingGameLocation)
+        {
+            return {
+                success: false,
+                message: "The game location is already being changed."
+            };
         }
 
-        const installationPath = await GameRegistry.getInstallPath();
-        if (!installationPath || !await fse.exists(installationPath))
-            return this.setupGameLocationFailure("Could not automatically discover the game location.");
+        this.isChangingGameLocation = true;
 
-        const isValidInstallationPath = (await fse.readdir(installationPath)).includes(executableFileName);
-        if (!isValidInstallationPath)
-            return this.setupGameLocationFailure("Game path detected but the game executable is missing.");
+        const sendProgress = (progress: GameLocationChangeProgress) => {
+            if (!event.sender.isDestroyed())
+                event.sender.send("setup:game-location-change-progress", progress);
+        };
 
-        return this.saveGameLocation(installationPath);
+        try
+        {
+            const gameLocation = await this.gameInstallation.validate(value);
+
+            sendProgress({
+                progress: 0,
+                status: "Preparing the new game location",
+                detail: gameLocation
+            });
+
+            const version = await this.pluginInstallation.reinstallAt(
+                gameLocation,
+                async (reportProgress) => {
+                    await this.gameInstallation.validate(gameLocation);
+
+                    const enabledMods = this.modRepository.getAll().filter((mod) => mod.enabled);
+                    if (enabledMods.length === 0)
+                    {
+                        reportProgress({
+                            progress: 100,
+                            status: "No synchronized mods to remove",
+                            detail: "The current mod state is already clean."
+                        });
+
+                        return;
+                    }
+
+                    const result = await this.modSynchronizer.synchronize({ method: "unsync", enabledModIds: [] }, (progress) => {
+                        reportProgress({
+                            progress: progress.progress,
+                            status: progress.status,
+                            detail: progress.detail
+                        });
+                    });
+
+                    if (!result.success)
+                    {
+                        const failures = result.entries.filter((entry) => entry.status === "failed");
+                        const visibleFailures = failures
+                            .slice(0, 3)
+                            .map((entry) => `${entry.directoryName}: ${entry.message}`)
+                            .join(" ");
+
+                        const remaining = failures.length - Math.min(failures.length, 3);
+                        const remainingMessage = remaining > 0
+                            ? ` ${remaining} additional mods could not be unsynchronized.`
+                            : "";
+
+                        throw new UserFacingError(
+                            `The game location was not changed because ` +
+                            `${failures.length} synchronized ` +
+                            `${failures.length === 1 ? "mod" : "mods"} ` +
+                            `could not be removed. ` +
+                            `${visibleFailures}${remainingMessage}`
+                        );
+                    }
+                },
+                (progress) => {
+                    sendProgress({
+                        progress: progress.progress,
+                        status: progress.status,
+                        detail: progress.detail ?? gameLocation
+                    });
+                }
+            );
+
+            this.settingsRepository.setGameSetup(gameLocation, version);
+
+            sendProgress({
+                progress: 100,
+                status: "Game location changed",
+                detail: gameLocation
+            });
+
+            return {
+                success: true,
+                message: "",
+                gameLocation,
+                pluginVersion: version
+            };
+        }
+        catch (error)
+        {
+            console.error("Could not change the game location:", error);
+
+            return {
+                success: false,
+                message: ErrorUtils.getUserErrorMessage(error, "The game location could not be changed.")
+            };
+        }
+        finally
+        {
+            this.isChangingGameLocation = false;
+        }
     }
 
     @IpcHelper.IpcHandle("setup:get-state")
     async getSetupState(): Promise<SetupState> {
-        const gameLocation = this.settingsRepository.getGameLocation();
+        const configuredLocation = this.settingsRepository.getGameLocation();
+        if (!configuredLocation)
+            return this.incompleteSetup();
+
+        let gameLocation: string;
+
+        try
+        {
+            gameLocation = await this.gameInstallation.validate(configuredLocation);
+        }
+        catch
+        {
+            return this.incompleteSetup();
+        }
+
         const pluginVersion = this.settingsRepository.getLOPluginVersion();
-
-        if (!gameLocation)
-            return this.incompleteSetup();
-
-        const executableFileName = await GameRegistry.getExecutableFileName() ?? "LAST ORIGIN R+.exe";
-        const gameLocationIsValid = await fse.exists(path.join(gameLocation, executableFileName));
-
-        if (!gameLocationIsValid)
-            return this.incompleteSetup();
-
-        const pluginPath = path.join(gameLocation, "BepInEx", "plugins", "LOPlugin+", "LOPlugin+.dll");
+        const pluginPath = path.join(Paths.getGamePluginRoot(gameLocation), "LOPlugin+.dll");
         const pluginIsInstalled = Boolean(pluginVersion && await fse.exists(pluginPath));
 
         return {
             isComplete: pluginIsInstalled,
             gameLocation,
-            pluginVersion: pluginIsInstalled ? pluginVersion : null
+            pluginVersion: pluginIsInstalled
+                ? pluginVersion
+                : null
         };
     }
 
-    private saveGameLocation(gameLocation: string): GameLocationResult {
-        this.settingsRepository.setGameLocation(gameLocation);
+    @IpcHelper.IpcHandle("setup:open-game-location")
+    async openGameLocation() {
+        const configuredLocation = this.settingsRepository.getGameLocation();
+        if (!configuredLocation)
+            throw new UserFacingError("The game location has not been configured.");
 
-        return {
-            success: true,
-            message: "",
-            path: gameLocation
-        };
+        const gameLocation = await this.gameInstallation.validate(configuredLocation);
+        const shellError = await shell.openPath(gameLocation);
+
+        if (shellError)
+            throw new UserFacingError(`Windows could not open the game folder. ${shellError.trim()}`);
     }
 
-    private setupGameLocationFailure(message: string): GameLocationResult {
+    private locationFailure(message: string): GameLocationResult {
         return {
             success: false,
             message,
             path: ""
+        };
+    }
+
+    private selectionFailure(message: string, canceled = false): GameLocationSelectionResult {
+        return {
+            success: false,
+            canceled,
+            path: "",
+            message
         };
     }
 

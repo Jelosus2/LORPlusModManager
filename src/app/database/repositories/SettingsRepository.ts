@@ -38,6 +38,20 @@ export class SettingsRepository {
         this.setSetting(SettingsRepository.LO_PLUGIN_VERSION_KEY, version);
     }
 
+    setGameSetup(gameLocation: string, pluginVersion: string) {
+        if (!gameLocation.trim())
+            throw new Error("The game location cannot be empty.");
+        if (!pluginVersion.trim())
+            throw new Error("The LOPlugin+ version cannot be empty.");
+
+        const save = AppDatabase.connection.transaction(() => {
+            this.setSetting(SettingsRepository.GAME_LOCATION_KEY, gameLocation);
+            this.setSetting(SettingsRepository.LO_PLUGIN_VERSION_KEY, pluginVersion);
+        });
+
+        save();
+    }
+
     private setSetting(key: string, value: string) {
         AppDatabase.connection.prepare(`
             INSERT INTO settings (key, value)

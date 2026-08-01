@@ -1,3 +1,159 @@
+<script setup lang="ts">
+import type { GameLocationChangeProgress } from "../../shared/setup.ts";
+
+import { ErrorUtils } from "@/utils/ErrorUtils.ts";
+import { useModStore } from "@/stores/modStore.ts";
+import { onMounted, ref } from "vue";
+
+const modStore = useModStore();
+
+const gameLocation = ref("");
+const pluginVersion = ref("");
+const pendingGameLocation = ref("");
+const gameLocationError = ref("");
+const gameLocationChangeError = ref("");
+const isSelectingGameLocation = ref(false);
+const isChangingGameLocation = ref(false);
+const gameLocationProgress = ref<GameLocationChangeProgress | null>(null);
+const isOpeningGameLocation = ref(false);
+
+async function loadGameSettings() {
+    gameLocationError.value = "";
+
+    try
+    {
+        const state = await window.app.getSetupState();
+
+        gameLocation.value = state.gameLocation ?? "";
+        pluginVersion.value = state.pluginVersion ?? "";
+    }
+    catch (error)
+    {
+        console.error("Could not load the game settings:", error);
+        gameLocationError.value = ErrorUtils.getUserErrorMessage(error, "The game settings could not be loaded.");
+    }
+}
+
+async function selectGameLocation(manualSetup: boolean) {
+    if (isSelectingGameLocation.value || isChangingGameLocation.value)
+        return;
+
+    isSelectingGameLocation.value = true;
+    gameLocationError.value = "";
+    gameLocationChangeError.value = "";
+
+    try
+    {
+        const result = await window.app.selectGameLocation(manualSetup);
+        if (result.canceled)
+            return;
+
+        if (!result.success)
+        {
+            gameLocationError.value = result.message;
+            return;
+        }
+
+        pendingGameLocation.value = result.path;
+        confirmationPopover()?.showPopover();
+    }
+    catch (error)
+    {
+        console.error("Could not select the game location:", error);
+        gameLocationError.value = ErrorUtils.getUserErrorMessage(error, "The game location could not be selected.");
+    }
+    finally
+    {
+        isSelectingGameLocation.value = false;
+    }
+}
+
+async function confirmGameLocationChange() {
+    if (!pendingGameLocation.value || isChangingGameLocation.value)
+        return;
+
+    isChangingGameLocation.value = true;
+    gameLocationChangeError.value = "";
+    gameLocationProgress.value = {
+        progress: 0,
+        status: "Preparing the installation…",
+        detail: pendingGameLocation.value
+    };
+
+    const removeProgressListener = window.app.onGameLocationChangeProgress((progress) => {
+        gameLocationProgress.value = progress;
+    });
+
+    try
+    {
+        const result = await window.app.changeGameLocation(pendingGameLocation.value);
+        if (!result.success)
+        {
+            gameLocationChangeError.value = result.message;
+            return;
+        }
+
+        gameLocation.value = result.gameLocation ?? pendingGameLocation.value;
+        pluginVersion.value = result.pluginVersion ?? pluginVersion.value;
+
+        confirmationPopover()?.hidePopover();
+        pendingGameLocation.value = "";
+
+        await modStore.load(true);
+    }
+    catch (error)
+    {
+        console.error("Could not change the game location:", error);
+        gameLocationChangeError.value = ErrorUtils.getUserErrorMessage(error, "The game location could not be changed.");
+    }
+    finally
+    {
+        removeProgressListener();
+        isChangingGameLocation.value = false;
+        gameLocationProgress.value = null;
+    }
+}
+
+async function openGameLocation() {
+    if (!gameLocation.value || isOpeningGameLocation.value || isSelectingGameLocation.value || isChangingGameLocation.value)
+        return;
+
+    isOpeningGameLocation.value = true;
+    gameLocationError.value = "";
+
+    try
+    {
+        await window.app.openGameLocation();
+    }
+    catch (error)
+    {
+        console.error("Could not open the game folder:", error);
+        gameLocationError.value = ErrorUtils.getUserErrorMessage(error, "The game folder could not be opened.");
+    }
+    finally
+    {
+        isOpeningGameLocation.value = false;
+    }
+}
+
+function confirmationPopover(): HTMLElement | null {
+    return document.getElementById("game-location-confirmation-popover");
+}
+
+function cancelGameLocationChange() {
+    if (isChangingGameLocation.value)
+        return;
+
+    confirmationPopover()?.hidePopover();
+
+    pendingGameLocation.value = "";
+    gameLocationChangeError.value = "";
+    gameLocationProgress.value = null;
+}
+
+onMounted(loadGameSettings);
+</script>
+
 <template>
     <section class="settings-view" aria-labelledby="settings-title">
         <header class="settings-header">
@@ -21,26 +177,59 @@
                         <div class="setting-copy">
                             <div class="setting-title-line">
                                 <h3>Game location</h3>
-                                <span class="status-chip status-chip--success">Valid installation</span>
+                                <span
+                                    v-if="gameLocation"
+                                    class="status-chip status-chip--success"
+                                >
+                                    Valid installation
+                                </span>
                             </div>
                             <p>The folder containing the Last Origin R+ executable.</p>
                         </div>
 
-                        <div class="path-field" aria-label="Selected game location">
-                            <span>Your selected game folder will appear here</span>
+                        <div
+                            class="path-field"
+                            aria-label="Selected game location"
+                            :title="gameLocation || undefined"
+                        >
+                            <span>{{ gameLocation || "No game location selected" }}</span>
                         </div>
 
                         <div class="setting-actions">
-                            <button class="settings-button settings-button--secondary" type="button">
+                            <button
+                                class="settings-button settings-button--secondary"
+                                type="button"
+                                :disabled="isSelectingGameLocation || isChangingGameLocation"
+                                @click="selectGameLocation(false)"
+                            >
                                 Auto-detect
                             </button>
-                            <button class="settings-button settings-button--secondary" type="button">
+                            <button
+                                class="settings-button settings-button--secondary"
+                                type="button"
+                                :disabled="isSelectingGameLocation || isChangingGameLocation"
+                                @click="selectGameLocation(true)"
+                            >
                                 Choose folder
                             </button>
-                            <button class="settings-button settings-button--quiet" type="button">
+                            <button
+                                class="settings-button settings-button--quiet"
+                                type="button"
+                                :disabled="
+                                    !gameLocation ||
+                                    isOpeningGameLocation ||
+                                    isSelectingGameLocation ||
+                                    isChangingGameLocation
+                                "
+                                @click="openGameLocation"
+                            >
                                 Open folder
                             </button>
                         </div>
+
+                        <p v-if="gameLocationError" class="setting-error" role="alert">
+                            {{ gameLocationError }}
+                        </p>
                     </div>
 
                     <div class="setting-row">
@@ -50,7 +239,8 @@
                                 <span class="status-chip status-chip--success">Installed</span>
                             </div>
                             <p>
-                                Installed version <span class="setting-value">1.3.8.1</span>
+                                Installed version
+                                <span class="setting-value">{{ pluginVersion || "Unknown" }}</span>
                             </p>
                         </div>
 
@@ -191,6 +381,101 @@
                     </div>
                 </div>
             </section>
+        </div>
+    </section>
+
+    <section
+        id="game-location-confirmation-popover"
+        class="confirmation-popover"
+        popover="manual"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="game-location-confirmation-title"
+        aria-describedby="game-location-confirmation-description"
+    >
+        <template v-if="!isChangingGameLocation">
+            <header class="confirmation-header">
+                <p class="confirmation-label">Change game location</p>
+                <h2 id="game-location-confirmation-title">
+                    Reinstall LOPlugin+ in this folder?
+                </h2>
+            </header>
+
+            <p id="game-location-confirmation-description" class="confirmation-description">
+                Changing the game location requires a clean LOPlugin+ and BepInEx installation.
+                Back up anything in the destination installation that you want to keep before continuing.
+            </p>
+
+            <div class="confirmation-path">
+                <span>New game location</span>
+                <strong :title="pendingGameLocation">{{ pendingGameLocation }}</strong>
+            </div>
+
+            <ul class="confirmation-effects">
+                <li>
+                    Every synchronized mod will be removed from the current game location.
+                </li>
+                <li class="confirmation-effect--warning">
+                    The destination’s existing BepInEx folder and loader files will be deleted and replaced.
+                </li>
+                <li>
+                    The latest LOPlugin+ release, including BepInEx, will be installed in the selected folder.
+                </li>
+                <li>
+                    Imported mods stored by the mod manager will not be deleted.
+                </li>
+            </ul>
+
+            <p v-if="gameLocationChangeError" class="confirmation-error" role="alert">
+                {{ gameLocationChangeError }}
+            </p>
+
+            <footer class="confirmation-actions">
+                <button
+                    class="settings-button settings-button--secondary"
+                    type="button"
+                    @click="cancelGameLocationChange"
+                >
+                    Cancel
+                </button>
+                <button
+                    class="settings-button settings-button--danger"
+                    type="button"
+                    @click="confirmGameLocationChange"
+                >
+                    Reinstall and change location
+                </button>
+            </footer>
+        </template>
+
+        <div v-else class="location-progress" aria-live="polite" aria-busy="true">
+            <header class="confirmation-header">
+                <p class="confirmation-label">Changing game location</p>
+                <h2>Preparing the selected installation</h2>
+            </header>
+
+            <div class="location-progress-copy">
+                <strong>{{ gameLocationProgress?.status || "Preparing…" }}</strong>
+                <span>{{ gameLocationProgress?.detail || pendingGameLocation }}</span>
+            </div>
+
+            <div
+                class="location-progress-track"
+                role="progressbar"
+                aria-label="Game location change progress"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                :aria-valuenow="Math.round(gameLocationProgress?.progress || 0)"
+            >
+                <span
+                    class="location-progress-fill"
+                    :style="{ width: `${gameLocationProgress?.progress || 0}%` }"
+                ></span>
+            </div>
+
+            <span class="location-progress-percent">
+                {{ Math.round(gameLocationProgress?.progress || 0) }}%
+            </span>
         </div>
     </section>
 </template>
@@ -429,6 +714,21 @@ h1 {
     background: transparent;
 }
 
+.settings-button--danger {
+    color: #f4d5d1;
+    background: #542d2b;
+}
+
+.settings-button--danger:hover {
+    background: #653633;
+}
+
+.settings-button:disabled {
+    color: #656b67;
+    background: #171a18;
+    cursor: not-allowed;
+}
+
 .settings-button:focus-visible,
 .setting-row--toggle:has(input:focus-visible) {
     outline: 2px solid #9bc2d9;
@@ -487,6 +787,170 @@ h1 {
     margin-top: 12px;
     color: #747b76;
     font-size: 12px;
+    text-align: right;
+}
+
+.setting-error,
+.confirmation-error {
+    color: #ef9c98;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.confirmation-popover {
+    width: min(590px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    margin: auto;
+    padding: 26px;
+    overflow-y: auto;
+    border: 1px solid #3a403c;
+    border-radius: 12px;
+    color: #e8e4dc;
+    background: #101411;
+    box-shadow: 0 22px 60px rgb(0 0 0 / 48%);
+}
+
+.confirmation-popover::backdrop {
+    background: rgb(3 5 4 / 74%);
+}
+
+.confirmation-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.confirmation-label {
+    color: #9bc2d9;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.confirmation-header h2 {
+    color: #f2eee5;
+    font-size: 23px;
+    line-height: 1.25;
+}
+
+.confirmation-description {
+    margin-top: 14px;
+    color: #a7ada8;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.confirmation-path {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 18px;
+    padding: 12px 14px;
+    border: 1px solid #303632;
+    border-radius: 7px;
+    background: #0b0e0c;
+}
+
+.confirmation-path span {
+    color: #7f8781;
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.confirmation-path strong {
+    overflow: hidden;
+    color: #d8d5ce;
+    font-family: "Cascadia Mono", "Consolas", monospace;
+    font-size: 12px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.confirmation-effects {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin: 18px 0 0;
+    padding: 0 0 0 20px;
+    color: #abb1ac;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.confirmation-effects li::marker {
+    color: #8eb9ce;
+}
+
+.confirmation-effects .confirmation-effect--warning {
+    color: #e6b3ac;
+}
+
+.confirmation-effects .confirmation-effect--warning::marker {
+    color: #d97f77;
+}
+
+.confirmation-error {
+    margin-top: 16px;
+    padding: 11px 13px;
+    border-radius: 6px;
+    background: #261817;
+}
+
+.confirmation-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.location-progress {
+    display: flex;
+    flex-direction: column;
+}
+
+.location-progress-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 22px;
+}
+
+.location-progress-copy strong {
+    color: #e9e5dd;
+    font-size: 14px;
+}
+
+.location-progress-copy span {
+    overflow: hidden;
+    color: #8f9690;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.location-progress-track {
+    height: 7px;
+    margin-top: 14px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #242a27;
+}
+
+.location-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #91b8cf;
+    transition: width 160ms ease;
+}
+
+.location-progress-percent {
+    margin-top: 7px;
+    color: #9ebdcb;
+    font-size: 12px;
+    font-weight: 650;
     text-align: right;
 }
 
@@ -577,6 +1041,19 @@ h1 {
     }
 
     .setting-actions .settings-button {
+        width: 100%;
+    }
+
+    .confirmation-popover {
+        padding: 20px;
+    }
+
+    .confirmation-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .confirmation-actions .settings-button {
         width: 100%;
     }
 }

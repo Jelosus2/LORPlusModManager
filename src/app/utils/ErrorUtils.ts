@@ -89,14 +89,14 @@ export class ErrorUtils {
         if (!(error instanceof Error))
             return "";
 
-        if (error.name === "TypeError" || error.name === "ReferenceError" || error.name === "SyntaxError" || error.name === "RangeError")
-            return "";
-
         if (error.name === "AbortError" || /timed?\s*out/i.test(error.message))
             return "The operation timed out.";
 
         if (/fetch failed/i.test(error.message) || /network request failed/i.test(error.message))
             return this.getNetworkErrorMessage(error) || "The server could not be reached. Check your internet connection and try again.";
+
+        if (error.name === "TypeError" || error.name === "ReferenceError" || error.name === "SyntaxError" || error.name === "RangeError")
+            return "";
 
         return error.message.trim();
     }

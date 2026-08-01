@@ -9,3 +9,20 @@ export type SetupState = {
     gameLocation: string | null;
     pluginVersion: string | null;
 };
+
+export type GameLocationSelectionResult = GameLocationResult & {
+    canceled: boolean;
+};
+
+export type GameLocationChangeProgress = {
+    progress: number;
+    status: string;
+    detail: string;
+};
+
+export type GameLocationChangeResult = {
+    success: boolean;
+    message: string;
+    gameLocation?: string;
+    pluginVersion?: string;
+};

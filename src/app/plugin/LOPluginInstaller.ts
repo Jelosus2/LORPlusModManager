@@ -1,7 +1,6 @@
 import type { DownloadedPluginRelease } from "./LOPluginDownloader.js";
 import type { PluginProgress } from "../../shared/plugin.js";
 
-import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { ZipArchive } from "#utils/ZipArchive.js";
 import { Paths } from "#utils/Paths.js";
 import path from "node:path";
@@ -13,7 +12,6 @@ export type InstallProgressCallback = (
 
 export class LOPluginInstaller {
     private readonly archives = new ZipArchive();
-    private readonly settingsRepository = new SettingsRepository();
     private readonly validationFiles = [
         "BepInEx/core/BepInEx.dll",
         "BepInEx/plugins/LOPlugin+/LOPlugin+.dll",
@@ -21,13 +19,9 @@ export class LOPluginInstaller {
         "winhttp.dll"
     ];
 
-    async install(release: DownloadedPluginRelease, reportProgress: InstallProgressCallback) {
-        const gameLocation = this.settingsRepository.getGameLocation();
-
-        if (!gameLocation)
-            throw new Error("The game location has not been configured.");
+    async installAt(release: DownloadedPluginRelease, gameLocation: string, cleanInstall: boolean, reportProgress: InstallProgressCallback) {
         if (!await fse.exists(gameLocation))
-            throw new Error("The configured game location no longer exists.");
+            throw new Error("The selected game location no longer exists.");
 
         const releaseDirectory = path.resolve(release.directory);
 
@@ -68,10 +62,14 @@ export class LOPluginInstaller {
 
             await this.validateStagedInstallation(stagingDirectory);
 
+            if (cleanInstall)
+            {
+                reportProgress({ status: "Removing the existing LOPlugin+ installation...", progress: 75 });
+                await this.removeExistingInstallation(gameLocation);
+            }
+
             reportProgress({ status: "Installing LOPlugin+...", progress: 80 });
             await fse.copy(stagingDirectory, gameLocation);
-
-            this.settingsRepository.setLOPluginVersion(release.version);
             reportProgress({ status: `LOPlugin+ ${release.version} installed`, progress: 100 });
         }
         finally
@@ -80,9 +78,9 @@ export class LOPluginInstaller {
             {
                 await fse.rm(stagingDirectory, { recursive: true, force: true });
             }
-            catch (cleanupError)
+            catch (error)
             {
-                console.error("Could not clean the staging directory:", cleanupError);
+                console.error("Could not clean the staging directory:", error);
             }
         }
     }
@@ -94,6 +92,24 @@ export class LOPluginInstaller {
 
             if (!await fse.exists(filePath))
                 throw new Error(`The LOPlugin+ release is missing ${file}.`)
+        }
+    }
+
+    private async removeExistingInstallation(gameLocation: string) {
+        const targets = [
+            path.join(gameLocation, "BepInEx"),
+            path.join(gameLocation, "doorstop_config.ini"),
+            path.join(gameLocation, "winhttp.dll"),
+            path.join(gameLocation, "changelog.txt"),
+            path.join(gameLocation, ".doorstop_version")
+        ];
+
+        for (const target of targets)
+        {
+            if (!Paths.isSubpath(gameLocation, target))
+                throw new Error("An unsafe BepInEx cleanup path was generated.");
+
+            await fse.rm(target, { recursive: true, force: true });
         }
     }
 }
