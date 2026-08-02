@@ -1,5 +1,6 @@
 import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js";
 
+import { VersionUtils } from "./VersionUtils.js";
 import { StringUtils } from "./StringUtils.js";
 import { TypeCheck } from "./TypeCheck.js";
 import { Paths } from "./Paths.js";
@@ -17,9 +18,9 @@ export class CharacterCatalogService {
     private skinsByCharacterName = new Map<string, readonly CharacterSkin[]>();
     private skinsByAssetName = new Map<string, readonly CharacterSkin[]>();
     private readonly EMPTY_RESULTS: readonly CharacterSkin[] = Object.freeze([]);
-    private readonly MAX_CATALOG_SIZE = 1 * 1024 ** 2;
     private readonly MAX_CATALOG_ENTRIES = 2000;
     private readonly MAX_ASSETS_PER_ENTRY = 10;
+    static readonly MAX_CATALOG_SIZE = 1 * 1024 ** 2;
 
     async getCatalog(): Promise<CharacterCatalog> {
         if (this.catalog)
@@ -54,6 +55,24 @@ export class CharacterCatalogService {
         await this.getCatalog();
 
         return this.skinsByAssetName.get(StringUtils.normalize(assetName)) ?? this.EMPTY_RESULTS;
+    }
+
+    parseCatalogContents(contents: string): CharacterCatalog {
+        if (Buffer.byteLength(contents, "utf-8") > CharacterCatalogService.MAX_CATALOG_SIZE)
+            throw new Error("The character catalog is too large.");
+
+        let value: unknown;
+
+        try
+        {
+            value = JSON.parse(contents);
+        }
+        catch (error)
+        {
+            throw new Error("The character catalog contains invalid JSON.", { cause: error });
+        }
+
+        return this.parseCatalog(value);
     }
 
     private async loadCatalog(): Promise<CharacterCatalog> {
@@ -104,29 +123,18 @@ export class CharacterCatalogService {
 
         if (!stats.isFile())
             throw new Error(`${filePath} is not a file.`);
-        if (stats.size > this.MAX_CATALOG_SIZE)
+        if (stats.size > CharacterCatalogService.MAX_CATALOG_SIZE)
             throw new Error("The character catalog is too large.");
 
         const contents = await fse.readFile(filePath, { encoding: "utf-8" });
-        let value: unknown;
-
-        try
-        {
-            value = JSON.parse(contents);
-        }
-        catch (error)
-        {
-            throw new Error("The character catalog contains invalid JSON.", { cause: error });
-        }
-
-        return this.parseCatalog(value);
+        return this.parseCatalogContents(contents);
     }
 
     private parseCatalog(value: unknown): CharacterCatalog {
         if (!TypeCheck.isRecord(value))
             throw new Error("The character catalog is not an object.");
 
-        const version = this.readString(value.version, "catalog version", 10);
+        const version = VersionUtils.validate(value.version, "catalog version");
 
         if (!TypeCheck.isValidArray(value.characters))
             throw new Error("The catalog has no characters array.");

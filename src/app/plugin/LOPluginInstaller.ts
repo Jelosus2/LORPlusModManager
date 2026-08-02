@@ -1,6 +1,7 @@
 import type { DownloadedPluginRelease } from "./LOPluginDownloader.js";
 import type { PluginProgress } from "../../shared/plugin.js";
 
+import { UserFacingError } from "#utils/ErrorUtils.js";
 import { ZipArchive } from "#utils/ZipArchive.js";
 import { Paths } from "#utils/Paths.js";
 import path from "node:path";
@@ -21,7 +22,7 @@ export class LOPluginInstaller {
 
     async installAt(release: DownloadedPluginRelease, gameLocation: string, cleanInstall: boolean, reportProgress: InstallProgressCallback) {
         if (!await fse.exists(gameLocation))
-            throw new Error("The selected game location no longer exists.");
+            throw new UserFacingError("The selected game location no longer exists.");
 
         const releaseDirectory = path.resolve(release.directory);
 
@@ -30,7 +31,7 @@ export class LOPluginInstaller {
             const relativePath = path.relative(releaseDirectory, archivePath);
 
             if (relativePath.startsWith("..") || path.isAbsolute(relativePath))
-                throw new Error(`Unsafe release filename: ${fileName}`);
+                throw new UserFacingError(`"The LOPlugin+ release contains an unsafe filename."`);
 
             return archivePath;
         });
@@ -91,7 +92,7 @@ export class LOPluginInstaller {
             const filePath = path.join(stagingDirectory, ...file.split("/"));
 
             if (!await fse.exists(filePath))
-                throw new Error(`The LOPlugin+ release is missing ${file}.`)
+                throw new UserFacingError(`The LOPlugin+ release is missing ${file}.`);
         }
     }
 

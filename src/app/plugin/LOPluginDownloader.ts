@@ -1,22 +1,15 @@
+import type { GitHubRelease, GitHubReleaseAsset } from "#utils/GitHubReleaseClient.js";
 import type { PluginProgress } from "../../shared/plugin.js";
 
+import { GitHubReleaseClient } from "#utils/GitHubReleaseClient.js";
+import { UserFacingError } from "#utils/ErrorUtils.js";
+import { VersionUtils } from "#utils/VersionUtils.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { createHash } from "node:crypto";
 import { Paths } from "#utils/Paths.js";
 import fsp from "node:fs/promises";
 import path from "node:path";
 import fse from "fs-extra";
-
-type GitHubReleaseAsset = {
-    name: string;
-    browser_download_url: string;
-    size: number;
-};
-
-type GitHubRelease = {
-    tag_name: string;
-    assets: GitHubReleaseAsset[];
-};
 
 type VersionInfo = {
     version: string;
@@ -34,8 +27,8 @@ export type ProgressCallback = (progress: PluginProgress) => void;
 
 export class LOPluginDownloader {
     private readonly REPOSITORY = "Jelosus2/LOPluginPlus-Releases";
-    private readonly LATEST_RELEASE_URL = `https://api.github.com/repos/${this.REPOSITORY}/releases/latest`;
     private readonly MANIFEST_NAME = "version-info.json";
+    private readonly githubClient = new GitHubReleaseClient();
 
     async download(reportProgress: ProgressCallback): Promise<DownloadedPluginRelease> {
         reportProgress({
@@ -45,14 +38,10 @@ export class LOPluginDownloader {
             totalBytes: 0
         });
 
-        const release = await this.getLatestRelease();
-        const manifestAsset = this.findAsset(release, this.MANIFEST_NAME);
-        const manifest = await this.getVersionInfo(manifestAsset);
-
-        this.validateReleaseVersion(release, manifest);
+        const { release, manifest } = await this.getLatestVersionInformation();
 
         const assets = manifest.files.map((fileName) => {
-            const asset = this.findAsset(release, fileName);
+            const asset = this.githubClient.findAsset(release, fileName);
 
             return {
                 asset,
@@ -137,110 +126,60 @@ export class LOPluginDownloader {
         }
     }
 
-    private async getLatestRelease(): Promise<GitHubRelease> {
-        const response = await fetch(this.LATEST_RELEASE_URL, {
-            headers: {
-                Accept: "application/vnd.github+json",
-                "User-Agent": "LORPlusModManager"
-            },
-            signal: AbortSignal.timeout(30_000)
-        });
-
-        if (!response.ok)
-            throw new Error(`GitHub returned status ${response.status} while checking LOPlugin+ latest release.`);
-
-        const value = await response.json();
-        if (!this.isGithubRelease(value))
-            throw new Error("GitHub returned invalid release information.");
-
-        return value;
+    async getLatestVersion(): Promise<string> {
+        const { manifest } = await this.getLatestVersionInformation();
+        return manifest.version;
     }
 
-    private isGithubRelease(value: unknown): value is GitHubRelease {
-        if (!TypeCheck.isRecord(value))
-            return false;
+    private async getLatestVersionInformation(): Promise<{ release: GitHubRelease; manifest: VersionInfo; }> {
+        const release = await this.githubClient.getLatestRelease(this.REPOSITORY);
+        const manifestAsset = this.githubClient.findAsset(release, this.MANIFEST_NAME);
+        const manifest = this.parseVersionInfo(await this.githubClient.readAssetJson(manifestAsset));
 
-        const release = value as Partial<GitHubRelease>;
+        this.validateReleaseVersion(release, manifest);
 
-        return (
-            TypeCheck.isValidString(release.tag_name) &&
-            TypeCheck.isValidArray(release.assets) &&
-            release.assets.every((asset) =>
-                asset &&
-                TypeCheck.isValidString(asset.name) &&
-                TypeCheck.isValidString(asset.browser_download_url) &&
-                TypeCheck.isValidInteger(asset.size)
-            )
-        );
-    }
-
-    private findAsset(release: GitHubRelease, fileName: string): GitHubReleaseAsset {
-        const asset = release.assets.find((candidate) => candidate.name === fileName);
-        if (!asset)
-            throw new Error(`${fileName} is missing from release ${release.tag_name}.`);
-
-        return asset;
-    }
-
-    private async getVersionInfo(manifestAsset: GitHubReleaseAsset): Promise<VersionInfo> {
-        const response = await fetch(manifestAsset.browser_download_url, {
-            headers: {
-                Accept: "application/json",
-                "User-Agent": "LORPlusModManager"
-            },
-            signal: AbortSignal.timeout(30_000)
-        });
-
-        if (!response.ok)
-            throw new Error(`Could not download ${this.MANIFEST_NAME}: HTTP ${response.status}.`);
-
-        return this.parseVersionInfo(await response.json());
+        return {
+            release,
+            manifest
+        };
     }
 
     private parseVersionInfo(value: unknown): VersionInfo {
         if (!TypeCheck.isRecord(value))
-            throw new Error(`${this.MANIFEST_NAME} is not a JSON object.`);
+            throw new UserFacingError(`${this.MANIFEST_NAME} is not a JSON object.`);
 
         const manifest = value as Partial<VersionInfo>;
+        const version = VersionUtils.validate(manifest.version, "LOPlugin+ version");
 
-        if (!TypeCheck.isValidString(manifest.version) || !/^[0-9A-Za-z._-]+$/.test(manifest.version))
-            throw new Error(`${this.MANIFEST_NAME} contains an invalid version.`);
         if (!TypeCheck.isRecord(manifest.checksums) || TypeCheck.isValidArray(manifest.checksums))
-            throw new Error(`${this.MANIFEST_NAME} contains invalid checksums.`);
-
-        if (
-            !TypeCheck.isValidArray(manifest.files) ||
-            manifest.files.length === 0 ||
-            manifest.files.some((file) => !TypeCheck.isValidString(file))
-        )
-        {
-            throw new Error(`${this.MANIFEST_NAME} contains an invalid files list.`);
-        }
+            throw new UserFacingError(`${this.MANIFEST_NAME} contains invalid checksums.`);
+        if (!TypeCheck.isValidArray(manifest.files, 10) || manifest.files.some((file) => !TypeCheck.isValidString(file)))
+            throw new UserFacingError(`${this.MANIFEST_NAME} contains an invalid files list.`);
 
         const files = [...new Set(manifest.files)];
 
         for (const fileName of files)
         {
             if (path.basename(fileName) !== fileName || !fileName.toLowerCase().endsWith(".zip"))
-                throw new Error(`Expected ${this.MANIFEST_NAME} to be a zip.`);
+                throw new UserFacingError(`${this.MANIFEST_NAME} contains a file that is not a supported ZIP archive.`);
 
             const checksum = manifest.checksums[fileName];
             if (!TypeCheck.isValidString(checksum) || !/^[a-fA-F0-9]{64}$/.test(checksum))
-                throw new Error(`${this.MANIFEST_NAME} has no valid checksum for ${fileName}.`);
+                throw new UserFacingError(`${this.MANIFEST_NAME} has no valid checksum for ${fileName}.`);
         }
 
         return {
-            version: manifest.version,
+            version,
             files,
             checksums: manifest.checksums
         };
     }
 
     private validateReleaseVersion(release: GitHubRelease, manifest: VersionInfo) {
-        const tagVersion = release.tag_name.replace(/^v/, "");
+        const tagVersion = release.tagName.replace(/^v/, "");
 
         if (tagVersion !== manifest.version)
-            throw new Error(`Release ${release.tag_name} contains version ${manifest.version} metadata`);
+            throw new UserFacingError(`Release ${release.tagName} contains metadata for version ${manifest.version}.`);
     }
 
     private calculateProgress(downloadedBytes: number, totalBytes: number): number {
@@ -256,7 +195,7 @@ export class LOPluginDownloader {
         directory: string,
         onChunk: (size: number) => void
     ) {
-        const response = await fetch(asset.browser_download_url, {
+        const response = await fetch(asset.downloadUrl, {
             headers: {
                 Accept: "application/octet-stream",
                 "User-Agent": "LORPlusModManager"
@@ -265,9 +204,9 @@ export class LOPluginDownloader {
         });
 
         if (!response.ok)
-            throw new Error(`Could not download ${asset.name}: HTTP ${response.status}.`);
+            throw new UserFacingError(`Could not download ${asset.name}: HTTP ${response.status}.`);
         if (!response.body)
-            throw new Error(`${asset.name} returned an empty response.`);
+            throw new UserFacingError(`${asset.name} returned an empty response.`);
 
         const destination = path.join(directory, asset.name);
         const partialDestination = `${destination}.part`;
@@ -296,7 +235,7 @@ export class LOPluginDownloader {
                 {
                     const { bytesWritten } = await file.write(chunk, offset, chunk.length - offset, null);
                     if (bytesWritten === 0)
-                        throw new Error(`Failed to write ${asset.name}.`);
+                        throw new UserFacingError(`Failed to write ${asset.name}.`);
 
                     offset += bytesWritten;
                 }
@@ -321,14 +260,14 @@ export class LOPluginDownloader {
         if (asset.size > 0 && receivedBytes !== asset.size)
         {
             await fse.rm(partialDestination, { force: true });
-            throw new Error(`${asset.name} was incomplete: expected ${asset.size} bytes, received ${receivedBytes}.`);
+            throw new UserFacingError(`${asset.name} was incomplete: expected ${asset.size} bytes, received ${receivedBytes}.`);
         }
 
         const calculatedChecksum = hash.digest("hex");
         if (calculatedChecksum.toLowerCase() !== checksum.toLowerCase())
         {
             await fse.rm(partialDestination, { force: true });
-            throw new Error(`Checksum verification failed for ${asset.name}.`);
+            throw new UserFacingError(`Checksum verification failed for ${asset.name}.`);
         }
 
         await fse.rename(partialDestination, destination);

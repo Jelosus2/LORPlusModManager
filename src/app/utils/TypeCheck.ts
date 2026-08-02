@@ -36,7 +36,7 @@ export class TypeCheck {
             return false;
         if (checkSafety && !Number.isSafeInteger(value))
             return false;
-        if (positiveCheck && value <= 0)
+        if (positiveCheck && value < 0)
             return false;
 
         return true;

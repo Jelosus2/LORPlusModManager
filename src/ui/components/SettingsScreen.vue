@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AutomaticUpdatePreferences, ComponentUpdateResult, InstalledComponentVersions, UpdateComponent } from "../../shared/updates.ts";
 import type { GameLocationChangeProgress } from "../../shared/setup.ts";
 import type { PluginProgress } from "../../shared/plugin.ts";
 
@@ -24,6 +25,22 @@ const isOpeningGameLocation = ref(false);
 const isReinstallingPlugin = ref(false);
 const pluginInstallProgress = ref<PluginProgress | null>(null);
 const pluginInstallError = ref("");
+const automaticUpdatePreferences = ref<AutomaticUpdatePreferences>({
+    application: true,
+    plugin: true,
+    catalog: true
+});
+const installedUpdateVersions = ref<InstalledComponentVersions>({
+    application: null,
+    plugin: null,
+    catalog: null
+});
+const updateResults = ref<Partial<Record<UpdateComponent, ComponentUpdateResult>>>({});
+const updateSettingsError = ref("");
+const lastUpdateCheck = ref("");
+const isLoadingUpdateSettings = ref(true);
+const isCheckingUpdates = ref(false);
+const savingUpdatePreference = ref<UpdateComponent | null>(null);
 
 async function loadGameSettings() {
     gameLocationError.value = "";
@@ -103,6 +120,10 @@ async function confirmGameLocationChange() {
 
         gameLocation.value = result.gameLocation ?? pendingGameLocation.value;
         pluginVersion.value = result.pluginVersion ?? pluginVersion.value;
+        installedUpdateVersions.value = {
+            ...installedUpdateVersions.value,
+            plugin: result.pluginVersion ?? installedUpdateVersions.value.plugin
+        };
 
         confirmationPopover()?.hidePopover();
         pendingGameLocation.value = "";
@@ -169,7 +190,13 @@ async function reinstallPlugin() {
         }
 
         if (result.version)
+        {
             pluginVersion.value = result.version;
+            installedUpdateVersions.value = {
+                ...installedUpdateVersions.value,
+                plugin: result.version
+            };
+        }
     }
     catch (error)
     {
@@ -182,6 +209,131 @@ async function reinstallPlugin() {
         isReinstallingPlugin.value = false;
         pluginInstallProgress.value = null;
     }
+}
+
+async function loadUpdateSettings() {
+    isLoadingUpdateSettings.value = true;
+    updateSettingsError.value = "";
+
+    try
+    {
+        const state = await window.app.getUpdateSettings();
+
+        automaticUpdatePreferences.value = state.preferences;
+        installedUpdateVersions.value = state.installedVersions;
+    }
+    catch (error)
+    {
+        console.error("Could not load the update settings:", error);
+        updateSettingsError.value = ErrorUtils.getUserErrorMessage(error, "The update settings could not be loaded.");
+    }
+    finally
+    {
+        isLoadingUpdateSettings.value = false;
+    }
+}
+
+async function saveAutomaticUpdatePreference(component: UpdateComponent, event: Event) {
+    const input = event.currentTarget;
+    if (!(input instanceof HTMLInputElement))
+        return;
+
+    if (isLoadingUpdateSettings.value || savingUpdatePreference.value !== null)
+    {
+        input.checked = automaticUpdatePreferences.value[component];
+        return;
+    }
+
+    savingUpdatePreference.value = component;
+    updateSettingsError.value = "";
+
+    try
+    {
+        automaticUpdatePreferences.value = await window.app.setAutomaticUpdatePreference({ component, enabled: input.checked });
+    }
+    catch (error)
+    {
+        console.error(`Could not save the ${component} update preference:`, error);
+        input.checked = automaticUpdatePreferences.value[component];
+        updateSettingsError.value = ErrorUtils.getUserErrorMessage(error, "The automatic update preference could not be saved.");
+    }
+    finally
+    {
+        savingUpdatePreference.value = null;
+    }
+}
+
+async function checkForUpdates() {
+    if (isCheckingUpdates.value || isLoadingUpdateSettings.value)
+        return;
+
+    isCheckingUpdates.value = true;
+    updateSettingsError.value = "";
+
+    try
+    {
+        const result = await window.app.checkForUpdates("manual");
+        const nextResults: Partial<Record<UpdateComponent, ComponentUpdateResult>> = {};
+        const nextVersions = { ...installedUpdateVersions.value };
+
+        for (const componentResult of result.components)
+        {
+            nextResults[componentResult.component] = componentResult;
+
+            if (componentResult.installedVersion)
+                nextVersions[componentResult.component] = componentResult.installedVersion;
+        }
+
+        updateResults.value = nextResults;
+        installedUpdateVersions.value = nextVersions;
+        lastUpdateCheck.value = result.checkedAt;
+    }
+    catch (error)
+    {
+        console.error("Could not check for updates:", error);
+        updateSettingsError.value = ErrorUtils.getUserErrorMessage(error, "Updates could not be checked.");
+    }
+    finally
+    {
+        isCheckingUpdates.value = false;
+    }
+}
+
+function getUpdateResult(component: UpdateComponent): ComponentUpdateResult | undefined {
+    return updateResults.value[component];
+}
+
+function getUpdateResultClasses(component: UpdateComponent) {
+    const result = getUpdateResult(component);
+
+    return {
+        "update-result--up-to-date": result?.status === "up-to-date",
+        "update-result--available": result?.status === "available" && !result.required,
+        "update-result--required": result?.status === "available" && result.required,
+        "update-result--error": result?.status === "error",
+        "update-result--not-checked": result?.status === "not-checked"
+    };
+}
+
+function getInstalledVersionLabel(component: UpdateComponent): string {
+    const version = installedUpdateVersions.value[component];
+    if (!version)
+        return component === "catalog" ? "Catalog unknown" : "Version unknown";
+
+    return component === "catalog"
+        ? `Catalog ${version}`
+        : `Version ${version}`;
+}
+
+function formatLastUpdateCheck(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime()))
+        return "just now";
+
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short"
+    }).format(date);
 }
 
 function confirmationPopover(): HTMLElement | null {
@@ -199,7 +351,10 @@ function cancelGameLocationChange() {
     gameLocationProgress.value = null;
 }
 
-onMounted(loadGameSettings);
+onMounted(() => {
+    void loadGameSettings();
+    void loadUpdateSettings();
+});
 </script>
 
 <template>
@@ -365,25 +520,67 @@ onMounted(loadGameSettings);
                         <p>Choose which components should be checked automatically.</p>
                     </div>
 
-                    <button class="settings-button settings-button--primary" type="button">
-                        Check for updates
+                    <button
+                        class="settings-button settings-button--primary"
+                        type="button"
+                        :disabled="isLoadingUpdateSettings || isCheckingUpdates"
+                        @click="checkForUpdates"
+                    >
+                        <RefreshIcon
+                            class="settings-button-icon"
+                            :class="{
+                                'settings-button-icon--spinning': isCheckingUpdates
+                            }"
+                        />
+                        <span>{{ isCheckingUpdates ? "Checking…" : "Check for updates" }}</span>
                     </button>
                 </header>
+
+                <p
+                    v-if="updateSettingsError"
+                    class="setting-error update-settings-error"
+                    role="alert"
+                >
+                    {{ updateSettingsError }}
+                </p>
 
                 <div class="settings-list">
                     <label class="setting-row setting-row--toggle">
                         <span class="setting-copy">
                             <span class="setting-title-line">
                                 <strong>Application updates</strong>
-                                <span class="version-text">Version 1.0.0</span>
+                                <span class="version-text">
+                                    {{ getInstalledVersionLabel("application") }}
+                                </span>
                             </span>
                             <span class="setting-description">
                                 Check for new mod manager releases when the application starts.
                             </span>
+                            <span
+                                v-if="getUpdateResult('application')"
+                                class="update-result"
+                                :class="getUpdateResultClasses('application')"
+                                :role="
+                                    getUpdateResult('application')?.status === 'error' ||
+                                    getUpdateResult('application')?.required
+                                        ? 'alert'
+                                        : 'status'
+                                "
+                            >
+                                {{ getUpdateResult("application")?.message }}
+                            </span>
                         </span>
 
                         <span class="switch-control">
-                            <input type="checkbox" checked />
+                            <input
+                                type="checkbox"
+                                :checked="automaticUpdatePreferences.application"
+                                :disabled="
+                                    isLoadingUpdateSettings ||
+                                    savingUpdatePreference !== null
+                                "
+                                @change="saveAutomaticUpdatePreference('application', $event)"
+                            />
                             <span class="switch-track" aria-hidden="true">
                                 <span class="switch-thumb"></span>
                             </span>
@@ -394,15 +591,38 @@ onMounted(loadGameSettings);
                         <span class="setting-copy">
                             <span class="setting-title-line">
                                 <strong>LOPlugin+ updates</strong>
-                                <span class="version-text">Version 1.3.8.1</span>
+                                <span class="version-text">
+                                    {{ getInstalledVersionLabel("plugin") }}
+                                </span>
                             </span>
                             <span class="setting-description">
                                 Check whether a newer plugin release is available.
                             </span>
+                            <span
+                                v-if="getUpdateResult('plugin')"
+                                class="update-result"
+                                :class="getUpdateResultClasses('plugin')"
+                                :role="
+                                    getUpdateResult('plugin')?.status === 'error' ||
+                                    getUpdateResult('plugin')?.required
+                                        ? 'alert'
+                                        : 'status'
+                                "
+                            >
+                                {{ getUpdateResult("plugin")?.message }}
+                            </span>
                         </span>
 
                         <span class="switch-control">
-                            <input type="checkbox" checked />
+                            <input
+                                type="checkbox"
+                                :checked="automaticUpdatePreferences.plugin"
+                                :disabled="
+                                    isLoadingUpdateSettings ||
+                                    savingUpdatePreference !== null
+                                "
+                                @change="saveAutomaticUpdatePreference('plugin', $event)"
+                            />
                             <span class="switch-track" aria-hidden="true">
                                 <span class="switch-thumb"></span>
                             </span>
@@ -413,15 +633,38 @@ onMounted(loadGameSettings);
                         <span class="setting-copy">
                             <span class="setting-title-line">
                                 <strong>Character catalog updates</strong>
-                                <span class="version-text">Catalog 1.4.2</span>
+                                <span class="version-text">
+                                    {{ getInstalledVersionLabel("catalog") }}
+                                </span>
                             </span>
                             <span class="setting-description">
                                 Keep character, skin and asset information up to date.
                             </span>
+                            <span
+                                v-if="getUpdateResult('catalog')"
+                                class="update-result"
+                                :class="getUpdateResultClasses('catalog')"
+                                :role="
+                                    getUpdateResult('catalog')?.status === 'error' ||
+                                    getUpdateResult('catalog')?.required
+                                        ? 'alert'
+                                        : 'status'
+                                "
+                            >
+                                {{ getUpdateResult("catalog")?.message }}
+                            </span>
                         </span>
 
                         <span class="switch-control">
-                            <input type="checkbox" checked />
+                            <input
+                                type="checkbox"
+                                :checked="automaticUpdatePreferences.catalog"
+                                :disabled="
+                                    isLoadingUpdateSettings ||
+                                    savingUpdatePreference !== null
+                                "
+                                @change="saveAutomaticUpdatePreference('catalog', $event)"
+                            />
                             <span class="switch-track" aria-hidden="true">
                                 <span class="switch-thumb"></span>
                             </span>
@@ -429,7 +672,20 @@ onMounted(loadGameSettings);
                     </label>
                 </div>
 
-                <p class="last-checked">Updates have not been checked yet.</p>
+                <p class="last-checked">
+                    <template v-if="lastUpdateCheck">
+                        Last checked
+                        <time :datetime="lastUpdateCheck">
+                            {{ formatLastUpdateCheck(lastUpdateCheck) }}
+                        </time>.
+                    </template>
+                    <template v-else-if="isLoadingUpdateSettings">
+                        Loading update settings…
+                    </template>
+                    <template v-else>
+                        Updates have not been checked yet.
+                    </template>
+                </p>
             </section>
 
             <section class="settings-section" aria-labelledby="maintenance-settings-title">
@@ -694,6 +950,10 @@ h1 {
     background: #121714;
 }
 
+.setting-row--toggle:has(input:disabled) {
+    cursor: not-allowed;
+}
+
 .setting-copy {
     display: flex;
     min-width: 0;
@@ -775,6 +1035,51 @@ h1 {
 .version-text {
     font-size: 12px;
     font-weight: 600;
+}
+
+.update-settings-error {
+    margin: -2px 0 14px;
+}
+
+.update-result {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin-top: 4px;
+    color: #8f9690;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.update-result::before {
+    width: 6px;
+    height: 6px;
+    margin-top: 5px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: currentColor;
+    content: "";
+}
+
+.update-result--up-to-date {
+    color: #8fbea9;
+}
+
+.update-result--available {
+    color: #9fc4d8;
+}
+
+.update-result--required {
+    color: #e5b47f;
+}
+
+.update-result--error {
+    color: #e69a96;
+}
+
+.update-result--not-checked {
+    color: #7d8580;
 }
 
 .status-chip {
@@ -950,6 +1255,10 @@ h1 {
 .switch-control input:checked + .switch-track .switch-thumb {
     background: #a6cade;
     transform: translateX(18px);
+}
+
+.switch-control input:disabled + .switch-track {
+    opacity: 0.48;
 }
 
 .last-checked {

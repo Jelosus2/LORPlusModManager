@@ -68,6 +68,9 @@ const modManagerApi: IpcApi = {
         };
     },
     openGameLocation: () => ipcRenderer.invoke("setup:open-game-location"),
+    getUpdateSettings: () => ipcRenderer.invoke("updates:get-settings"),
+    setAutomaticUpdatePreference: (request) => ipcRenderer.invoke("updates:set-automatic-preference", request),
+    checkForUpdates: (mode) => ipcRenderer.invoke("updates:check", mode)
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);
