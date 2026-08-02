@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import type { GameLocationChangeProgress } from "../../shared/setup.ts";
+import type { PluginProgress } from "../../shared/plugin.ts";
+
+import RefreshIcon from "./icons/RefreshIcon.vue";
+import SearchIcon from "./icons/SearchIcon.vue";
+import FolderIcon from "./icons/FolderIcon.vue";
 
 import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { useModStore } from "@/stores/modStore.ts";
@@ -16,6 +21,9 @@ const isSelectingGameLocation = ref(false);
 const isChangingGameLocation = ref(false);
 const gameLocationProgress = ref<GameLocationChangeProgress | null>(null);
 const isOpeningGameLocation = ref(false);
+const isReinstallingPlugin = ref(false);
+const pluginInstallProgress = ref<PluginProgress | null>(null);
+const pluginInstallError = ref("");
 
 async function loadGameSettings() {
     gameLocationError.value = "";
@@ -35,7 +43,7 @@ async function loadGameSettings() {
 }
 
 async function selectGameLocation(manualSetup: boolean) {
-    if (isSelectingGameLocation.value || isChangingGameLocation.value)
+    if (isSelectingGameLocation.value || isChangingGameLocation.value || isReinstallingPlugin.value)
         return;
 
     isSelectingGameLocation.value = true;
@@ -115,7 +123,7 @@ async function confirmGameLocationChange() {
 }
 
 async function openGameLocation() {
-    if (!gameLocation.value || isOpeningGameLocation.value || isSelectingGameLocation.value || isChangingGameLocation.value)
+    if (!gameLocation.value || isOpeningGameLocation.value || isSelectingGameLocation.value || isChangingGameLocation.value || isReinstallingPlugin.value)
         return;
 
     isOpeningGameLocation.value = true;
@@ -133,6 +141,46 @@ async function openGameLocation() {
     finally
     {
         isOpeningGameLocation.value = false;
+    }
+}
+
+async function reinstallPlugin() {
+    if (!gameLocation.value || isReinstallingPlugin.value || isSelectingGameLocation.value || isChangingGameLocation.value)
+        return;
+
+    isReinstallingPlugin.value = true;
+    pluginInstallError.value = "";
+    pluginInstallProgress.value = {
+        progress: 0,
+        status: "Preparing reinstall..."
+    };
+
+    const removeProgressListener = window.app.onLOPluginInstallProgress((progress) => {
+        pluginInstallProgress.value = progress;
+    });
+
+    try
+    {
+        const result = await window.app.installLOPlugin();
+        if (!result.success)
+        {
+            pluginInstallError.value = result.message;
+            return;
+        }
+
+        if (result.version)
+            pluginVersion.value = result.version;
+    }
+    catch (error)
+    {
+        console.error("Could not reinstall LOPlugin+:", error);
+        pluginInstallError.value = ErrorUtils.getUserErrorMessage(error, "LOPlugin+ could not be reinstalled.");
+    }
+    finally
+    {
+        removeProgressListener();
+        isReinstallingPlugin.value = false;
+        pluginInstallProgress.value = null;
     }
 }
 
@@ -199,18 +247,28 @@ onMounted(loadGameSettings);
                             <button
                                 class="settings-button settings-button--secondary"
                                 type="button"
-                                :disabled="isSelectingGameLocation || isChangingGameLocation"
+                                :disabled="
+                                    isSelectingGameLocation ||
+                                    isChangingGameLocation ||
+                                    isReinstallingPlugin
+                                "
                                 @click="selectGameLocation(false)"
                             >
-                                Auto-detect
+                                <SearchIcon class="settings-button-icon" />
+                                <span>Auto-detect</span>
                             </button>
                             <button
                                 class="settings-button settings-button--secondary"
                                 type="button"
-                                :disabled="isSelectingGameLocation || isChangingGameLocation"
+                                :disabled="
+                                    isSelectingGameLocation ||
+                                    isChangingGameLocation ||
+                                    isReinstallingPlugin
+                                "
                                 @click="selectGameLocation(true)"
                             >
-                                Choose folder
+                                <FolderIcon class="settings-button-icon" />
+                                <span>Choose folder</span>
                             </button>
                             <button
                                 class="settings-button settings-button--quiet"
@@ -219,11 +277,13 @@ onMounted(loadGameSettings);
                                     !gameLocation ||
                                     isOpeningGameLocation ||
                                     isSelectingGameLocation ||
-                                    isChangingGameLocation
+                                    isChangingGameLocation ||
+                                    isReinstallingPlugin
                                 "
                                 @click="openGameLocation"
                             >
-                                Open folder
+                                <FolderIcon class="settings-button-icon" />
+                                <span>{{ isOpeningGameLocation ? "Opening…" : "Open folder" }}</span>
                             </button>
                         </div>
 
@@ -242,14 +302,56 @@ onMounted(loadGameSettings);
                                 Installed version
                                 <span class="setting-value">{{ pluginVersion || "Unknown" }}</span>
                             </p>
+
+                            <div
+                                v-if="isReinstallingPlugin"
+                                class="plugin-install-progress"
+                                aria-live="polite"
+                            >
+                                <div class="plugin-install-progress-copy">
+                                    <span>{{ pluginInstallProgress?.status || "Preparing reinstall…" }}</span>
+                                    <strong>{{ Math.round(pluginInstallProgress?.progress || 0) }}%</strong>
+                                </div>
+
+                                <div
+                                    class="plugin-install-progress-track"
+                                    role="progressbar"
+                                    aria-label="LOPlugin+ reinstall progress"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                    :aria-valuenow="Math.round(pluginInstallProgress?.progress || 0)"
+                                >
+                                    <span
+                                        class="plugin-install-progress-fill"
+                                        :style="{ width: `${pluginInstallProgress?.progress || 0}%` }"
+                                    ></span>
+                                </div>
+                            </div>
+
+                            <p v-if="pluginInstallError" class="setting-error" role="alert">
+                                {{ pluginInstallError }}
+                            </p>
                         </div>
 
                         <div class="setting-actions">
-                            <button class="settings-button settings-button--secondary" type="button">
-                                Check for update
-                            </button>
-                            <button class="settings-button settings-button--quiet" type="button">
-                                Reinstall
+                            <button
+                                class="settings-button settings-button--secondary"
+                                type="button"
+                                :disabled="
+                                    !gameLocation ||
+                                    isReinstallingPlugin ||
+                                    isSelectingGameLocation ||
+                                    isChangingGameLocation
+                                "
+                                @click="reinstallPlugin"
+                            >
+                                <RefreshIcon
+                                    class="settings-button-icon"
+                                    :class="{
+                                        'settings-button-icon--spinning': isReinstallingPlugin
+                                    }"
+                                />
+                                <span>{{ isReinstallingPlugin ? "Reinstalling…" : "Reinstall" }}</span>
                             </button>
                         </div>
                     </div>
@@ -628,6 +730,48 @@ h1 {
     color: #9ebdcb;
 }
 
+.plugin-install-progress {
+    width: min(100%, 520px);
+    margin-top: 8px;
+}
+
+.plugin-install-progress-copy {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    color: #9ca39e;
+    font-size: 12px;
+}
+
+.plugin-install-progress-copy span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.plugin-install-progress-copy strong {
+    flex: 0 0 auto;
+    color: #9ebdcb;
+    font-size: 12px;
+}
+
+.plugin-install-progress-track {
+    height: 6px;
+    margin-top: 8px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: #242a27;
+}
+
+.plugin-install-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #91b8cf;
+    transition: width 160ms ease;
+}
+
 .version-text {
     font-size: 12px;
     font-weight: 600;
@@ -678,7 +822,11 @@ h1 {
 }
 
 .settings-button {
+    display: inline-flex;
     min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     padding: 0 15px;
     border: 0;
     border-radius: 7px;
@@ -687,6 +835,27 @@ h1 {
     font-weight: 650;
     cursor: pointer;
     transition: background-color 140ms ease, color 140ms ease;
+}
+
+.settings-button-icon {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.settings-button-icon--spinning {
+    animation: settings-icon-spin 900ms linear infinite;
+}
+
+@keyframes settings-icon-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .settings-button--primary {
@@ -795,6 +964,10 @@ h1 {
     color: #ef9c98;
     font-size: 13px;
     line-height: 1.5;
+}
+
+.setting-copy .setting-error {
+    color: #ef9c98;
 }
 
 .confirmation-popover {
@@ -1055,6 +1228,16 @@ h1 {
 
     .confirmation-actions .settings-button {
         width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .settings-button-icon--spinning {
+        animation: none;
+    }
+
+    .plugin-install-progress-fill {
+        transition: none;
     }
 }
 </style>

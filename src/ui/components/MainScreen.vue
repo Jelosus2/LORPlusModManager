@@ -5,8 +5,11 @@ import ImportFilesIcon from "./icons/ImportFilesIcon.vue";
 import ModExtractionModal from "./ModExtractionModal.vue";
 import ImportFileIcon from "./icons/ImportFileIcon.vue";
 import CharactersScreen from "./CharactersScreen.vue";
+import CharacterIcon from "./icons/CharacterIcon.vue";
+import SettingsIcon from "./icons/SettingsIcon.vue";
 import ModImportScreen from "./ModImportScreen.vue";
 import SettingsScreen from "./SettingsScreen.vue";
+import ModsIcon from "./icons/ModsIcon.vue";
 import ModsScreen from "./ModsScreen.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
@@ -273,7 +276,8 @@ onMounted(() => {
                             :aria-current="activeSection === 'mods' ? 'page' : undefined"
                             @click="activeSection = 'mods'"
                         >
-                            Mods
+                            <ModsIcon class="navigation-icon" />
+                            <span>Mods</span>
                         </button>
 
                         <button
@@ -285,7 +289,8 @@ onMounted(() => {
                             :aria-current="activeSection === 'characters' ? 'page' : undefined"
                             @click="activeSection = 'characters'"
                         >
-                            Characters
+                            <CharacterIcon class="navigation-icon" />
+                            <span>Characters</span>
                         </button>
                     </div>
                 </section>
@@ -305,7 +310,8 @@ onMounted(() => {
                             :aria-current="activeSection === 'settings' ? 'page' : undefined"
                             @click="activeSection = 'settings'"
                         >
-                            Settings
+                            <SettingsIcon class="navigation-icon" />
+                            <span>Settings</span>
                         </button>
                     </div>
                 </section>
@@ -501,7 +507,10 @@ onMounted(() => {
 
 .navigation-item {
     position: relative;
+    display: flex;
     min-height: 44px;
+    align-items: center;
+    gap: 11px;
     padding: 0 14px;
     border: 0;
     border-radius: 7px;
@@ -513,6 +522,17 @@ onMounted(() => {
     text-align: left;
     cursor: pointer;
     transition: color 150ms ease, background-color 150ms ease;
+}
+
+.navigation-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .navigation-item:hover {
