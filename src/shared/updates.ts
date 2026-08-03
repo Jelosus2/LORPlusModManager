@@ -35,7 +35,7 @@ export type ComponentUpdateResult = Readonly<{
 
 export type UpdateCheckResult = Readonly<{
     mode: UpdateCheckMode;
-    checkedAt: string;
+    checkedAt: string | null;
     components: readonly ComponentUpdateResult[];
 }>;
 
@@ -46,6 +46,7 @@ export type InstalledComponentVersions = Readonly<
 export type UpdateSettingsState = Readonly<{
     preferences: AutomaticUpdatePreferences;
     installedVersions: InstalledComponentVersions;
+    lastChecked: string | null;
 }>;
 
 export type UpdateReleaseInfo = Readonly<{

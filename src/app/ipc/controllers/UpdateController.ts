@@ -30,7 +30,8 @@ export class UpdateController {
                 application: app.getVersion(),
                 plugin: this.settingsRepository.getLOPluginVersion(),
                 catalog: await this.getCatalogVersion()
-            }
+            },
+            lastChecked: this.settingsRepository.getLastUpdateCheck()
         };
     }
 

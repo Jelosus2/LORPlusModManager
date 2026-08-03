@@ -23,10 +23,18 @@ export class UpdateCheckCoordinator {
         const preferences = this.settingsRepository.getAutomaticUpdatePreferences();
         const components: readonly UpdateComponent[] = ["application", "plugin", "catalog"];
         const results = await Promise.all(components.map((component) => this.checkComponent(component, mode, preferences)));
+        const performedCheck = results.some((result) => result.status !== "not-checked");
+        let checkedAt = this.settingsRepository.getLastUpdateCheck();
+
+        if (performedCheck)
+        {
+            checkedAt = new Date().toISOString();
+            this.settingsRepository.setLastUpdateCheck(checkedAt);
+        }
 
         return {
             mode,
-            checkedAt: new Date().toISOString(),
+            checkedAt,
             components: results
         };
     }

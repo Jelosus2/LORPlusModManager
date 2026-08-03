@@ -99,6 +99,7 @@ export const useUpdateStore = defineStore("updates", () => {
 
                 preferences.value = state.preferences;
                 installedVersions.value = state.installedVersions;
+                lastChecked.value = state.lastChecked ?? "";
                 isSettingsLoaded.value = true;
 
                 return true;
@@ -145,7 +146,9 @@ export const useUpdateStore = defineStore("updates", () => {
 
                 results.value = nextResults;
                 installedVersions.value = nextVersions;
-                lastChecked.value = result.checkedAt;
+
+                if (result.checkedAt)
+                    lastChecked.value = result.checkedAt;
 
                 const application = nextResults.application;
 

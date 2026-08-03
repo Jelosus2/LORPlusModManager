@@ -14,6 +14,7 @@ export class SettingsRepository {
         plugin: "check_plugin_update",
         catalog: "check_catalog_update"
     };
+    private static readonly LAST_UPDATE_CHECK_KEY = "last_update_check";
 
     getGameLocation(): string | null {
         return this.getSetting(SettingsRepository.GAME_LOCATION_KEY);
@@ -33,6 +34,18 @@ export class SettingsRepository {
             plugin: this.getAutomaticUpdatePreference("plugin"),
             catalog: this.getAutomaticUpdatePreference("catalog")
         };
+    }
+
+    getLastUpdateCheck(): string | null {
+        const value = this.getSetting(SettingsRepository.LAST_UPDATE_CHECK_KEY);
+        if (!value)
+            return null;
+
+        const timestamp = Date.parse(value);
+        if (!Number.isFinite(timestamp))
+            return null;
+
+        return new Date(timestamp).toISOString();
     }
 
     private getBoolean(key: string, defaultValue: boolean): boolean {
@@ -70,6 +83,14 @@ export class SettingsRepository {
 
     setAutomaticUpdatePreference(component: UpdateComponent, enabled: boolean) {
         this.setSetting(SettingsRepository.AUTOMATIC_UPDATE_KEYS[component], enabled ? "1" : "0");
+    }
+
+    setLastUpdateCheck(value: string) {
+        const timestamp = Date.parse(value);
+        if (!Number.isFinite(timestamp))
+            throw new Error("The last update check timestamp is invalid.");
+
+        this.setSetting(SettingsRepository.LAST_UPDATE_CHECK_KEY, new Date(timestamp).toISOString());
     }
 
     setGameSetup(gameLocation: string, pluginVersion: string) {
