@@ -888,7 +888,11 @@ function unsyncMods() {
                         'refresh-mods-button--busy': isRefreshing
                     }"
                     type="button"
-                    :disabled="isRefreshing || isBulkDeleteMode"
+                    :disabled="
+                        !!loadErrorMessage ||
+                        isRefreshing ||
+                        isBulkDeleteMode
+                    "
                     @click="refreshMods"
                 >
                     <RefreshIcon
@@ -906,6 +910,7 @@ function unsyncMods() {
                         type="button"
                         aria-haspopup="dialog"
                         :disabled="
+                            !!loadErrorMessage ||
                             isBulkDeleteMode ||
                             isSynchronizationBlocked ||
                             !hasSynchronizationState
@@ -931,6 +936,7 @@ function unsyncMods() {
                     "
                     class="bulk-delete-button"
                     type="button"
+                    :disabled="!!loadErrorMessage"
                     @click="requestBulkDeletion"
                 >
                     <TrashIcon />
@@ -942,7 +948,7 @@ function unsyncMods() {
                     type="button"
                     aria-haspopup="dialog"
                     popovertarget="add-mod-popover"
-                    :disabled="isBulkDeleteMode"
+                    :disabled="!!loadErrorMessage || isBulkDeleteMode"
                 >
                     <span aria-hidden="true">+</span>
                     Add mod
@@ -954,6 +960,10 @@ function unsyncMods() {
             v-show="modStore.mods.length && areFiltersVisible"
             id="mod-filters"
             class="mod-filters"
+            :class="{
+                'mod-filters--disabled': !!loadErrorMessage
+            }"
+            :aria-disabled="!!loadErrorMessage"
             @submit.prevent
         >
             <label class="text-filter">
@@ -965,6 +975,7 @@ function unsyncMods() {
                         type="search"
                         placeholder="Search mods"
                         autocomplete="off"
+                        :disabled="!!loadErrorMessage"
                     />
                 </span>
             </label>
@@ -978,13 +989,17 @@ function unsyncMods() {
                         type="search"
                         placeholder="Character or skin"
                         autocomplete="off"
+                        :disabled="!!loadErrorMessage"
                     />
                 </span>
             </label>
 
             <label class="select-filter">
                 <span>Mod type</span>
-                <select v-model="modTypeFilter">
+                <select
+                    v-model="modTypeFilter"
+                    :disabled="!!loadErrorMessage"
+                >
                     <option value="all">All types</option>
                     <option value="normal">Normal</option>
                     <option value="damaged">Damaged</option>
@@ -993,7 +1008,10 @@ function unsyncMods() {
 
             <label class="select-filter">
                 <span>Skin type</span>
-                <select v-model="skinTypeFilter">
+                <select
+                    v-model="skinTypeFilter"
+                    :disabled="!!loadErrorMessage"
+                >
                     <option value="all">All skin types</option>
                     <option value="spine">Spine</option>
                     <option value="animator">Animator</option>
@@ -1001,7 +1019,10 @@ function unsyncMods() {
                 </select>
             </label>
 
-            <fieldset class="date-filters">
+            <fieldset
+                class="date-filters"
+                :disabled="!!loadErrorMessage"
+            >
                 <legend>Import period</legend>
 
                 <label>
@@ -1982,6 +2003,17 @@ h1 {
     border-bottom: 1px solid #292e2b;
 }
 
+.mod-filters--disabled {
+    opacity: 0.48;
+}
+
+.mod-filters--disabled label,
+.mod-filters--disabled .date-filters,
+.mod-filters input:disabled,
+.mod-filters select:disabled {
+    cursor: not-allowed;
+}
+
 .mod-filters label,
 .date-filters {
     min-width: 0;
@@ -2634,9 +2666,14 @@ h1 {
     cursor: pointer;
 }
 
-.bulk-delete-button:hover {
+.bulk-delete-button:hover:not(:disabled) {
     color: #f0c2bd;
     background: #2b1c1a;
+}
+
+.bulk-delete-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 .bulk-delete-button svg {

@@ -21,8 +21,7 @@ export class PluginUpdateChecker implements UpdateChecker {
 
         return {
             installedVersion,
-            latestVersion,
-            required: false
+            latestVersion
         };
     }
 }

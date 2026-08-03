@@ -3,11 +3,13 @@ import type {
     AutomaticUpdatePreferences,
     UpdateCheckResult,
     UpdateComponent,
-    UpdateSettingsState
+    UpdateSettingsState,
+    ApplicationUpdateDownloadResult
 } from "../../../shared/updates.js";
 import type { IpcMainInvokeEvent } from "electron";
 
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
+import { applicationUpdateService } from "#update/ApplicationUpdateService.js";
 import { updateCheckCoordinator } from "#update/UpdateCheckCoordinator.js";
 import { characterCatalog } from "#utils/CharacterCatalogService.js";
 import { UserFacingError } from "#utils/ErrorUtils.js";
@@ -44,6 +46,19 @@ export class UpdateController {
             throw new UserFacingError("The update check request is invalid.");
 
         return updateCheckCoordinator.check(value);
+    }
+
+    @IpcHelper.IpcHandle("updates:download-application")
+    downloadApplicationUpdate(event: IpcMainInvokeEvent): Promise<ApplicationUpdateDownloadResult> {
+        return applicationUpdateService.download((progress) => {
+            if (!event.sender.isDestroyed())
+                event.sender.send("updates:application-download-progress", progress);
+        });
+    }
+
+    @IpcHelper.IpcHandle("updates:install-application")
+    installApplicationUpdate(): void {
+        applicationUpdateService.install();
     }
 
     private async getCatalogVersion(): Promise<string | null> {

@@ -11,7 +11,15 @@ import type {
     ModSyncResult,
     ModSyncProgress
 } from "./mod.js";
-import type { AutomaticUpdatePreferenceRequest, AutomaticUpdatePreferences, UpdateCheckMode, UpdateCheckResult, UpdateSettingsState } from "./updates.js";
+import type {
+    AutomaticUpdatePreferenceRequest,
+    AutomaticUpdatePreferences,
+    UpdateCheckMode,
+    UpdateCheckResult,
+    UpdateSettingsState,
+    ApplicationUpdateDownloadProgress,
+    ApplicationUpdateDownloadResult
+} from "./updates.js";
 import type { GameLocationResult, SetupState, GameLocationChangeProgress, GameLocationChangeResult, GameLocationSelectionResult } from "./setup.js";
 import type { PluginInstallResult, PluginProgress } from "./plugin.js";
 import type { CharacterCatalog } from "./characters.js";
@@ -42,4 +50,7 @@ export type IpcApi = {
     getUpdateSettings: () => Promise<UpdateSettingsState>;
     setAutomaticUpdatePreference: (request: AutomaticUpdatePreferenceRequest) => Promise<AutomaticUpdatePreferences>;
     checkForUpdates: (mode: UpdateCheckMode) => Promise<UpdateCheckResult>;
+    downloadApplicationUpdate: () => Promise<ApplicationUpdateDownloadResult>;
+    onApplicationUpdateDownloadProgress: (callback: (progress: ApplicationUpdateDownloadProgress) => void) => () => void;
+    installApplicationUpdate: () => Promise<void>;
 };

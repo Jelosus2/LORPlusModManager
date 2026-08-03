@@ -2,7 +2,7 @@ import type { AutomaticUpdatePreferences, ComponentUpdateResult, UpdateCheckMode
 import type { UpdateChecker } from "./UpdateChecker.js";
 
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
-import { ApplicationUpdateChecker } from "./ApplicationUpdateChecker.js";
+import { applicationUpdateService } from "./ApplicationUpdateService.js";
 import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
 import { CatalogUpdateChecker } from "./CatalogUpdateChecker.js";
 import { PluginUpdateChecker } from "./PluginUpdateChecker.js";
@@ -11,7 +11,7 @@ import { VersionUtils } from "#utils/VersionUtils.js";
 export class UpdateCheckCoordinator {
     private readonly settingsRepository = new SettingsRepository();
     private readonly checkers: Record<UpdateComponent, UpdateChecker> = {
-        application: new ApplicationUpdateChecker(),
+        application: applicationUpdateService,
         plugin: new PluginUpdateChecker(),
         catalog: new CatalogUpdateChecker()
     };
@@ -40,8 +40,8 @@ export class UpdateCheckCoordinator {
                 status: "not-checked",
                 installedVersion: null,
                 latestVersion: null,
-                required: false,
-                message: `Automatic ${this.getComponentName(component)} update checks are disabled.`
+                message: `Automatic ${this.getComponentName(component)} update checks are disabled.`,
+                release: null
             };
         }
 
@@ -49,7 +49,6 @@ export class UpdateCheckCoordinator {
         {
             const versions = await this.checkers[component].check();
             const updateAvailable = VersionUtils.isNewer(versions.latestVersion, versions.installedVersion);
-            const required = updateAvailable && versions.required;
 
             return {
                 component,
@@ -58,12 +57,10 @@ export class UpdateCheckCoordinator {
                     : "up-to-date",
                 installedVersion: versions.installedVersion,
                 latestVersion: versions.latestVersion,
-                required,
                 message: updateAvailable
-                    ? required
-                        ? `${this.getComponentName(component)} ${versions.latestVersion} is required.`
-                        : `${this.getComponentName(component)} ${versions.latestVersion} is available.`
-                    : `${this.getComponentName(component)} is up to date.`
+                    ? `${this.getComponentName(component)} ${versions.latestVersion} is available.`
+                    : `${this.getComponentName(component)} is up to date.`,
+                release: versions.release ?? null
             };
         }
         catch (error)
@@ -73,8 +70,8 @@ export class UpdateCheckCoordinator {
                 status: "error",
                 installedVersion: null,
                 latestVersion: null,
-                required: false,
-                message: ErrorUtils.combineWithCause(`Could not check for ${this.getComponentName(component)} updates.`, error)
+                message: ErrorUtils.combineWithCause(`Could not check for ${this.getComponentName(component)} updates.`, error),
+                release: null
             };
         }
     }

@@ -3,6 +3,7 @@ import type { ModImportMode, SelectedModSource, ModExtractionRequest, ModExtract
 
 import ImportFilesIcon from "./icons/ImportFilesIcon.vue";
 import ModExtractionModal from "./ModExtractionModal.vue";
+import ApplicationUpdateModal from "./ApplicationUpdateModal.vue";
 import ImportFileIcon from "./icons/ImportFileIcon.vue";
 import CharactersScreen from "./CharactersScreen.vue";
 import CharacterIcon from "./icons/CharacterIcon.vue";
@@ -13,6 +14,7 @@ import ModsIcon from "./icons/ModsIcon.vue";
 import ModsScreen from "./ModsScreen.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
+import { useUpdateStore } from "@/stores/updateStore.ts";
 import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { useModStore } from "@/stores/modStore.ts";
 import { ref, onMounted } from "vue";
@@ -21,6 +23,7 @@ type MainSection = "mods" | "characters" | "settings";
 type ModsView = "library" | "import";
 
 const characterCatalog = useCharacterCatalogStore();
+const updateStore = useUpdateStore();
 const modStore = useModStore();
 
 const activeSection = ref<MainSection>("mods");
@@ -252,7 +255,8 @@ onMounted(() => {
     void Promise.all([
         characterCatalog.load(),
         modStore.load(),
-        loadAdminPrivilegeState()
+        loadAdminPrivilegeState(),
+        updateStore.initialize()
     ]);
 });
 </script>
@@ -448,6 +452,8 @@ onMounted(() => {
             @close="closeModExtraction"
             @extract="prepareModExtraction"
         />
+
+        <ApplicationUpdateModal />
     </div>
 </template>
 

@@ -146,7 +146,14 @@ function retryLoading() {
             </p>
         </header>
 
-        <form class="character-filters" @submit.prevent>
+        <form
+            class="character-filters"
+            :class="{
+                'character-filters--disabled': !!loadErrorMessage
+            }"
+            :aria-disabled="!!loadErrorMessage"
+            @submit.prevent
+        >
             <label class="search-filter">
                 <span class="visually-hidden">
                     Search characters and skins
@@ -157,12 +164,16 @@ function retryLoading() {
                     type="search"
                     placeholder="Search characters or skins"
                     autocomplete="off"
+                    :disabled="!!loadErrorMessage"
                 />
             </label>
 
             <label class="type-filter">
                 <span class="visually-hidden">Skin type</span>
-                <select v-model="skinTypeFilter">
+                <select
+                    v-model="skinTypeFilter"
+                    :disabled="!!loadErrorMessage"
+                >
                     <option value="all">All skin types</option>
                     <option value="spine">Spine</option>
                     <option value="animator">Animator</option>
@@ -179,6 +190,7 @@ function retryLoading() {
                 <input
                     v-model="onlyWithNormalMods"
                     type="checkbox"
+                    :disabled="!!loadErrorMessage"
                 />
                 <span class="filter-checkbox" aria-hidden="true">
                     <CheckIcon v-if="onlyWithNormalMods" />
@@ -195,6 +207,7 @@ function retryLoading() {
                 <input
                     v-model="onlyWithDamagedMods"
                     type="checkbox"
+                    :disabled="!!loadErrorMessage"
                 />
                 <span class="filter-checkbox" aria-hidden="true">
                     <CheckIcon v-if="onlyWithDamagedMods" />
@@ -378,6 +391,16 @@ h1 {
     border-bottom: 1px solid #292e2b;
 }
 
+.character-filters--disabled {
+    opacity: 0.48;
+}
+
+.character-filters--disabled label,
+.character-filters input:disabled,
+.character-filters select:disabled {
+    cursor: not-allowed;
+}
+
 .search-filter {
     position: relative;
 }
@@ -463,7 +486,7 @@ h1 {
     user-select: none;
 }
 
-.filter-toggle:hover {
+.filter-toggle:hover:not(:has(input:disabled)) {
     color: #e4e0d7;
     background: #171b18;
 }

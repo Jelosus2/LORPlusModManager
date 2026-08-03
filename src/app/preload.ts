@@ -1,3 +1,4 @@
+import type { ApplicationUpdateDownloadProgress } from "../shared/updates.js";
 import type { ModImportProgress, ModSyncProgress } from "../shared/mod.js";
 import type { GameLocationChangeProgress } from "../shared/setup.js";
 import type { PluginProgress } from "../shared/plugin.js";
@@ -70,7 +71,20 @@ const modManagerApi: IpcApi = {
     openGameLocation: () => ipcRenderer.invoke("setup:open-game-location"),
     getUpdateSettings: () => ipcRenderer.invoke("updates:get-settings"),
     setAutomaticUpdatePreference: (request) => ipcRenderer.invoke("updates:set-automatic-preference", request),
-    checkForUpdates: (mode) => ipcRenderer.invoke("updates:check", mode)
+    checkForUpdates: (mode) => ipcRenderer.invoke("updates:check", mode),
+    downloadApplicationUpdate: () => ipcRenderer.invoke("updates:download-application"),
+    onApplicationUpdateDownloadProgress: (callback) => {
+        const listener = (_event: IpcRendererEvent, progress: ApplicationUpdateDownloadProgress) => {
+            callback(progress);
+        };
+
+        ipcRenderer.on("updates:application-download-progress", listener);
+
+        return () => {
+            ipcRenderer.removeListener("updates:application-download-progress", listener);
+        };
+    },
+    installApplicationUpdate: () => ipcRenderer.invoke("updates:install-application")
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

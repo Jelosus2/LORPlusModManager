@@ -1,17 +1,38 @@
 <script setup lang="ts">
-import type { AutomaticUpdatePreferences, ComponentUpdateResult, InstalledComponentVersions, UpdateComponent } from "../../shared/updates.ts";
+import type { ComponentUpdateResult, UpdateComponent } from "../../shared/updates.ts";
 import type { GameLocationChangeProgress } from "../../shared/setup.ts";
 import type { PluginProgress } from "../../shared/plugin.ts";
 
 import RefreshIcon from "./icons/RefreshIcon.vue";
+import DownloadIcon from "./icons/DownloadIcon.vue";
 import SearchIcon from "./icons/SearchIcon.vue";
 import FolderIcon from "./icons/FolderIcon.vue";
 
+import { useUpdateStore } from "@/stores/updateStore.ts";
 import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { useModStore } from "@/stores/modStore.ts";
 import { onMounted, ref } from "vue";
+import { storeToRefs } from "pinia";
 
 const modStore = useModStore();
+const updateStore = useUpdateStore();
+
+const {
+    preferences: automaticUpdatePreferences,
+    installedVersions: installedUpdateVersions,
+    results: updateResults,
+    errorMessage: updateSettingsError,
+    lastChecked: lastUpdateCheck,
+    isLoadingSettings: isLoadingUpdateSettings,
+    isChecking: isCheckingUpdates,
+    savingPreference: savingUpdatePreference,
+    applicationUpdateAvailable,
+    isDownloading: isDownloadingApplicationUpdate,
+    isInstalling: isInstallingApplicationUpdate,
+    isUpdateReady: isApplicationUpdateReady,
+    downloadProgress: applicationDownloadProgress,
+    downloadError: applicationDownloadError
+} = storeToRefs(updateStore);
 
 const gameLocation = ref("");
 const pluginVersion = ref("");
@@ -25,22 +46,6 @@ const isOpeningGameLocation = ref(false);
 const isReinstallingPlugin = ref(false);
 const pluginInstallProgress = ref<PluginProgress | null>(null);
 const pluginInstallError = ref("");
-const automaticUpdatePreferences = ref<AutomaticUpdatePreferences>({
-    application: true,
-    plugin: true,
-    catalog: true
-});
-const installedUpdateVersions = ref<InstalledComponentVersions>({
-    application: null,
-    plugin: null,
-    catalog: null
-});
-const updateResults = ref<Partial<Record<UpdateComponent, ComponentUpdateResult>>>({});
-const updateSettingsError = ref("");
-const lastUpdateCheck = ref("");
-const isLoadingUpdateSettings = ref(true);
-const isCheckingUpdates = ref(false);
-const savingUpdatePreference = ref<UpdateComponent | null>(null);
 
 async function loadGameSettings() {
     gameLocationError.value = "";
@@ -120,10 +125,7 @@ async function confirmGameLocationChange() {
 
         gameLocation.value = result.gameLocation ?? pendingGameLocation.value;
         pluginVersion.value = result.pluginVersion ?? pluginVersion.value;
-        installedUpdateVersions.value = {
-            ...installedUpdateVersions.value,
-            plugin: result.pluginVersion ?? installedUpdateVersions.value.plugin
-        };
+        updateStore.setInstalledVersion("plugin", result.pluginVersion ?? installedUpdateVersions.value.plugin);
 
         confirmationPopover()?.hidePopover();
         pendingGameLocation.value = "";
@@ -192,10 +194,7 @@ async function reinstallPlugin() {
         if (result.version)
         {
             pluginVersion.value = result.version;
-            installedUpdateVersions.value = {
-                ...installedUpdateVersions.value,
-                plugin: result.version
-            };
+            updateStore.setInstalledVersion("plugin", result.version);
         }
     }
     catch (error)
@@ -212,25 +211,7 @@ async function reinstallPlugin() {
 }
 
 async function loadUpdateSettings() {
-    isLoadingUpdateSettings.value = true;
-    updateSettingsError.value = "";
-
-    try
-    {
-        const state = await window.app.getUpdateSettings();
-
-        automaticUpdatePreferences.value = state.preferences;
-        installedUpdateVersions.value = state.installedVersions;
-    }
-    catch (error)
-    {
-        console.error("Could not load the update settings:", error);
-        updateSettingsError.value = ErrorUtils.getUserErrorMessage(error, "The update settings could not be loaded.");
-    }
-    finally
-    {
-        isLoadingUpdateSettings.value = false;
-    }
+    await updateStore.loadSettings();
 }
 
 async function saveAutomaticUpdatePreference(component: UpdateComponent, event: Event) {
@@ -238,65 +219,21 @@ async function saveAutomaticUpdatePreference(component: UpdateComponent, event: 
     if (!(input instanceof HTMLInputElement))
         return;
 
-    if (isLoadingUpdateSettings.value || savingUpdatePreference.value !== null)
-    {
+    const saved = await updateStore.savePreference(component, input.checked);
+    if (!saved)
         input.checked = automaticUpdatePreferences.value[component];
-        return;
-    }
-
-    savingUpdatePreference.value = component;
-    updateSettingsError.value = "";
-
-    try
-    {
-        automaticUpdatePreferences.value = await window.app.setAutomaticUpdatePreference({ component, enabled: input.checked });
-    }
-    catch (error)
-    {
-        console.error(`Could not save the ${component} update preference:`, error);
-        input.checked = automaticUpdatePreferences.value[component];
-        updateSettingsError.value = ErrorUtils.getUserErrorMessage(error, "The automatic update preference could not be saved.");
-    }
-    finally
-    {
-        savingUpdatePreference.value = null;
-    }
 }
 
 async function checkForUpdates() {
-    if (isCheckingUpdates.value || isLoadingUpdateSettings.value)
-        return;
+    await updateStore.checkForUpdates("manual");
+}
 
-    isCheckingUpdates.value = true;
-    updateSettingsError.value = "";
+async function downloadApplicationUpdate() {
+    await updateStore.downloadApplicationUpdate();
+}
 
-    try
-    {
-        const result = await window.app.checkForUpdates("manual");
-        const nextResults: Partial<Record<UpdateComponent, ComponentUpdateResult>> = {};
-        const nextVersions = { ...installedUpdateVersions.value };
-
-        for (const componentResult of result.components)
-        {
-            nextResults[componentResult.component] = componentResult;
-
-            if (componentResult.installedVersion)
-                nextVersions[componentResult.component] = componentResult.installedVersion;
-        }
-
-        updateResults.value = nextResults;
-        installedUpdateVersions.value = nextVersions;
-        lastUpdateCheck.value = result.checkedAt;
-    }
-    catch (error)
-    {
-        console.error("Could not check for updates:", error);
-        updateSettingsError.value = ErrorUtils.getUserErrorMessage(error, "Updates could not be checked.");
-    }
-    finally
-    {
-        isCheckingUpdates.value = false;
-    }
+async function installApplicationUpdate() {
+    await updateStore.installApplicationUpdate();
 }
 
 function getUpdateResult(component: UpdateComponent): ComponentUpdateResult | undefined {
@@ -308,8 +245,7 @@ function getUpdateResultClasses(component: UpdateComponent) {
 
     return {
         "update-result--up-to-date": result?.status === "up-to-date",
-        "update-result--available": result?.status === "available" && !result.required,
-        "update-result--required": result?.status === "available" && result.required,
+        "update-result--available": result?.status === "available",
         "update-result--error": result?.status === "error",
         "update-result--not-checked": result?.status === "not-checked"
     };
@@ -545,14 +481,14 @@ onMounted(() => {
                 </p>
 
                 <div class="settings-list">
-                    <label class="setting-row setting-row--toggle">
-                        <span class="setting-copy">
-                            <span class="setting-title-line">
+                    <div class="setting-row setting-row--application-update">
+                        <div class="setting-copy">
+                            <div class="setting-title-line">
                                 <strong>Application updates</strong>
                                 <span class="version-text">
                                     {{ getInstalledVersionLabel("application") }}
                                 </span>
-                            </span>
+                            </div>
                             <span class="setting-description">
                                 Check for new mod manager releases when the application starts.
                             </span>
@@ -561,31 +497,123 @@ onMounted(() => {
                                 class="update-result"
                                 :class="getUpdateResultClasses('application')"
                                 :role="
-                                    getUpdateResult('application')?.status === 'error' ||
-                                    getUpdateResult('application')?.required
+                                    getUpdateResult('application')?.status === 'error'
                                         ? 'alert'
                                         : 'status'
                                 "
                             >
                                 {{ getUpdateResult("application")?.message }}
                             </span>
-                        </span>
 
-                        <span class="switch-control">
-                            <input
-                                type="checkbox"
-                                :checked="automaticUpdatePreferences.application"
-                                :disabled="
-                                    isLoadingUpdateSettings ||
-                                    savingUpdatePreference !== null
+                            <div
+                                v-if="
+                                    isDownloadingApplicationUpdate ||
+                                    isApplicationUpdateReady
                                 "
-                                @change="saveAutomaticUpdatePreference('application', $event)"
-                            />
-                            <span class="switch-track" aria-hidden="true">
-                                <span class="switch-thumb"></span>
+                                class="application-update-progress"
+                                aria-live="polite"
+                            >
+                                <div class="application-update-progress-copy">
+                                    <span>
+                                        {{
+                                            isApplicationUpdateReady
+                                                ? "Ready to install"
+                                                : "Downloading application update…"
+                                        }}
+                                    </span>
+                                    <strong>
+                                        {{ Math.round(applicationDownloadProgress?.progress || 0) }}%
+                                    </strong>
+                                </div>
+
+                                <div
+                                    class="application-update-progress-track"
+                                    role="progressbar"
+                                    aria-label="Application update download progress"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                    :aria-valuenow="Math.round(applicationDownloadProgress?.progress || 0)"
+                                >
+                                    <span
+                                        class="application-update-progress-fill"
+                                        :style="{
+                                            width: `${applicationDownloadProgress?.progress || 0}%`
+                                        }"
+                                    ></span>
+                                </div>
+                            </div>
+
+                            <span
+                                v-if="applicationDownloadError"
+                                class="application-update-error"
+                                role="alert"
+                            >
+                                {{ applicationDownloadError }}
                             </span>
-                        </span>
-                    </label>
+                        </div>
+
+                        <div class="application-update-actions">
+                            <button
+                                v-if="applicationUpdateAvailable && !isApplicationUpdateReady"
+                                class="settings-button settings-button--primary"
+                                type="button"
+                                :disabled="
+                                    isDownloadingApplicationUpdate ||
+                                    isInstallingApplicationUpdate
+                                "
+                                @click="downloadApplicationUpdate"
+                            >
+                                <DownloadIcon class="settings-button-icon" />
+                                <span>
+                                    {{
+                                        isDownloadingApplicationUpdate
+                                            ? `Downloading ${Math.round(applicationDownloadProgress?.progress || 0)}%`
+                                            : "Download update"
+                                    }}
+                                </span>
+                            </button>
+
+                            <button
+                                v-if="isApplicationUpdateReady"
+                                class="settings-button settings-button--primary"
+                                type="button"
+                                :disabled="isInstallingApplicationUpdate"
+                                @click="installApplicationUpdate"
+                            >
+                                <RefreshIcon
+                                    class="settings-button-icon"
+                                    :class="{
+                                        'settings-button-icon--spinning': isInstallingApplicationUpdate
+                                    }"
+                                />
+                                <span>
+                                    {{
+                                        isInstallingApplicationUpdate
+                                            ? "Restarting…"
+                                            : "Restart and install"
+                                    }}
+                                </span>
+                            </button>
+
+                            <label
+                                class="switch-control"
+                                aria-label="Check for application updates automatically"
+                            >
+                                <input
+                                    type="checkbox"
+                                    :checked="automaticUpdatePreferences.application"
+                                    :disabled="
+                                        isLoadingUpdateSettings ||
+                                        savingUpdatePreference !== null
+                                    "
+                                    @change="saveAutomaticUpdatePreference('application', $event)"
+                                />
+                                <span class="switch-track" aria-hidden="true">
+                                    <span class="switch-thumb"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
 
                     <label class="setting-row setting-row--toggle">
                         <span class="setting-copy">
@@ -603,8 +631,7 @@ onMounted(() => {
                                 class="update-result"
                                 :class="getUpdateResultClasses('plugin')"
                                 :role="
-                                    getUpdateResult('plugin')?.status === 'error' ||
-                                    getUpdateResult('plugin')?.required
+                                    getUpdateResult('plugin')?.status === 'error'
                                         ? 'alert'
                                         : 'status'
                                 "
@@ -645,8 +672,7 @@ onMounted(() => {
                                 class="update-result"
                                 :class="getUpdateResultClasses('catalog')"
                                 :role="
-                                    getUpdateResult('catalog')?.status === 'error' ||
-                                    getUpdateResult('catalog')?.required
+                                    getUpdateResult('catalog')?.status === 'error'
                                         ? 'alert'
                                         : 'status'
                                 "
@@ -954,6 +980,17 @@ h1 {
     cursor: not-allowed;
 }
 
+.setting-row--application-update {
+    align-items: center;
+}
+
+.application-update-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 14px;
+}
+
 .setting-copy {
     display: flex;
     min-width: 0;
@@ -1070,16 +1107,57 @@ h1 {
     color: #9fc4d8;
 }
 
-.update-result--required {
-    color: #e5b47f;
-}
-
 .update-result--error {
     color: #e69a96;
 }
 
 .update-result--not-checked {
     color: #7d8580;
+}
+
+.application-update-progress {
+    width: min(100%, 520px);
+    margin-top: 9px;
+}
+
+.application-update-progress-copy {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    color: #a6ada8;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.application-update-progress-copy strong {
+    flex: 0 0 auto;
+    color: #a5c9dd;
+    font-size: 12px;
+}
+
+.application-update-progress-track {
+    height: 6px;
+    margin-top: 7px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: #252b28;
+}
+
+.application-update-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #91b8cf;
+    transition: width 160ms ease;
+}
+
+.application-update-error {
+    display: block;
+    margin-top: 7px;
+    color: #ef9c98;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 .status-chip {
@@ -1502,6 +1580,14 @@ h1 {
         flex-direction: row;
     }
 
+    .setting-row--application-update {
+        align-items: stretch;
+    }
+
+    .application-update-actions {
+        justify-content: space-between;
+    }
+
     .storage-summary .storage-location {
         text-align: left;
     }
@@ -1526,6 +1612,19 @@ h1 {
         width: 100%;
     }
 
+    .application-update-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .application-update-actions .settings-button {
+        width: 100%;
+    }
+
+    .application-update-actions .switch-control {
+        align-self: flex-end;
+    }
+
     .confirmation-popover {
         padding: 20px;
     }
@@ -1546,6 +1645,10 @@ h1 {
     }
 
     .plugin-install-progress-fill {
+        transition: none;
+    }
+
+    .application-update-progress-fill {
         transition: none;
     }
 }

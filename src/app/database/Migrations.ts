@@ -49,6 +49,15 @@ export class Migrations {
 
                 CREATE INDEX mod_assets_file_name_index ON mod_assets (file_name COLLATE NOCASE);
             `);
+        },
+        (database) => {
+            database.exec(`
+                INSERT OR IGNORE INTO settings (key, value)
+                VALUES
+                    ('check_app_update', '1'),
+                    ('check_plugin_update', '1'),
+                    ('check_catalog_update', '1');
+            `);
         }
     ];
 

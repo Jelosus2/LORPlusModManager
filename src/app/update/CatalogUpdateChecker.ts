@@ -48,8 +48,7 @@ export class CatalogUpdateChecker implements UpdateChecker {
 
         return {
             installedVersion,
-            latestVersion,
-            required: false
+            latestVersion
         };
     }
 

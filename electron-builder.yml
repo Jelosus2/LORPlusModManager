@@ -1,0 +1,14 @@
+appId: com.jelosus1.lorplusmodmanager
+productName: LORPlusModManager
+directories:
+  output: build/app
+publish:
+  provider: github
+  owner: Jelosus2
+  repo: LORPlusModManager
+  private: true
+releaseInfo:
+  releaseNotesFile: release-notes.md
+win:
+  target: nsis
+  artifactName: "LORPlusModManager-Setup-${version}.${ext}"

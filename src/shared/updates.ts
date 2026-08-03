@@ -24,19 +24,13 @@ export type AutomaticUpdatePreferenceRequest = {
     enabled: boolean;
 };
 
-export type ApplicationUpdateManifest = Readonly<{
-    version: string;
-    mandatory: boolean;
-    minimumVersion?: string;
-}>;
-
 export type ComponentUpdateResult = Readonly<{
     component: UpdateComponent;
     status: UpdateCheckStatus;
     installedVersion: string | null;
     latestVersion: string | null;
-    required: boolean;
     message: string;
+    release: UpdateReleaseInfo | null;
 }>;
 
 export type UpdateCheckResult = Readonly<{
@@ -52,4 +46,23 @@ export type InstalledComponentVersions = Readonly<
 export type UpdateSettingsState = Readonly<{
     preferences: AutomaticUpdatePreferences;
     installedVersions: InstalledComponentVersions;
+}>;
+
+export type UpdateReleaseInfo = Readonly<{
+    name: string | null;
+    notes: string | null;
+    date: string | null;
+}>;
+
+export type ApplicationUpdateDownloadProgress = Readonly<{
+    phase: "downloading" | "ready";
+    version: string;
+    progress: number;
+    transferredBytes: number;
+    totalBytes: number;
+    bytesPerSecond: number;
+}>;
+
+export type ApplicationUpdateDownloadResult = Readonly<{
+    version: string;
 }>;
