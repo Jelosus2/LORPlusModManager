@@ -3,7 +3,7 @@ import type { ModImportMode, SelectedModSource, ModExtractionRequest, ModExtract
 
 import ImportFilesIcon from "./icons/ImportFilesIcon.vue";
 import ModExtractionModal from "./ModExtractionModal.vue";
-import ApplicationUpdateModal from "./ApplicationUpdateModal.vue";
+import UpdateModal from "./UpdateModal.vue";
 import ImportFileIcon from "./icons/ImportFileIcon.vue";
 import CharactersScreen from "./CharactersScreen.vue";
 import CharacterIcon from "./icons/CharacterIcon.vue";
@@ -453,7 +453,7 @@ onMounted(() => {
             @extract="prepareModExtraction"
         />
 
-        <ApplicationUpdateModal />
+        <UpdateModal />
     </div>
 </template>
 

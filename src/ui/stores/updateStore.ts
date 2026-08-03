@@ -6,6 +6,7 @@ import type {
     UpdateCheckMode,
     UpdateComponent
 } from "../../shared/updates";
+import type { PluginProgress } from "../../shared/plugin";
 
 import { computed, ref, shallowRef } from "vue";
 import { ErrorUtils } from "@/utils/ErrorUtils";
@@ -39,15 +40,24 @@ export const useUpdateStore = defineStore("updates", () => {
     const downloadProgress = ref<ApplicationUpdateDownloadProgress | null>(null);
     const downloadError = ref("");
     const results = shallowRef<Partial<Record<UpdateComponent, ComponentUpdateResult>>>({});
+    const isPluginUpdateModalOpen = ref(false);
+    const isUpdatingPlugin = ref(false);
+    const isPluginUpdateComplete = ref(false);
+    const pluginUpdateProgress = ref<PluginProgress | null>(null);
+    const pluginUpdateError = ref("");
 
     let loadingPromise: Promise<boolean> | null = null;
     let checkingPromise: Promise<boolean> | null = null;
     let initializationPromise: Promise<void> | null = null;
+    let pendingPluginStartupModal = false;
     let initialized = false;
 
     const applicationResult = computed(() => results.value.application);
     const applicationUpdateAvailable = computed(() => applicationResult.value?.status === "available");
     const applicationUpdateVersion = computed(() => applicationResult.value?.latestVersion ?? null);
+    const pluginResult = computed(() => results.value.plugin);
+    const pluginUpdateAvailable = computed(() => pluginResult.value?.status === "available");
+    const pluginUpdateVersion = computed(() => pluginResult.value?.latestVersion ?? null);
 
     async function initialize() {
         if (initialized)
@@ -137,8 +147,16 @@ export const useUpdateStore = defineStore("updates", () => {
                     downloadError.value = "";
                 }
 
-                if (mode === "automatic" && application?.status === "available")
-                    isStartupModalOpen.value = true;
+                if (mode === "automatic")
+                {
+                    const applicationAvailable = application?.status === "available";
+                    const pluginAvailable = nextResults.plugin?.status === "available";
+
+                    isStartupModalOpen.value = applicationAvailable;
+                    isPluginUpdateModalOpen.value = !applicationAvailable && pluginAvailable;
+
+                    pendingPluginStartupModal = applicationAvailable && pluginAvailable;
+                }
 
                 return true;
             }
@@ -262,6 +280,75 @@ export const useUpdateStore = defineStore("updates", () => {
         }
     }
 
+    async function updatePlugin(): Promise<boolean> {
+        if (isUpdatingPlugin.value || !pluginUpdateAvailable.value)
+            return false;
+
+        const expectedVersion = pluginUpdateVersion.value;
+        if (!expectedVersion)
+            return false;
+
+        isUpdatingPlugin.value = true;
+        isPluginUpdateComplete.value = false;
+        pluginUpdateError.value = "";
+
+        pluginUpdateProgress.value = {
+            status: "Preparing the LOPlugin+ update…",
+            progress: 0,
+            downloadedBytes: 0,
+            totalBytes: 0
+        };
+
+        const removeProgressListener = window.app.onLOPluginInstallProgress((progress) => {
+            pluginUpdateProgress.value = progress;
+        });
+
+        try
+        {
+            const result = await window.app.installLOPlugin();
+            if (!result.success)
+            {
+                pluginUpdateError.value = result.message || "LOPlugin+ could not be updated.";
+                return false;
+            }
+
+            if (!result.version)
+            {
+                pluginUpdateError.value = "The update completed without reporting the installed LOPlugin+ version.";
+                return false;
+            }
+
+            setInstalledVersion("plugin", result.version);
+
+            results.value = {
+                ...results.value,
+                plugin: {
+                    component: "plugin",
+                    status: "up-to-date",
+                    installedVersion: result.version,
+                    latestVersion: result.version,
+                    message: `LOPlugin+ ${result.version} is installed.`,
+                    release: pluginResult.value?.release ?? null
+                }
+            };
+
+            isPluginUpdateComplete.value = true;
+            return true;
+        }
+        catch (error)
+        {
+            console.error("Could not update LOPlugin+:", error);
+
+            pluginUpdateError.value = ErrorUtils.getUserErrorMessage(error, "LOPlugin+ could not be updated.");
+            return false;
+        }
+        finally
+        {
+            removeProgressListener();
+            isUpdatingPlugin.value = false;
+        }
+    }
+
     function setInstalledVersion(component: UpdateComponent, version: string | null) {
         installedVersions.value = {
             ...installedVersions.value,
@@ -271,13 +358,28 @@ export const useUpdateStore = defineStore("updates", () => {
 
     function closeStartupModal(): void {
         isStartupModalOpen.value = false;
+
+        if (pendingPluginStartupModal)
+        {
+            pendingPluginStartupModal = false;
+            isPluginUpdateModalOpen.value = true;
+        }
+    }
+
+    function closePluginUpdateModal(): void {
+        if (isUpdatingPlugin.value)
+            return;
+
+        isPluginUpdateModalOpen.value = false;
+        isPluginUpdateComplete.value = false;
+        pluginUpdateProgress.value = null;
+        pluginUpdateError.value = "";
     }
 
     return {
         preferences,
         installedVersions,
         results,
-        isSettingsLoaded,
         isLoadingSettings,
         isChecking,
         savingPreference,
@@ -285,13 +387,19 @@ export const useUpdateStore = defineStore("updates", () => {
         errorMessage,
         applicationResult,
         applicationUpdateAvailable,
-        applicationUpdateVersion,
         isStartupModalOpen,
         isDownloading,
         isInstalling,
         isUpdateReady,
         downloadProgress,
         downloadError,
+        pluginResult,
+        pluginUpdateAvailable,
+        isPluginUpdateModalOpen,
+        isUpdatingPlugin,
+        isPluginUpdateComplete,
+        pluginUpdateProgress,
+        pluginUpdateError,
         initialize,
         loadSettings,
         checkForUpdates,
@@ -299,6 +407,8 @@ export const useUpdateStore = defineStore("updates", () => {
         downloadApplicationUpdate,
         installApplicationUpdate,
         setInstalledVersion,
-        closeStartupModal
+        closeStartupModal,
+        updatePlugin,
+        closePluginUpdateModal
     };
 });

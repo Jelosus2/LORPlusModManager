@@ -31,7 +31,12 @@ const {
     isInstalling: isInstallingApplicationUpdate,
     isUpdateReady: isApplicationUpdateReady,
     downloadProgress: applicationDownloadProgress,
-    downloadError: applicationDownloadError
+    downloadError: applicationDownloadError,
+    pluginUpdateAvailable,
+    isUpdatingPlugin,
+    isPluginUpdateComplete,
+    pluginUpdateProgress,
+    pluginUpdateError
 } = storeToRefs(updateStore);
 
 const gameLocation = ref("");
@@ -65,7 +70,7 @@ async function loadGameSettings() {
 }
 
 async function selectGameLocation(manualSetup: boolean) {
-    if (isSelectingGameLocation.value || isChangingGameLocation.value || isReinstallingPlugin.value)
+    if (isSelectingGameLocation.value || isChangingGameLocation.value || isReinstallingPlugin.value || isUpdatingPlugin.value)
         return;
 
     isSelectingGameLocation.value = true;
@@ -99,7 +104,7 @@ async function selectGameLocation(manualSetup: boolean) {
 }
 
 async function confirmGameLocationChange() {
-    if (!pendingGameLocation.value || isChangingGameLocation.value)
+    if (!pendingGameLocation.value || isChangingGameLocation.value || isUpdatingPlugin.value)
         return;
 
     isChangingGameLocation.value = true;
@@ -146,7 +151,7 @@ async function confirmGameLocationChange() {
 }
 
 async function openGameLocation() {
-    if (!gameLocation.value || isOpeningGameLocation.value || isSelectingGameLocation.value || isChangingGameLocation.value || isReinstallingPlugin.value)
+    if (!gameLocation.value || isOpeningGameLocation.value || isSelectingGameLocation.value || isChangingGameLocation.value || isReinstallingPlugin.value || isUpdatingPlugin.value)
         return;
 
     isOpeningGameLocation.value = true;
@@ -168,7 +173,7 @@ async function openGameLocation() {
 }
 
 async function reinstallPlugin() {
-    if (!gameLocation.value || isReinstallingPlugin.value || isSelectingGameLocation.value || isChangingGameLocation.value)
+    if (!gameLocation.value || isReinstallingPlugin.value || isSelectingGameLocation.value || isChangingGameLocation.value || isUpdatingPlugin.value)
         return;
 
     isReinstallingPlugin.value = true;
@@ -234,6 +239,10 @@ async function downloadApplicationUpdate() {
 
 async function installApplicationUpdate() {
     await updateStore.installApplicationUpdate();
+}
+
+async function updatePlugin() {
+    await updateStore.updatePlugin();
 }
 
 function getUpdateResult(component: UpdateComponent): ComponentUpdateResult | undefined {
@@ -341,7 +350,8 @@ onMounted(() => {
                                 :disabled="
                                     isSelectingGameLocation ||
                                     isChangingGameLocation ||
-                                    isReinstallingPlugin
+                                    isReinstallingPlugin ||
+                                    isUpdatingPlugin
                                 "
                                 @click="selectGameLocation(false)"
                             >
@@ -354,7 +364,8 @@ onMounted(() => {
                                 :disabled="
                                     isSelectingGameLocation ||
                                     isChangingGameLocation ||
-                                    isReinstallingPlugin
+                                    isReinstallingPlugin ||
+                                    isUpdatingPlugin
                                 "
                                 @click="selectGameLocation(true)"
                             >
@@ -369,7 +380,8 @@ onMounted(() => {
                                     isOpeningGameLocation ||
                                     isSelectingGameLocation ||
                                     isChangingGameLocation ||
-                                    isReinstallingPlugin
+                                    isReinstallingPlugin ||
+                                    isUpdatingPlugin
                                 "
                                 @click="openGameLocation"
                             >
@@ -391,7 +403,9 @@ onMounted(() => {
                             </div>
                             <p>
                                 Installed version
-                                <span class="setting-value">{{ pluginVersion || "Unknown" }}</span>
+                                <span class="setting-value">
+                                    {{ installedUpdateVersions.plugin || pluginVersion || "Unknown" }}
+                                </span>
                             </p>
 
                             <div
@@ -432,7 +446,8 @@ onMounted(() => {
                                     !gameLocation ||
                                     isReinstallingPlugin ||
                                     isSelectingGameLocation ||
-                                    isChangingGameLocation
+                                    isChangingGameLocation ||
+                                    isUpdatingPlugin
                                 "
                                 @click="reinstallPlugin"
                             >
@@ -481,7 +496,7 @@ onMounted(() => {
                 </p>
 
                 <div class="settings-list">
-                    <div class="setting-row setting-row--application-update">
+                    <div class="setting-row setting-row--component-update">
                         <div class="setting-copy">
                             <div class="setting-title-line">
                                 <strong>Application updates</strong>
@@ -510,10 +525,10 @@ onMounted(() => {
                                     isDownloadingApplicationUpdate ||
                                     isApplicationUpdateReady
                                 "
-                                class="application-update-progress"
+                                class="component-update-progress"
                                 aria-live="polite"
                             >
-                                <div class="application-update-progress-copy">
+                                <div class="component-update-progress-copy">
                                     <span>
                                         {{
                                             isApplicationUpdateReady
@@ -527,7 +542,7 @@ onMounted(() => {
                                 </div>
 
                                 <div
-                                    class="application-update-progress-track"
+                                    class="component-update-progress-track"
                                     role="progressbar"
                                     aria-label="Application update download progress"
                                     aria-valuemin="0"
@@ -535,7 +550,7 @@ onMounted(() => {
                                     :aria-valuenow="Math.round(applicationDownloadProgress?.progress || 0)"
                                 >
                                     <span
-                                        class="application-update-progress-fill"
+                                        class="component-update-progress-fill"
                                         :style="{
                                             width: `${applicationDownloadProgress?.progress || 0}%`
                                         }"
@@ -545,14 +560,14 @@ onMounted(() => {
 
                             <span
                                 v-if="applicationDownloadError"
-                                class="application-update-error"
+                                class="component-update-error"
                                 role="alert"
                             >
                                 {{ applicationDownloadError }}
                             </span>
                         </div>
 
-                        <div class="application-update-actions">
+                        <div class="component-update-actions">
                             <button
                                 v-if="applicationUpdateAvailable && !isApplicationUpdateReady"
                                 class="settings-button settings-button--primary"
@@ -615,14 +630,14 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <label class="setting-row setting-row--toggle">
-                        <span class="setting-copy">
-                            <span class="setting-title-line">
+                    <div class="setting-row setting-row--component-update">
+                        <div class="setting-copy">
+                            <div class="setting-title-line">
                                 <strong>LOPlugin+ updates</strong>
                                 <span class="version-text">
                                     {{ getInstalledVersionLabel("plugin") }}
                                 </span>
-                            </span>
+                            </div>
                             <span class="setting-description">
                                 Check whether a newer plugin release is available.
                             </span>
@@ -638,23 +653,84 @@ onMounted(() => {
                             >
                                 {{ getUpdateResult("plugin")?.message }}
                             </span>
-                        </span>
 
-                        <span class="switch-control">
-                            <input
-                                type="checkbox"
-                                :checked="automaticUpdatePreferences.plugin"
-                                :disabled="
-                                    isLoadingUpdateSettings ||
-                                    savingUpdatePreference !== null
-                                "
-                                @change="saveAutomaticUpdatePreference('plugin', $event)"
-                            />
-                            <span class="switch-track" aria-hidden="true">
-                                <span class="switch-thumb"></span>
+                            <div
+                                v-if="isUpdatingPlugin"
+                                class="component-update-progress"
+                                aria-live="polite"
+                            >
+                                <div class="component-update-progress-copy">
+                                    <span>
+                                        {{ pluginUpdateProgress?.status || "Preparing LOPlugin+ update…" }}
+                                    </span>
+                                    <strong>{{ Math.round(pluginUpdateProgress?.progress || 0) }}%</strong>
+                                </div>
+
+                                <div
+                                    class="component-update-progress-track"
+                                    role="progressbar"
+                                    aria-label="LOPlugin+ update progress"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                    :aria-valuenow="Math.round(pluginUpdateProgress?.progress || 0)"
+                                >
+                                    <span
+                                        class="component-update-progress-fill"
+                                        :style="{ width: `${pluginUpdateProgress?.progress || 0}%` }"
+                                    ></span>
+                                </div>
+                            </div>
+
+                            <span
+                                v-if="pluginUpdateError"
+                                class="component-update-error"
+                                role="alert"
+                            >
+                                {{ pluginUpdateError }}
                             </span>
-                        </span>
-                    </label>
+                        </div>
+
+                        <div class="component-update-actions">
+                            <button
+                                v-if="pluginUpdateAvailable && !isPluginUpdateComplete"
+                                class="settings-button settings-button--primary"
+                                type="button"
+                                :disabled="
+                                    isUpdatingPlugin ||
+                                    isReinstallingPlugin ||
+                                    isSelectingGameLocation ||
+                                    isChangingGameLocation
+                                "
+                                @click="updatePlugin"
+                            >
+                                <RefreshIcon
+                                    class="settings-button-icon"
+                                    :class="{
+                                        'settings-button-icon--spinning': isUpdatingPlugin
+                                    }"
+                                />
+                                <span>{{ isUpdatingPlugin ? "Updating…" : "Update plugin" }}</span>
+                            </button>
+
+                            <label
+                                class="switch-control"
+                                aria-label="Check for LOPlugin+ updates automatically"
+                            >
+                                <input
+                                    type="checkbox"
+                                    :checked="automaticUpdatePreferences.plugin"
+                                    :disabled="
+                                        isLoadingUpdateSettings ||
+                                        savingUpdatePreference !== null
+                                    "
+                                    @change="saveAutomaticUpdatePreference('plugin', $event)"
+                                />
+                                <span class="switch-track" aria-hidden="true">
+                                    <span class="switch-thumb"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
 
                     <label class="setting-row setting-row--toggle">
                         <span class="setting-copy">
@@ -980,11 +1056,11 @@ h1 {
     cursor: not-allowed;
 }
 
-.setting-row--application-update {
+.setting-row--component-update {
     align-items: center;
 }
 
-.application-update-actions {
+.component-update-actions {
     display: flex;
     flex: 0 0 auto;
     align-items: center;
@@ -1115,12 +1191,12 @@ h1 {
     color: #7d8580;
 }
 
-.application-update-progress {
+.component-update-progress {
     width: min(100%, 520px);
     margin-top: 9px;
 }
 
-.application-update-progress-copy {
+.component-update-progress-copy {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1130,13 +1206,13 @@ h1 {
     line-height: 1.4;
 }
 
-.application-update-progress-copy strong {
+.component-update-progress-copy strong {
     flex: 0 0 auto;
     color: #a5c9dd;
     font-size: 12px;
 }
 
-.application-update-progress-track {
+.component-update-progress-track {
     height: 6px;
     margin-top: 7px;
     overflow: hidden;
@@ -1144,7 +1220,7 @@ h1 {
     background: #252b28;
 }
 
-.application-update-progress-fill {
+.component-update-progress-fill {
     display: block;
     height: 100%;
     border-radius: inherit;
@@ -1152,7 +1228,7 @@ h1 {
     transition: width 160ms ease;
 }
 
-.application-update-error {
+.component-update-error {
     display: block;
     margin-top: 7px;
     color: #ef9c98;
@@ -1580,11 +1656,11 @@ h1 {
         flex-direction: row;
     }
 
-    .setting-row--application-update {
+    .setting-row--component-update {
         align-items: stretch;
     }
 
-    .application-update-actions {
+    .component-update-actions {
         justify-content: space-between;
     }
 
@@ -1612,16 +1688,16 @@ h1 {
         width: 100%;
     }
 
-    .application-update-actions {
+    .component-update-actions {
         align-items: stretch;
         flex-direction: column-reverse;
     }
 
-    .application-update-actions .settings-button {
+    .component-update-actions .settings-button {
         width: 100%;
     }
 
-    .application-update-actions .switch-control {
+    .component-update-actions .switch-control {
         align-self: flex-end;
     }
 
@@ -1648,7 +1724,7 @@ h1 {
         transition: none;
     }
 
-    .application-update-progress-fill {
+    .component-update-progress-fill {
         transition: none;
     }
 }
