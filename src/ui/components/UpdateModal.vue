@@ -337,8 +337,9 @@ function closeModal(): void {
                     <template v-else>
                         <div v-if="!isCatalogUpdateComplete" class="update-modal-notice">
                             <p>
-                                The downloaded catalog will be validated before it replaces the
-                                cached copy. Imported mods and their files will not be changed.
+                                The catalog and any newly required character icons will be
+                                validated before the cached copy is replaced. Imported mods and
+                                their files will not be changed.
                             </p>
                         </div>
 

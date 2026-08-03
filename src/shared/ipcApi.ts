@@ -21,8 +21,8 @@ import type {
     ApplicationUpdateDownloadResult
 } from "./updates.js";
 import type { GameLocationResult, SetupState, GameLocationChangeProgress, GameLocationChangeResult, GameLocationSelectionResult } from "./setup.js";
+import type { CharacterCatalog, CatalogIconRepairProgress, CatalogIconRepairResult } from "./characters.js";
 import type { PluginInstallResult, PluginProgress } from "./plugin.js";
-import type { CharacterCatalog } from "./characters.js";
 
 export type IpcApi = {
     setupGameLocation: (manualSetup: boolean) => Promise<GameLocationResult>;
@@ -54,4 +54,6 @@ export type IpcApi = {
     onApplicationUpdateDownloadProgress: (callback: (progress: ApplicationUpdateDownloadProgress) => void) => () => void;
     installApplicationUpdate: () => Promise<void>;
     updateCharacterCatalog: () => Promise<CharacterCatalog>;
+    repairCatalogIcons: () => Promise<CatalogIconRepairResult>;
+    onCatalogIconRepairProgress: (callback: (progress: CatalogIconRepairProgress) => void) => () => void;
 };

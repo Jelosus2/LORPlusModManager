@@ -90,6 +90,14 @@ export class Paths {
         return path.join(Paths.getGamePluginRoot(gameLocation), ".lorplus-sync");
     }
 
+    static getCachedCharacterIconsPath(): string {
+        return path.join(app.getPath("userData"), "catalogs", "icons");
+    }
+
+    static getCachedCharacterIconPath(iconFile: string): string {
+        return path.join(Paths.getCachedCharacterIconsPath(), iconFile);
+    }
+
     static isSubpath(parentPath: string, childPath: string): boolean {
         const relative = path.relative(parentPath, childPath);
         return Boolean(relative && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
@@ -135,5 +143,16 @@ export class Paths {
 
     static isSafeModDirectoryName(value: unknown): value is string {
         return Paths.isSafeDirectoryName(value) && !value.startsWith(".");
+    }
+
+    static isSafeCatalogIconName(value: unknown): value is string {
+        return (
+            Paths.isSafeDirectoryName(value) &&
+            value === value.trim() &&
+            !value.startsWith(".") &&
+            !/[. ]$/.test(value) &&
+            !/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(value) &&
+            path.extname(value).toLowerCase() === ".png"
+        );
     }
 }

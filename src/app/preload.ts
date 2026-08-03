@@ -1,5 +1,6 @@
 import type { ApplicationUpdateDownloadProgress } from "../shared/updates.js";
 import type { ModImportProgress, ModSyncProgress } from "../shared/mod.js";
+import type { CatalogIconRepairProgress } from "../shared/characters.js";
 import type { GameLocationChangeProgress } from "../shared/setup.js";
 import type { PluginProgress } from "../shared/plugin.js";
 import type { IpcApi } from "../shared/ipcApi.js";
@@ -85,7 +86,19 @@ const modManagerApi: IpcApi = {
         };
     },
     installApplicationUpdate: () => ipcRenderer.invoke("updates:install-application"),
-    updateCharacterCatalog: () => ipcRenderer.invoke("updates:install-catalog")
+    updateCharacterCatalog: () => ipcRenderer.invoke("updates:install-catalog"),
+    repairCatalogIcons: () => ipcRenderer.invoke("updates:repair-catalog-icons"),
+    onCatalogIconRepairProgress: (callback) => {
+        const listener = (_event: IpcRendererEvent, progress: CatalogIconRepairProgress) => {
+            callback(progress);
+        };
+
+        ipcRenderer.on("updates:catalog-icon-repair-progress", listener);
+
+        return () => {
+            ipcRenderer.removeListener("updates:catalog-icon-repair-progress", listener);
+        };
+    }
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

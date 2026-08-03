@@ -98,6 +98,10 @@ export class CharacterCatalogService {
         return catalog;
     }
 
+    async getBundledCatalog(): Promise<CharacterCatalog> {
+        return this.readCatalog(Paths.getBundledCharacterCatalogPath());
+    }
+
     parseCatalogContents(contents: string): CharacterCatalog {
         if (Buffer.byteLength(contents, "utf-8") > CharacterCatalogService.MAX_CATALOG_SIZE)
             throw new Error("The character catalog is too large.");

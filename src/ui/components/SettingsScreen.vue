@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ComponentUpdateResult, UpdateComponent } from "../../shared/updates.ts";
+import type { CatalogIconRepairProgress } from "../../shared/characters.ts";
 import type { GameLocationChangeProgress } from "../../shared/setup.ts";
 import type { PluginProgress } from "../../shared/plugin.ts";
 
@@ -54,6 +55,10 @@ const isOpeningGameLocation = ref(false);
 const isReinstallingPlugin = ref(false);
 const pluginInstallProgress = ref<PluginProgress | null>(null);
 const pluginInstallError = ref("");
+const isRepairingCatalogIcons = ref(false);
+const catalogIconRepairProgress = ref<CatalogIconRepairProgress | null>(null);
+const catalogIconRepairMessage = ref("");
+const catalogIconRepairError = ref("");
 
 async function loadGameSettings() {
     gameLocationError.value = "";
@@ -246,6 +251,55 @@ async function installApplicationUpdate() {
 
 async function updatePlugin() {
     await updateStore.updatePlugin();
+}
+
+async function repairCatalogIcons() {
+    if (isRepairingCatalogIcons.value || isUpdatingCatalog.value || isCheckingUpdates.value)
+        return;
+
+    isRepairingCatalogIcons.value = true;
+    catalogIconRepairMessage.value = "";
+    catalogIconRepairError.value = "";
+    catalogIconRepairProgress.value = {
+        processed: 0,
+        total: 0,
+        downloaded: 0,
+        currentIcon: null
+    };
+
+    const removeProgressListener = window.app.onCatalogIconRepairProgress((progress) => {
+        catalogIconRepairProgress.value = progress;
+    });
+
+    try
+    {
+        const result = await window.app.repairCatalogIcons();
+        if (result.downloaded === 0)
+        {
+            catalogIconRepairMessage.value = `All ${result.required} character icons required by the catalog are available.`;
+            return;
+        }
+
+        const alreadyAvailable = result.bundled + result.cached;
+        const downloadedLabel = result.downloaded === 1
+            ? "character icon"
+            : "character icons";
+
+        catalogIconRepairMessage.value =
+            `Downloaded ${result.downloaded} missing or invalid ${downloadedLabel}. ` +
+            `${alreadyAvailable} ${alreadyAvailable === 1 ? "was" : "were"} already available.`;
+    }
+    catch (error)
+    {
+        console.error("Could not repair the character icons:", error);
+        catalogIconRepairError.value = ErrorUtils.getUserErrorMessage(error, "The character icons could not be repaired.");
+    }
+    finally
+    {
+        removeProgressListener();
+        isRepairingCatalogIcons.value = false;
+        catalogIconRepairProgress.value = null;
+    }
 }
 
 function getUpdateResult(component: UpdateComponent): ComponentUpdateResult | undefined {
@@ -477,7 +531,11 @@ onMounted(() => {
                     <button
                         class="settings-button settings-button--primary"
                         type="button"
-                        :disabled="isLoadingUpdateSettings || isCheckingUpdates"
+                        :disabled="
+                            isLoadingUpdateSettings ||
+                            isCheckingUpdates ||
+                            isRepairingCatalogIcons
+                        "
                         @click="checkForUpdates"
                     >
                         <RefreshIcon
@@ -744,7 +802,7 @@ onMounted(() => {
                                 </span>
                             </div>
                             <span class="setting-description">
-                                Keep character, skin and asset information up to date.
+                                Keep character, skin, icon and asset information up to date.
                             </span>
                             <span
                                 v-if="getUpdateResult('catalog')"
@@ -774,7 +832,7 @@ onMounted(() => {
                                 v-if="catalogUpdateAvailable"
                                 class="settings-button settings-button--primary"
                                 type="button"
-                                :disabled="isUpdatingCatalog"
+                                :disabled="isUpdatingCatalog || isRepairingCatalogIcons"
                                 @click="updateStore.updateCatalog"
                             >
                                 <RefreshIcon
@@ -840,6 +898,93 @@ onMounted(() => {
                 </div>
 
                 <div class="settings-list">
+                    <div class="setting-row setting-row--icon-maintenance">
+                        <div class="setting-copy">
+                            <h3>Character icons</h3>
+                            <p>
+                                Check the icons required by the current catalog and redownload
+                                anything missing or invalid. Icons bundled with the application
+                                will not be duplicated.
+                            </p>
+
+                            <div
+                                v-if="catalogIconRepairProgress"
+                                class="maintenance-progress"
+                                aria-live="polite"
+                            >
+                                <div class="maintenance-progress-copy">
+                                    <span :title="catalogIconRepairProgress.currentIcon || undefined">
+                                        {{
+                                            catalogIconRepairProgress.currentIcon
+                                                ? `Checking ${catalogIconRepairProgress.currentIcon}`
+                                                : "Checking character icons…"
+                                        }}
+                                    </span>
+                                    <strong>
+                                        {{ catalogIconRepairProgress.processed }} of
+                                        {{ catalogIconRepairProgress.total }}
+                                    </strong>
+                                </div>
+
+                                <div
+                                    class="maintenance-progress-track"
+                                    role="progressbar"
+                                    aria-label="Character icon repair progress"
+                                    aria-valuemin="0"
+                                    :aria-valuemax="catalogIconRepairProgress.total"
+                                    :aria-valuenow="catalogIconRepairProgress.processed"
+                                >
+                                    <span
+                                        class="maintenance-progress-fill"
+                                        :style="{
+                                            width: `${Math.round(
+                                                (catalogIconRepairProgress.processed /
+                                                    Math.max(catalogIconRepairProgress.total, 1)) * 100
+                                            )}%`
+                                        }"
+                                    ></span>
+                                </div>
+                            </div>
+
+                            <span
+                                v-if="catalogIconRepairMessage"
+                                class="maintenance-result"
+                                role="status"
+                            >
+                                {{ catalogIconRepairMessage }}
+                            </span>
+
+                            <span
+                                v-if="catalogIconRepairError"
+                                class="setting-error maintenance-error"
+                                role="alert"
+                            >
+                                {{ catalogIconRepairError }}
+                            </span>
+                        </div>
+
+                        <button
+                            class="settings-button settings-button--secondary"
+                            type="button"
+                            :disabled="
+                                isRepairingCatalogIcons ||
+                                isUpdatingCatalog ||
+                                isCheckingUpdates
+                            "
+                            @click="repairCatalogIcons"
+                        >
+                            <RefreshIcon
+                                class="settings-button-icon"
+                                :class="{
+                                    'settings-button-icon--spinning': isRepairingCatalogIcons
+                                }"
+                            />
+                            <span>
+                                {{ isRepairingCatalogIcons ? "Checking…" : "Repair icons" }}
+                            </span>
+                        </button>
+                    </div>
+
                     <div class="setting-row">
                         <div class="setting-copy">
                             <h3>Mod library folder</h3>
@@ -1464,6 +1609,71 @@ h1 {
 
 .setting-copy .setting-error {
     color: #ef9c98;
+}
+
+.setting-row--icon-maintenance {
+    align-items: flex-start;
+}
+
+.setting-row--icon-maintenance > .settings-button {
+    margin-top: 1px;
+}
+
+.maintenance-progress {
+    width: min(100%, 520px);
+    margin-top: 8px;
+}
+
+.maintenance-progress-copy {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    color: #929b95;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.maintenance-progress-copy span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.maintenance-progress-copy strong {
+    flex: 0 0 auto;
+    color: #9ebdcb;
+    font-size: 12px;
+}
+
+.maintenance-progress-track {
+    height: 6px;
+    margin-top: 8px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: #242a27;
+}
+
+.maintenance-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #91b8cf;
+    transition: width 160ms ease;
+}
+
+.maintenance-result,
+.maintenance-error {
+    margin-top: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.maintenance-result {
+    color: #8fbea9;
 }
 
 .confirmation-popover {

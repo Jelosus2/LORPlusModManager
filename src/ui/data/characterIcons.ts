@@ -16,5 +16,21 @@ for (const [modulePath, url] of Object.entries(iconModules))
 }
 
 export function getCharacterIconUrl(iconFile: string): string | undefined {
-    return iconUrls.get(iconFile.toLowerCase());
+    const bundledIcon = iconUrls.get(iconFile.toLowerCase());
+    if (bundledIcon)
+        return bundledIcon;
+
+    if (
+        !iconFile ||
+        iconFile !== iconFile.trim() ||
+        iconFile === "." ||
+        iconFile === ".." ||
+        /[\\/\u0000]/.test(iconFile) ||
+        !iconFile.toLowerCase().endsWith(".png")
+    )
+    {
+        return undefined;
+    }
+
+    return `lorplus-catalog-icon://catalog/${encodeURIComponent(iconFile)}`;
 }

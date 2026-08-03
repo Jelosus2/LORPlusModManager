@@ -1,8 +1,11 @@
+import { CatalogIconProtocol } from "#protocol/CatalogIconProtocol.js";
 import { app, BrowserWindow } from "electron";
 import { Paths } from "#utils/Paths.js";
 
 export class MainWindow {
     static async createMainWindow(): Promise<BrowserWindow> {
+        CatalogIconProtocol.registerHandler();
+
         const mainWindow = new BrowserWindow({
             title: "LORPlusModManager",
             //icon: getAppIconPath(),

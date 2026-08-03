@@ -6,7 +6,7 @@ import type {
     UpdateSettingsState,
     ApplicationUpdateDownloadResult
 } from "../../../shared/updates.js";
-import type { CharacterCatalog } from "../../../shared/characters.js";
+import type { CharacterCatalog, CatalogIconRepairResult } from "../../../shared/characters.js";
 import type { IpcMainInvokeEvent } from "electron";
 
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
@@ -66,6 +66,14 @@ export class UpdateController {
     @IpcHelper.IpcHandle("updates:install-catalog")
     installCatalogUpdate(): Promise<CharacterCatalog> {
         return catalogUpdateService.update();
+    }
+
+    @IpcHelper.IpcHandle("updates:repair-catalog-icons")
+    repairCatalogIcons(event: IpcMainInvokeEvent): Promise<CatalogIconRepairResult> {
+        return catalogUpdateService.repairCatalogIcons((progress) => {
+            if (!event.sender.isDestroyed())
+                event.sender.send("updates:catalog-icon-repair-progress", progress);
+        });
     }
 
     private async getCatalogVersion(): Promise<string | null> {

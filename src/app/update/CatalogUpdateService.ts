@@ -1,14 +1,18 @@
+import type { CharacterCatalog, CatalogIconRepairProgress, CatalogIconRepairResult } from "../../shared/characters.js";
 import type { CheckedUpdateVersions, UpdateChecker } from "./UpdateChecker.js";
-import type { CharacterCatalog } from "../../shared/characters.js";
 import type { UpdateComponent } from "../../shared/updates.js";
 
 import { CharacterCatalogService, characterCatalog } from "#utils/CharacterCatalogService.js";
 import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
+import { GitHubRequestUtils } from "#utils/GitHubRequestUtils.js";
+import { HttpDownloadUtils } from "#utils/HttpDownloadUtils.js";
+import { catalogIconService } from "./CatalogIconService.js";
 import { VersionUtils } from "#utils/VersionUtils.js";
 
 type DownloadedCatalog = {
     catalog: CharacterCatalog;
     contents: string;
+    sourceUrl: URL;
 };
 
 export class CatalogUpdateService implements UpdateChecker {
@@ -24,6 +28,15 @@ export class CatalogUpdateService implements UpdateChecker {
             installedVersion: VersionUtils.validate(installedCatalog.version, "installed character catalog version"),
             latestVersion: VersionUtils.validate(downloaded.catalog.version, "downloaded character catalog version")
         };
+    }
+
+    async repairCatalogIcons(onProgress?: (progress: CatalogIconRepairProgress) => void): Promise<CatalogIconRepairResult> {
+        const [activeCatalog, bundledCatalog] = await Promise.all([
+            characterCatalog.getCatalog(),
+            characterCatalog.getBundledCatalog()
+        ]);
+
+        return catalogIconService.repairCatalogIcons(activeCatalog, bundledCatalog, this.getCatalogUrl(), onProgress);
     }
 
     update(): Promise<CharacterCatalog> {
@@ -47,16 +60,16 @@ export class CatalogUpdateService implements UpdateChecker {
         if (comparison === 0)
             return installedCatalog;
 
+        await catalogIconService.installRequiredIcons(installedCatalog, downloaded.catalog, downloaded.sourceUrl);
         return characterCatalog.installCatalogContents(downloaded.contents);
 
     }
 
     private async downloadLatest(): Promise<DownloadedCatalog> {
-        const response = await fetch(this.getCatalogUrl(), {
-            headers: {
-                Accept: "application/json",
-                "User-Agent": "LORPlusModManager"
-            },
+        const sourceUrl = this.getCatalogUrl();
+
+        const response = await fetch(sourceUrl, {
+            headers: GitHubRequestUtils.createDownloadHeaders(sourceUrl, "application/json"),
             cache: "no-store",
             signal: AbortSignal.timeout(30_000)
         });
@@ -64,7 +77,14 @@ export class CatalogUpdateService implements UpdateChecker {
         if (!response.ok)
             throw this.createHttpError(response.status);
 
-        const contents = await this.readLimitedBody(response);
+        const contents = (
+            await HttpDownloadUtils.readLimitedBody(
+                response,
+                CharacterCatalogService.MAX_CATALOG_SIZE,
+                "The downloaded character catalog is unexpectedly large.",
+                "The character catalog server returned an empty response."
+            )
+        ).toString("utf-8");
 
         try
         {
@@ -73,7 +93,8 @@ export class CatalogUpdateService implements UpdateChecker {
 
             return {
                 catalog,
-                contents
+                contents,
+                sourceUrl
             };
         }
         catch (error)
@@ -82,50 +103,7 @@ export class CatalogUpdateService implements UpdateChecker {
         }
     }
 
-    private async readLimitedBody(response: Response): Promise<string> {
-        const contentLength = response.headers.get("content-length");
-        if (contentLength !== null)
-        {
-            const declaredSize = Number(contentLength);
-            if (Number.isFinite(declaredSize) && declaredSize > CharacterCatalogService.MAX_CATALOG_SIZE)
-                throw new UserFacingError("The downloaded character catalog is unexpectedly large.");
-        }
-
-        if (!response.body)
-            throw new UserFacingError("The character catalog server returned an empty response.");
-
-        const reader = response.body.getReader();
-        const chunks: Buffer[] = [];
-        let totalBytes = 0;
-
-        try
-        {
-            while (true)
-            {
-                const { done, value } = await reader.read();
-
-                if (done)
-                    break;
-
-                totalBytes += value.byteLength;
-                if (totalBytes > CharacterCatalogService.MAX_CATALOG_SIZE)
-                {
-                    await reader.cancel();
-                    throw new UserFacingError("The downloaded character catalog is unexpectedly large.");
-                }
-
-                chunks.push(Buffer.from(value));
-            }
-        }
-        finally
-        {
-            reader.releaseLock();
-        }
-
-        return Buffer.concat(chunks, totalBytes).toString("utf-8");
-    }
-
-    private getCatalogUrl(): string {
+    private getCatalogUrl(): URL {
         const value = process.env.LORPLUS_CATALOG_URL?.trim() || CatalogUpdateService.CHARACTER_CATALOG_URL;
         let url: URL;
 
@@ -139,11 +117,9 @@ export class CatalogUpdateService implements UpdateChecker {
         }
 
         if (url.protocol !== "https:")
-        {
             throw new UserFacingError("The character catalog update address must use HTTPS.");
-        }
 
-        return url.toString();
+        return url;
     }
 
     private createHttpError(status: number): UserFacingError {

@@ -14,3 +14,17 @@ export type CharacterCatalog = Readonly<{
     version: string;
     characters: readonly CharacterSkin[];
 }>;
+
+export type CatalogIconRepairProgress = Readonly<{
+    processed: number;
+    total: number;
+    downloaded: number;
+    currentIcon: string | null;
+}>;
+
+export type CatalogIconRepairResult = Readonly<{
+    required: number;
+    bundled: number;
+    cached: number;
+    downloaded: number;
+}>;
