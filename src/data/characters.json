@@ -1,5 +1,5 @@
 {
-  "version": "1.4.2",
+  "version": "1.4.3",
   "characters": [
     {
       "skin2dId": "2DModel_BR_BloodyPanther_N",
@@ -177,7 +177,9 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "FullbodyIMG_BR_Io_NS1.png"
+        "FullbodyIMG_BR_Io_NS1.png",
+        "FullbodyIMG_BR_Io_NS1_R+.png",
+        "Circle.png"
       ]
     },
     {
@@ -191,7 +193,9 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_Io_NS1_Dam_part1.png",
-        "FullbodyIMG_BR_Io_NS1_Dam_part2.png"
+        "FullbodyIMG_BR_Io_NS1_Dam_part1_R+.png",
+        "FullbodyIMG_BR_Io_NS1_Dam_part2.png",
+        "Circle.png"
       ]
     },
     {
@@ -4383,6 +4387,50 @@
       ]
     },
     {
+      "skin2dId": "2DModel_DS_GraveSong_N",
+      "variantId": null,
+      "characterName": "Grave Song",
+      "skinName": "Default",
+      "iconFile": "InvenIcon_DS_GraveSong_N.png",
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_DS_GraveSong_N_Part1.png",
+        "FullbodyIMG_DS_GraveSong_N_Part2.png"
+      ]
+    },
+    {
+      "skin2dId": "2DModel_DS_GraveSong_NS1",
+      "variantId": null,
+      "characterName": "Grave Song",
+      "skinName": "DEAD or ALIVE: Popular Streamer Outfit",
+      "iconFile": "InvenIcon_DS_GraveSong_NS1.png",
+      "isSpineSkin": true,
+      "isAnimatorSkin": false,
+      "isStaticSkin": false,
+      "assets": [
+        "L2D_DS_GraveSong_NS1.json",
+        "L2D_DS_GraveSong_NS1.atlas",
+        "L2D_DS_GraveSong_NS1.png",
+        "L2D_DS_GraveSong_NS1_2.png"
+      ]
+    },
+    {
+      "skin2dId": "2DModel_DS_GraveSong_NS1_Dam",
+      "variantId": null,
+      "characterName": "Grave Song",
+      "skinName": "DEAD or ALIVE: Popular Streamer Outfit (Damaged)",
+      "iconFile": "InvenIcon_DS_GraveSong_NS1.png",
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_DS_GraveSong_NS1_Dam_Part1.png",
+        "FullbodyIMG_DS_GraveSong_NS1_Dam_Part2.png"
+      ]
+    },
+    {
       "skin2dId": "2DModel_DS_Faucre_N",
       "variantId": null,
       "characterName": "Great Demon King Faucre",
@@ -6658,7 +6706,9 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_Lumberjane_NS1_part1.png",
-        "FullbodyIMG_PECS_Lumberjane_NS1_part2.png"
+        "FullbodyIMG_PECS_Lumberjane_NS1_part1_R+.png",
+        "FullbodyIMG_PECS_Lumberjane_NS1_part2.png",
+        "Circle.png"
       ]
     },
     {
@@ -6672,7 +6722,9 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_Lumberjane_NS1_Dam_part1.png",
-        "FullbodyIMG_PECS_Lumberjane_NS1_Dam_part2.png"
+        "FullbodyIMG_PECS_Lumberjane_NS1_Dam_part1_R+.png",
+        "FullbodyIMG_PECS_Lumberjane_NS1_Dam_part2.png",
+        "Circle.png"
       ]
     },
     {
@@ -7509,6 +7561,34 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_PECS_Muse_NS2.png"
+      ]
+    },
+    {
+      "skin2dId": "2DModel_PECS_Muse_NS3",
+      "variantId": null,
+      "characterName": "Muse",
+      "skinName": "Orca Bunny: Encore!☆ Bunny Girl Outfit",
+      "iconFile": "InvenIcon_PECS_Muse_NS3.png",
+      "isSpineSkin": true,
+      "isAnimatorSkin": false,
+      "isStaticSkin": false,
+      "assets": [
+        "L2D_PECS_Muse_NS3.json",
+        "L2D_PECS_Muse_NS3.atlas",
+        "L2D_PECS_Muse_NS3.png"
+      ]
+    },
+    {
+      "skin2dId": "2DModel_PECS_Muse_NS3_Dam",
+      "variantId": null,
+      "characterName": "Muse",
+      "skinName": "Orca Bunny: Encore!☆ Bunny Girl Outfit (Damaged)",
+      "iconFile": "InvenIcon_PECS_Muse_NS3.png",
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_PECS_Muse_NS3_Dam.png"
       ]
     },
     {
