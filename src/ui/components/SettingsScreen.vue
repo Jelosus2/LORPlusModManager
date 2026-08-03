@@ -36,7 +36,10 @@ const {
     isUpdatingPlugin,
     isPluginUpdateComplete,
     pluginUpdateProgress,
-    pluginUpdateError
+    pluginUpdateError,
+    catalogUpdateAvailable,
+    isUpdatingCatalog,
+    catalogUpdateError
 } = storeToRefs(updateStore);
 
 const gameLocation = ref("");
@@ -732,14 +735,14 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <label class="setting-row setting-row--toggle">
-                        <span class="setting-copy">
-                            <span class="setting-title-line">
+                    <div class="setting-row setting-row--component-update">
+                        <div class="setting-copy">
+                            <div class="setting-title-line">
                                 <strong>Character catalog updates</strong>
                                 <span class="version-text">
                                     {{ getInstalledVersionLabel("catalog") }}
                                 </span>
-                            </span>
+                            </div>
                             <span class="setting-description">
                                 Keep character, skin and asset information up to date.
                             </span>
@@ -755,23 +758,53 @@ onMounted(() => {
                             >
                                 {{ getUpdateResult("catalog")?.message }}
                             </span>
-                        </span>
 
-                        <span class="switch-control">
-                            <input
-                                type="checkbox"
-                                :checked="automaticUpdatePreferences.catalog"
-                                :disabled="
-                                    isLoadingUpdateSettings ||
-                                    savingUpdatePreference !== null
-                                "
-                                @change="saveAutomaticUpdatePreference('catalog', $event)"
-                            />
-                            <span class="switch-track" aria-hidden="true">
-                                <span class="switch-thumb"></span>
+
+                            <span
+                                v-if="catalogUpdateError"
+                                class="component-update-error"
+                                role="alert"
+                            >
+                                {{ catalogUpdateError }}
                             </span>
-                        </span>
-                    </label>
+                        </div>
+
+                        <div class="component-update-actions">
+                            <button
+                                v-if="catalogUpdateAvailable"
+                                class="settings-button settings-button--primary"
+                                type="button"
+                                :disabled="isUpdatingCatalog"
+                                @click="updateStore.updateCatalog"
+                            >
+                                <RefreshIcon
+                                    class="settings-button-icon"
+                                    :class="{
+                                        'settings-button-icon--spinning': isUpdatingCatalog
+                                    }"
+                                />
+                                <span>{{ isUpdatingCatalog ? "Updating…" : "Update catalog" }}</span>
+                            </button>
+
+                            <label
+                                class="switch-control"
+                                aria-label="Check for character catalog updates automatically"
+                            >
+                                <input
+                                    type="checkbox"
+                                    :checked="automaticUpdatePreferences.catalog"
+                                    :disabled="
+                                        isLoadingUpdateSettings ||
+                                        savingUpdatePreference !== null
+                                    "
+                                    @change="saveAutomaticUpdatePreference('catalog', $event)"
+                                />
+                                <span class="switch-track" aria-hidden="true">
+                                    <span class="switch-thumb"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <p class="last-checked">

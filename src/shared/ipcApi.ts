@@ -53,4 +53,5 @@ export type IpcApi = {
     downloadApplicationUpdate: () => Promise<ApplicationUpdateDownloadResult>;
     onApplicationUpdateDownloadProgress: (callback: (progress: ApplicationUpdateDownloadProgress) => void) => () => void;
     installApplicationUpdate: () => Promise<void>;
+    updateCharacterCatalog: () => Promise<CharacterCatalog>;
 };

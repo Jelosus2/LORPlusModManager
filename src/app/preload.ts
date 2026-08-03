@@ -84,7 +84,8 @@ const modManagerApi: IpcApi = {
             ipcRenderer.removeListener("updates:application-download-progress", listener);
         };
     },
-    installApplicationUpdate: () => ipcRenderer.invoke("updates:install-application")
+    installApplicationUpdate: () => ipcRenderer.invoke("updates:install-application"),
+    updateCharacterCatalog: () => ipcRenderer.invoke("updates:install-catalog")
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

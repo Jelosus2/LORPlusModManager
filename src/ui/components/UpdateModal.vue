@@ -7,7 +7,7 @@ import { useUpdateStore } from "@/stores/updateStore.ts";
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
 
-type ActiveUpdate = "application" | "plugin";
+type ActiveUpdate = "application" | "plugin" | "catalog";
 
 const updateStore = useUpdateStore();
 
@@ -24,7 +24,12 @@ const {
     isUpdatingPlugin,
     isPluginUpdateComplete,
     pluginUpdateProgress,
-    pluginUpdateError
+    pluginUpdateError,
+    catalogResult,
+    isCatalogUpdateModalOpen,
+    isUpdatingCatalog,
+    isCatalogUpdateComplete,
+    catalogUpdateError
 } = storeToRefs(updateStore);
 
 const activeUpdate = computed<ActiveUpdate | null>(() => {
@@ -32,21 +37,41 @@ const activeUpdate = computed<ActiveUpdate | null>(() => {
         return "application";
     if (isPluginUpdateModalOpen.value && pluginResult.value)
         return "plugin";
+    if (isCatalogUpdateModalOpen.value && catalogResult.value)
+        return "catalog";
 
     return null;
 });
 
 const isOpen = computed(() => activeUpdate.value !== null);
 
-const activeResult = computed(() => activeUpdate.value === "application"
-    ? applicationResult.value
-    : pluginResult.value
-);
+const activeResult = computed(() => {
+    switch (activeUpdate.value)
+    {
+        case "application":
+            return applicationResult.value;
+        case "plugin":
+            return pluginResult.value;
+        case "catalog":
+            return catalogResult.value;
+        default:
+            return undefined;
+    }
+});
 
-const modalLabel = computed(() => activeUpdate.value === "application"
-    ? "Application update"
-    : "Plugin update"
-);
+const modalLabel = computed(() => {
+    switch (activeUpdate.value)
+    {
+        case "application":
+            return "Application update";
+        case "plugin":
+            return "Plugin update";
+        case "catalog":
+            return "Catalog update";
+        default:
+            return "Update";
+    }
+});
 
 const modalTitle = computed(() => {
     const result = activeResult.value;
@@ -60,6 +85,13 @@ const modalTitle = computed(() => {
             : `LOPlugin+ ${result.latestVersion} is available`;
     }
 
+    if (activeUpdate.value === "catalog")
+    {
+        return isCatalogUpdateComplete.value
+            ? `Character catalog ${result.installedVersion ?? result.latestVersion} installed`
+            : `Catalog ${result.latestVersion} is available`;
+    }
+
     return `Version ${result.latestVersion} is available`;
 });
 
@@ -71,10 +103,27 @@ const modalDescription = computed(() => {
             : "Close Last Origin R+ before updating. The release will be installed in your configured game folder.";
     }
 
+    if (activeUpdate.value === "catalog")
+    {
+        return isCatalogUpdateComplete.value
+            ? "The character catalog update completed successfully."
+            : "Install the latest character, skin and asset information.";
+    }
+
     return "Download it now, or continue using the current version and install it later.";
 });
 
-const showVersionComparison = computed(() => activeUpdate.value === "application" || !isPluginUpdateComplete.value);
+const showVersionComparison = computed(() => {
+    switch (activeUpdate.value)
+    {
+        case "plugin":
+            return !isPluginUpdateComplete.value;
+        case "catalog":
+            return !isCatalogUpdateComplete.value;
+        default:
+            return true;
+    }
+});
 
 const releaseDate = computed(() => {
     if (activeUpdate.value !== "application")
@@ -137,6 +186,8 @@ function closeModal(): void {
         updateStore.closeStartupModal();
     else if (activeUpdate.value === "plugin")
         updateStore.closePluginUpdateModal();
+    else if (activeUpdate.value === "catalog")
+        updateStore.closeCatalogUpdateModal();
 }
 </script>
 
@@ -235,7 +286,7 @@ function closeModal(): void {
                         </p>
                     </template>
 
-                    <template v-else>
+                    <template v-else-if="activeUpdate === 'plugin'">
                         <div v-if="!isPluginUpdateComplete" class="update-modal-notice">
                             <p>
                                 Existing release files with the same names will be overwritten.
@@ -280,6 +331,24 @@ function closeModal(): void {
 
                         <p v-if="pluginUpdateError" class="update-modal-error" role="alert">
                             {{ pluginUpdateError }}
+                        </p>
+                    </template>
+
+                    <template v-else>
+                        <div v-if="!isCatalogUpdateComplete" class="update-modal-notice">
+                            <p>
+                                The downloaded catalog will be validated before it replaces the
+                                cached copy. Imported mods and their files will not be changed.
+                            </p>
+                        </div>
+
+                        <div v-else class="update-modal-complete" role="status">
+                            <CheckIcon class="update-modal-complete-icon" />
+                            <p>The latest character catalog is loaded and ready to use.</p>
+                        </div>
+
+                        <p v-if="catalogUpdateError" class="update-modal-error" role="alert">
+                            {{ catalogUpdateError }}
                         </p>
                     </template>
 
@@ -328,7 +397,7 @@ function closeModal(): void {
                             </button>
                         </template>
 
-                        <template v-else>
+                        <template v-else-if="activeUpdate === 'plugin'">
                             <button
                                 class="update-modal-button update-modal-button--secondary"
                                 type="button"
@@ -352,6 +421,33 @@ function closeModal(): void {
                                     }"
                                 />
                                 <span>{{ isUpdatingPlugin ? "Updating…" : "Update LOPlugin+" }}</span>
+                            </button>
+                        </template>
+
+                        <template v-else>
+                            <button
+                                class="update-modal-button update-modal-button--secondary"
+                                type="button"
+                                :disabled="isUpdatingCatalog"
+                                @click="closeModal"
+                            >
+                                {{ isCatalogUpdateComplete ? "Done" : "Not now" }}
+                            </button>
+
+                            <button
+                                v-if="!isCatalogUpdateComplete"
+                                class="update-modal-button update-modal-button--primary"
+                                type="button"
+                                :disabled="isUpdatingCatalog"
+                                @click="updateStore.updateCatalog"
+                            >
+                                <RefreshIcon
+                                    class="update-modal-button-icon"
+                                    :class="{
+                                        'update-modal-button-icon--spinning': isUpdatingCatalog
+                                    }"
+                                />
+                                <span>{{ isUpdatingCatalog ? "Updating…" : "Update catalog" }}</span>
                             </button>
                         </template>
                     </footer>

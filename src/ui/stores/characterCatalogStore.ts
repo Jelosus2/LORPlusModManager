@@ -68,12 +68,18 @@ export const useCharacterCatalogStore = defineStore("character-catalog", () => {
         }
     }
 
+    function replaceCatalog(value: CharacterCatalog) {
+        catalog.value = value;
+        errorMessage.value = "";
+    }
+
     return {
         catalog,
         skins,
         skinsByCharacterName,
         isLoading,
         errorMessage,
-        load
+        load,
+        replaceCatalog
     };
 });

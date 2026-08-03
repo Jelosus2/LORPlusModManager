@@ -6,11 +6,13 @@ import type {
     UpdateSettingsState,
     ApplicationUpdateDownloadResult
 } from "../../../shared/updates.js";
+import type { CharacterCatalog } from "../../../shared/characters.js";
 import type { IpcMainInvokeEvent } from "electron";
 
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { applicationUpdateService } from "#update/ApplicationUpdateService.js";
 import { updateCheckCoordinator } from "#update/UpdateCheckCoordinator.js";
+import { catalogUpdateService } from "#update/CatalogUpdateService.js";
 import { characterCatalog } from "#utils/CharacterCatalogService.js";
 import { UserFacingError } from "#utils/ErrorUtils.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
@@ -59,6 +61,11 @@ export class UpdateController {
     @IpcHelper.IpcHandle("updates:install-application")
     installApplicationUpdate(): void {
         applicationUpdateService.install();
+    }
+
+    @IpcHelper.IpcHandle("updates:install-catalog")
+    installCatalogUpdate(): Promise<CharacterCatalog> {
+        return catalogUpdateService.update();
     }
 
     private async getCatalogVersion(): Promise<string | null> {

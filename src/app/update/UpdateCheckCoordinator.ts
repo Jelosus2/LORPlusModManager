@@ -4,7 +4,7 @@ import type { UpdateChecker } from "./UpdateChecker.js";
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { applicationUpdateService } from "./ApplicationUpdateService.js";
 import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
-import { CatalogUpdateChecker } from "./CatalogUpdateChecker.js";
+import { catalogUpdateService } from "./CatalogUpdateService.js";
 import { PluginUpdateChecker } from "./PluginUpdateChecker.js";
 import { VersionUtils } from "#utils/VersionUtils.js";
 
@@ -13,7 +13,7 @@ export class UpdateCheckCoordinator {
     private readonly checkers: Record<UpdateComponent, UpdateChecker> = {
         application: applicationUpdateService,
         plugin: new PluginUpdateChecker(),
-        catalog: new CatalogUpdateChecker()
+        catalog: catalogUpdateService
     };
 
     async check(mode: UpdateCheckMode): Promise<UpdateCheckResult> {

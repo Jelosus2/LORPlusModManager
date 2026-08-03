@@ -2,8 +2,11 @@ import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js
 
 import { VersionUtils } from "./VersionUtils.js";
 import { StringUtils } from "./StringUtils.js";
+import { ErrorUtils } from "./ErrorUtils.js";
 import { TypeCheck } from "./TypeCheck.js";
+import { randomUUID } from "node:crypto";
 import { Paths } from "./Paths.js";
+import path from "node:path";
 import fse from "fs-extra";
 
 type LoadedCatalog = {
@@ -55,6 +58,44 @@ export class CharacterCatalogService {
         await this.getCatalog();
 
         return this.skinsByAssetName.get(StringUtils.normalize(assetName)) ?? this.EMPTY_RESULTS;
+    }
+
+    async installCatalogContents(contents: string): Promise<CharacterCatalog> {
+        const catalog = this.parseCatalogContents(contents);
+        const targetPath = Paths.getCachedCharacterCatalogPath();
+        const targetDirectory = path.dirname(targetPath);
+        const temporaryPath = path.join(targetDirectory, `.${path.basename(targetPath)}.${randomUUID()}.tmp`);
+
+        await fse.ensureDir(targetDirectory);
+
+        try
+        {
+            await fse.writeFile(temporaryPath, contents, { encoding: "utf-8", flag: "wx" });
+            await this.readCatalog(temporaryPath);
+            await fse.move(temporaryPath, targetPath, { overwrite: true });
+        }
+        catch (error)
+        {
+            throw ErrorUtils.withContext("The character catalog could not be saved.", error);
+        }
+        finally
+        {
+            try
+            {
+                await fse.rm(temporaryPath, { force: true });
+            }
+            catch (error)
+            {
+                console.error("Could not remove the temporary character catalog:", error);
+            }
+        }
+
+        this.buildIndexes(catalog);
+        this.catalog = catalog;
+
+        console.log(`Installed character catalog ${catalog.version}.`);
+
+        return catalog;
     }
 
     parseCatalogContents(contents: string): CharacterCatalog {
@@ -113,7 +154,7 @@ export class CharacterCatalogService {
         const selected = validCatalogs.at(-1)!;
 
         this.buildIndexes(selected.catalog);
-        console.info(`Loaded character catalog ${selected.catalog.version} from ${selected.filePath}.`);
+        console.log(`Loaded character catalog ${selected.catalog.version} from ${selected.filePath}.`);
 
         return selected.catalog;
     }

@@ -8,6 +8,7 @@ import type {
 } from "../../shared/updates";
 import type { PluginProgress } from "../../shared/plugin";
 
+import { useCharacterCatalogStore } from "./characterCatalogStore";
 import { computed, ref, shallowRef } from "vue";
 import { ErrorUtils } from "@/utils/ErrorUtils";
 import { defineStore } from "pinia";
@@ -45,11 +46,16 @@ export const useUpdateStore = defineStore("updates", () => {
     const isPluginUpdateComplete = ref(false);
     const pluginUpdateProgress = ref<PluginProgress | null>(null);
     const pluginUpdateError = ref("");
+    const isCatalogUpdateModalOpen = ref(false);
+    const isUpdatingCatalog = ref(false);
+    const isCatalogUpdateComplete = ref(false);
+    const catalogUpdateError = ref("");
 
     let loadingPromise: Promise<boolean> | null = null;
     let checkingPromise: Promise<boolean> | null = null;
     let initializationPromise: Promise<void> | null = null;
     let pendingPluginStartupModal = false;
+    let pendingCatalogStartupModal = false;
     let initialized = false;
 
     const applicationResult = computed(() => results.value.application);
@@ -58,6 +64,9 @@ export const useUpdateStore = defineStore("updates", () => {
     const pluginResult = computed(() => results.value.plugin);
     const pluginUpdateAvailable = computed(() => pluginResult.value?.status === "available");
     const pluginUpdateVersion = computed(() => pluginResult.value?.latestVersion ?? null);
+    const catalogResult = computed(() => results.value.catalog);
+    const catalogUpdateAvailable = computed(() => catalogResult.value?.status === "available");
+    const catalogUpdateVersion = computed(() => catalogResult.value?.latestVersion ?? null);
 
     async function initialize() {
         if (initialized)
@@ -151,11 +160,14 @@ export const useUpdateStore = defineStore("updates", () => {
                 {
                     const applicationAvailable = application?.status === "available";
                     const pluginAvailable = nextResults.plugin?.status === "available";
+                    const catalogAvailable = nextResults.catalog?.status === "available";
 
                     isStartupModalOpen.value = applicationAvailable;
                     isPluginUpdateModalOpen.value = !applicationAvailable && pluginAvailable;
+                    isCatalogUpdateModalOpen.value = !applicationAvailable && !pluginAvailable && catalogAvailable;
 
                     pendingPluginStartupModal = applicationAvailable && pluginAvailable;
+                    pendingCatalogStartupModal = catalogAvailable && (applicationAvailable || pluginAvailable);
                 }
 
                 return true;
@@ -349,6 +361,53 @@ export const useUpdateStore = defineStore("updates", () => {
         }
     }
 
+    async function updateCatalog(): Promise<boolean> {
+        if (isUpdatingCatalog.value || !catalogUpdateAvailable.value)
+            return false;
+
+        const expectedVersion = catalogUpdateVersion.value;
+        if (!expectedVersion)
+            return false;
+
+        isUpdatingCatalog.value = true;
+        isCatalogUpdateComplete.value = false;
+        catalogUpdateError.value = "";
+
+        try
+        {
+            const installedCatalog = await window.app.updateCharacterCatalog();
+
+            useCharacterCatalogStore().replaceCatalog(installedCatalog);
+            setInstalledVersion("catalog", installedCatalog.version);
+
+            results.value = {
+                ...results.value,
+                catalog: {
+                    component: "catalog",
+                    status: "up-to-date",
+                    installedVersion: installedCatalog.version,
+                    latestVersion: installedCatalog.version,
+                    message: `Character catalog ${installedCatalog.version} is installed.`,
+                    release: null
+                }
+            };
+
+            isCatalogUpdateComplete.value = true;
+            return true;
+        }
+        catch (error)
+        {
+            console.error("Could not update the character catalog:", error);
+
+            catalogUpdateError.value = ErrorUtils.getUserErrorMessage(error, "The character catalog could not be updated.");
+            return false;
+        }
+        finally
+        {
+            isUpdatingCatalog.value = false;
+        }
+    }
+
     function setInstalledVersion(component: UpdateComponent, version: string | null) {
         installedVersions.value = {
             ...installedVersions.value,
@@ -364,6 +423,11 @@ export const useUpdateStore = defineStore("updates", () => {
             pendingPluginStartupModal = false;
             isPluginUpdateModalOpen.value = true;
         }
+        else if (pendingCatalogStartupModal)
+        {
+            pendingCatalogStartupModal = false;
+            isCatalogUpdateModalOpen.value = true;
+        }
     }
 
     function closePluginUpdateModal(): void {
@@ -374,6 +438,21 @@ export const useUpdateStore = defineStore("updates", () => {
         isPluginUpdateComplete.value = false;
         pluginUpdateProgress.value = null;
         pluginUpdateError.value = "";
+
+        if (pendingCatalogStartupModal)
+        {
+            pendingCatalogStartupModal = false;
+            isCatalogUpdateModalOpen.value = true;
+        }
+    }
+
+    function closeCatalogUpdateModal(): void {
+        if (isUpdatingCatalog.value)
+            return;
+
+        isCatalogUpdateModalOpen.value = false;
+        isCatalogUpdateComplete.value = false;
+        catalogUpdateError.value = "";
     }
 
     return {
@@ -400,6 +479,12 @@ export const useUpdateStore = defineStore("updates", () => {
         isPluginUpdateComplete,
         pluginUpdateProgress,
         pluginUpdateError,
+        catalogResult,
+        catalogUpdateAvailable,
+        isCatalogUpdateModalOpen,
+        isUpdatingCatalog,
+        isCatalogUpdateComplete,
+        catalogUpdateError,
         initialize,
         loadSettings,
         checkForUpdates,
@@ -409,6 +494,8 @@ export const useUpdateStore = defineStore("updates", () => {
         setInstalledVersion,
         closeStartupModal,
         updatePlugin,
-        closePluginUpdateModal
+        closePluginUpdateModal,
+        updateCatalog,
+        closeCatalogUpdateModal
     };
 });
