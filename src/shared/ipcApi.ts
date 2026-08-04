@@ -61,4 +61,5 @@ export type IpcApi = {
     getModLibraryStorage: () => Promise<ModLibraryStorageSummary>;
     openModLibraryFolder: () => Promise<void>;
     cleanTemporaryFiles: () => Promise<TemporaryFileCleanupResult>;
+    openLogFolder: () => Promise<void>;
 };

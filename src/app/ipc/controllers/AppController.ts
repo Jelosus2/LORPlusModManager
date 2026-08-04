@@ -50,18 +50,21 @@ export class AppController {
         }
     }
 
-    private async openModsFolder(errorMessage: string) {
-        const modsRoot = Paths.getModsPath();
+    @IpcHelper.IpcHandle("app:open-log-folder")
+    openLogFolder() {
+        return this.openDirectory(Paths.getLogsPath(), "The application log folder could not be opened.");
+    }
 
+    private openModsFolder(errorMessage: string) {
+        return this.openDirectory(Paths.getModsPath(), errorMessage, [Paths.getOperationsRoot(), Paths.getSyncOperationsRoot()]);
+    }
+
+    private async openDirectory(directoryPath: string, errorMessage: string, additionalDirectories: readonly string[] = []) {
         try
         {
-            await Promise.all([
-                fse.ensureDir(modsRoot),
-                fse.ensureDir(Paths.getOperationsRoot()),
-                fse.ensureDir(Paths.getSyncOperationsRoot())
-            ]);
+            await Promise.all([directoryPath, ...additionalDirectories].map((entry) => fse.ensureDir(entry)));
 
-            const shellError = await shell.openPath(modsRoot);
+            const shellError = await shell.openPath(directoryPath);
             if (shellError)
                 throw new Error(shellError);
         }

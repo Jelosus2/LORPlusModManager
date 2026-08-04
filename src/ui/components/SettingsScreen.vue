@@ -70,6 +70,8 @@ const isCleaningTemporaryFiles = ref(false);
 const temporaryCleanupMessage = ref("");
 const temporaryCleanupWarning = ref("");
 const temporaryCleanupError = ref("");
+const isOpeningLogFolder = ref(false);
+const logFolderError = ref("");
 
 async function loadGameSettings() {
     gameLocationError.value = "";
@@ -401,6 +403,28 @@ async function cleanTemporaryFiles() {
     finally
     {
         isCleaningTemporaryFiles.value = false;
+    }
+}
+
+async function openLogFolder() {
+    if (isOpeningLogFolder.value)
+        return;
+
+    isOpeningLogFolder.value = true;
+    logFolderError.value = "";
+
+    try
+    {
+        await window.app.openLogFolder();
+    }
+    catch (error)
+    {
+        console.error("Could not open the application log folder:", error);
+        logFolderError.value = ErrorUtils.getUserErrorMessage(error, "The application log folder could not be opened.");
+    }
+    finally
+    {
+        isOpeningLogFolder.value = false;
     }
 }
 
@@ -1238,10 +1262,23 @@ onMounted(() => {
                         <div class="setting-copy">
                             <h3>Application logs</h3>
                             <p>Open diagnostic logs that can help investigate errors.</p>
+                            <span
+                                v-if="logFolderError"
+                                class="setting-error"
+                                role="alert"
+                            >
+                                {{ logFolderError }}
+                            </span>
                         </div>
 
-                        <button class="settings-button settings-button--quiet" type="button">
-                            Open log folder
+                        <button
+                            class="settings-button settings-button--secondary"
+                            type="button"
+                            :disabled="isOpeningLogFolder"
+                            @click="openLogFolder"
+                        >
+                            <FolderIcon class="settings-button-icon" />
+                            <span>{{ isOpeningLogFolder ? "Opening…" : "Open log folder" }}</span>
                         </button>
                     </div>
                 </div>

@@ -62,35 +62,35 @@ export class Paths {
         );
     }
 
-    static getModsTrashRoot() {
+    static getModsTrashRoot(): string {
         return path.join(Paths.getModsPath(), ".trash");
     }
 
-    static getOperationsRoot() {
+    static getOperationsRoot(): string {
         return path.join(Paths.getModsPath(), ".operations");
     }
 
-    static getOperationsManifestPath(id: string) {
+    static getOperationsManifestPath(id: string): string {
         return path.join(this.getOperationsRoot(), `${id}.json`);
     }
 
-    static getSyncOperationsRoot() {
+    static getSyncOperationsRoot(): string {
         return path.join(Paths.getModsPath(), ".sync-operations");
     }
 
-    static getSyncOperationManifestPath(id: string) {
+    static getSyncOperationManifestPath(id: string): string {
         return path.join(Paths.getSyncOperationsRoot(), `${id}.json`);
     }
 
-    static getGamePluginRoot(gameLocation: string) {
+    static getGamePluginRoot(gameLocation: string): string {
         return path.join(gameLocation, "BepInEx", "plugins", "LOPlugin+");
     }
 
-    static getGameModsPath(gameLocation: string) {
+    static getGameModsPath(gameLocation: string): string {
         return path.join(Paths.getGamePluginRoot(gameLocation), "mods");
     }
 
-    static getGameSyncWorkRoot(gameLocation: string) {
+    static getGameSyncWorkRoot(gameLocation: string): string {
         return path.join(Paths.getGamePluginRoot(gameLocation), ".lorplus-sync");
     }
 
@@ -100,6 +100,10 @@ export class Paths {
 
     static getCachedCharacterIconPath(iconFile: string): string {
         return path.join(Paths.getCachedCharacterIconsPath(), iconFile);
+    }
+
+    static getLogsPath(): string {
+        return app.getPath("logs");
     }
 
     static isSubpath(parentPath: string, childPath: string): boolean {
@@ -132,7 +136,7 @@ export class Paths {
         return relative;
     }
 
-    static normalizeDirectoryName(value: string) {
+    static normalizeDirectoryName(value: string): string {
         return value.toLocaleLowerCase("en-US");
     }
 
