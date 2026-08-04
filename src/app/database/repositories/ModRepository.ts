@@ -24,6 +24,10 @@ type StoredModRow = {
     assetName: string | null;
 };
 
+type ModDirectoryRow = {
+    directoryName: string;
+};
+
 export class ModRepository {
     addImportedMods(mods: readonly ImportedModRecord[]) {
         if (mods.length === 0)
@@ -117,6 +121,14 @@ export class ModRepository {
         }
 
         return [...mods.values()];
+    }
+
+    getDirectoryNames(): readonly string[] {
+        const rows = AppDatabase.connection.prepare<[], ModDirectoryRow>(`
+            SELECT directory_name AS directoryName FROM mods ORDER BY directory_name COLLATE NOCASE
+        `).all();
+
+        return rows.map((row) => row.directoryName);
     }
 
     deleteById(id: string): boolean {

@@ -152,3 +152,12 @@ export type ModSyncResult = Readonly<{
     message: string;
     entries: readonly ModSyncLogEntry[];
 }>;
+
+export type ModLibraryStorageSummary = Readonly<{
+    path: string;
+    sizeBytes: number;
+    fileCount: number;
+    modCount: number;
+    availableModCount: number;
+    unavailableModCount: number;
+}>;

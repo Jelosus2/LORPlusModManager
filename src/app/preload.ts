@@ -98,7 +98,9 @@ const modManagerApi: IpcApi = {
         return () => {
             ipcRenderer.removeListener("updates:catalog-icon-repair-progress", listener);
         };
-    }
+    },
+    getModLibraryStorage: () => ipcRenderer.invoke("app:get-mod-library-storage"),
+    openModLibraryFolder: () => ipcRenderer.invoke("app:open-mod-library-folder")
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

@@ -2,6 +2,7 @@
 import type { ComponentUpdateResult, UpdateComponent } from "../../shared/updates.ts";
 import type { CatalogIconRepairProgress } from "../../shared/characters.ts";
 import type { GameLocationChangeProgress } from "../../shared/setup.ts";
+import type { ModLibraryStorageSummary } from "../../shared/mod.ts";
 import type { PluginProgress } from "../../shared/plugin.ts";
 
 import RefreshIcon from "./icons/RefreshIcon.vue";
@@ -59,6 +60,11 @@ const isRepairingCatalogIcons = ref(false);
 const catalogIconRepairProgress = ref<CatalogIconRepairProgress | null>(null);
 const catalogIconRepairMessage = ref("");
 const catalogIconRepairError = ref("");
+const modLibraryStorage = ref<ModLibraryStorageSummary | null>(null);
+const isLoadingModLibraryStorage = ref(false);
+const modLibraryStorageError = ref("");
+const isOpeningModLibraryFolder = ref(false);
+const modLibraryFolderError = ref("");
 
 async function loadGameSettings() {
     gameLocationError.value = "";
@@ -302,6 +308,50 @@ async function repairCatalogIcons() {
     }
 }
 
+async function loadModLibraryStorage() {
+    if (isLoadingModLibraryStorage.value)
+        return;
+
+    isLoadingModLibraryStorage.value = true;
+    modLibraryStorageError.value = "";
+
+    try
+    {
+        modLibraryStorage.value = await window.app.getModLibraryStorage();
+    }
+    catch (error)
+    {
+        console.error("Could not calculate the mod library storage:", error);
+        modLibraryStorageError.value = ErrorUtils.getUserErrorMessage(error, "The mod library storage usage could not be calculated.");
+    }
+    finally
+    {
+        isLoadingModLibraryStorage.value = false;
+    }
+}
+
+async function openModLibraryFolder() {
+    if (isOpeningModLibraryFolder.value)
+        return;
+
+    isOpeningModLibraryFolder.value = true;
+    modLibraryFolderError.value = "";
+
+    try
+    {
+        await window.app.openModLibraryFolder();
+    }
+    catch (error)
+    {
+        console.error("Could not open the mod library folder:", error);
+        modLibraryFolderError.value = ErrorUtils.getUserErrorMessage(error, "The mod library folder could not be opened.");
+    }
+    finally
+    {
+        isOpeningModLibraryFolder.value = false;
+    }
+}
+
 function getUpdateResult(component: UpdateComponent): ComponentUpdateResult | undefined {
     return updateResults.value[component];
 }
@@ -338,6 +388,24 @@ function formatLastUpdateCheck(value: string): string {
     }).format(date);
 }
 
+function formatStorageSize(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes <= 0)
+        return "0 B";
+
+    const units = ["B", "KB", "MB", "GB", "TB"];
+    const unitIndex = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    const value = bytes / 1024 ** unitIndex;
+
+    return `${new Intl.NumberFormat(undefined, {
+        maximumFractionDigits:
+            value >= 100
+                ? 0
+                : value >= 10
+                    ? 1
+                    : 2
+    }).format(value)} ${units[unitIndex]}`;
+}
+
 function confirmationPopover(): HTMLElement | null {
     return document.getElementById("game-location-confirmation-popover");
 }
@@ -356,6 +424,7 @@ function cancelGameLocationChange() {
 onMounted(() => {
     void loadGameSettings();
     void loadUpdateSettings();
+    void loadModLibraryStorage();
 });
 </script>
 
@@ -889,12 +958,68 @@ onMounted(() => {
                     </div>
                 </header>
 
-                <div class="storage-summary" aria-label="Mod storage usage">
-                    <div>
+                <div
+                    class="storage-summary"
+                    aria-label="Mod storage usage"
+                    :aria-busy="isLoadingModLibraryStorage"
+                >
+                    <div class="storage-summary-copy">
                         <span>Imported mod library</span>
-                        <strong>Calculating storage usage…</strong>
+                        <strong v-if="isLoadingModLibraryStorage">
+                            Calculating storage usage…
+                        </strong>
+                        <template v-else-if="modLibraryStorage">
+                            <div class="storage-summary-figures">
+                                <strong>{{ formatStorageSize(modLibraryStorage.sizeBytes) }}</strong>
+                                <span class="storage-mod-count">
+                                    {{ modLibraryStorage.modCount }} imported
+                                    {{ modLibraryStorage.modCount === 1 ? "mod" : "mods" }}
+                                </span>
+                            </div>
+                            <small>
+                                {{ modLibraryStorage.fileCount }}
+                                {{ modLibraryStorage.fileCount === 1 ? "file" : "files" }}
+                                <template v-if="modLibraryStorage.unavailableModCount > 0">
+                                    · {{ modLibraryStorage.unavailableModCount }}
+                                    {{ modLibraryStorage.unavailableModCount === 1 ? "directory could" : "directories could" }}
+                                    not be measured
+                                </template>
+                            </small>
+                        </template>
+                        <strong v-else>Storage usage unavailable</strong>
+                        <span
+                            v-if="modLibraryStorageError"
+                            class="storage-summary-error"
+                            role="alert"
+                        >
+                            {{ modLibraryStorageError }}
+                        </span>
                     </div>
-                    <span class="storage-location">Stored in the application data folder</span>
+
+                    <div class="storage-summary-actions">
+                        <span class="storage-location-label">Library location</span>
+                        <span
+                            class="storage-location"
+                            :title="modLibraryStorage?.path"
+                        >
+                            {{ modLibraryStorage?.path || "Stored in the application data folder" }}
+                        </span>
+
+                        <button
+                            class="storage-refresh-button"
+                            type="button"
+                            :disabled="isLoadingModLibraryStorage"
+                            @click="loadModLibraryStorage"
+                        >
+                            <RefreshIcon
+                                class="settings-button-icon"
+                                :class="{
+                                    'settings-button-icon--spinning': isLoadingModLibraryStorage
+                                }"
+                            />
+                            <span>Refresh</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="settings-list">
@@ -903,8 +1028,7 @@ onMounted(() => {
                             <h3>Character icons</h3>
                             <p>
                                 Check the icons required by the current catalog and redownload
-                                anything missing or invalid. Icons bundled with the application
-                                will not be duplicated.
+                                anything missing or invalid.
                             </p>
 
                             <div
@@ -973,12 +1097,7 @@ onMounted(() => {
                             "
                             @click="repairCatalogIcons"
                         >
-                            <RefreshIcon
-                                class="settings-button-icon"
-                                :class="{
-                                    'settings-button-icon--spinning': isRepairingCatalogIcons
-                                }"
-                            />
+                            <DownloadIcon class="settings-button-icon" />
                             <span>
                                 {{ isRepairingCatalogIcons ? "Checking…" : "Repair icons" }}
                             </span>
@@ -989,10 +1108,25 @@ onMounted(() => {
                         <div class="setting-copy">
                             <h3>Mod library folder</h3>
                             <p>Open the folder containing all imported mods.</p>
+                            <span
+                                v-if="modLibraryFolderError"
+                                class="setting-error"
+                                role="alert"
+                            >
+                                {{ modLibraryFolderError }}
+                            </span>
                         </div>
 
-                        <button class="settings-button settings-button--secondary" type="button">
-                            Open folder
+                        <button
+                            class="settings-button settings-button--secondary"
+                            type="button"
+                            :disabled="isOpeningModLibraryFolder"
+                            @click="openModLibraryFolder"
+                        >
+                            <FolderIcon class="settings-button-icon" />
+                            <span>
+                                {{ isOpeningModLibraryFolder ? "Opening…" : "Open folder" }}
+                            </span>
                         </button>
                     </div>
 
@@ -1839,13 +1973,14 @@ h1 {
     justify-content: space-between;
     gap: 24px;
     margin-bottom: 8px;
-    padding: 16px 18px;
+    padding: 18px 20px;
     border-radius: 8px;
     color: #e8e4dc;
     background: #111916;
 }
 
-.storage-summary div {
+.storage-summary-copy,
+.storage-summary-actions {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -1853,17 +1988,105 @@ h1 {
 
 .storage-summary span {
     color: #8f9690;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .storage-summary strong {
-    font-size: 15px;
+    color: #f0ece4;
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.storage-summary-figures {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.storage-summary .storage-mod-count {
+    padding: 4px 8px;
+    border-radius: 5px;
+    color: #b7c1bb;
+    background: #1b231f;
+    font-size: 12px;
     font-weight: 650;
 }
 
+.storage-summary small {
+    margin-top: 1px;
+    color: #89928c;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.storage-summary .storage-summary-error {
+    margin-top: 3px;
+    color: #ef9c98;
+    line-height: 1.45;
+}
+
+.storage-summary-actions {
+    min-width: 0;
+    align-items: flex-end;
+    gap: 7px;
+}
+
+.storage-summary .storage-location-label {
+    color: #747d77;
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
 .storage-summary .storage-location {
-    color: #8eb9ce;
+    max-width: min(520px, 42vw);
+    overflow: hidden;
+    color: #9fc6dc;
+    font-family: "Cascadia Mono", "Consolas", monospace;
+    font-size: 12px;
+    line-height: 1.4;
     text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.storage-refresh-button {
+    display: inline-flex;
+    min-height: 30px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 6px;
+    color: #e9e5dd;
+    background: #1a211d;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.storage-refresh-button:hover:not(:disabled) {
+    color: #f6f2e9;
+    background: #202823;
+}
+
+.storage-summary .storage-refresh-button span {
+    color: inherit;
+}
+
+.storage-refresh-button:focus-visible {
+    outline: 2px solid #9bc1d8;
+    outline-offset: 2px;
+}
+
+.storage-refresh-button:disabled {
+    opacity: 0.55;
+    cursor: wait;
 }
 
 @media (max-width: 820px) {
@@ -1908,7 +2131,12 @@ h1 {
     }
 
     .storage-summary .storage-location {
+        max-width: 100%;
         text-align: left;
+    }
+
+    .storage-summary-actions {
+        align-items: flex-start;
     }
 }
 

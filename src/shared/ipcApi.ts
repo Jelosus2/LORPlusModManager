@@ -9,7 +9,8 @@ import type {
     ModImportProgress,
     ModSyncRequest,
     ModSyncResult,
-    ModSyncProgress
+    ModSyncProgress,
+    ModLibraryStorageSummary
 } from "./mod.js";
 import type {
     AutomaticUpdatePreferenceRequest,
@@ -56,4 +57,6 @@ export type IpcApi = {
     updateCharacterCatalog: () => Promise<CharacterCatalog>;
     repairCatalogIcons: () => Promise<CatalogIconRepairResult>;
     onCatalogIconRepairProgress: (callback: (progress: CatalogIconRepairProgress) => void) => () => void;
+    getModLibraryStorage: () => Promise<ModLibraryStorageSummary>;
+    openModLibraryFolder: () => Promise<void>;
 };
