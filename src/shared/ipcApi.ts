@@ -24,6 +24,7 @@ import type {
 import type { GameLocationResult, SetupState, GameLocationChangeProgress, GameLocationChangeResult, GameLocationSelectionResult } from "./setup.js";
 import type { CharacterCatalog, CatalogIconRepairProgress, CatalogIconRepairResult } from "./characters.js";
 import type { PluginInstallResult, PluginProgress } from "./plugin.js";
+import type { TemporaryFileCleanupResult } from "./maintenance.js";
 
 export type IpcApi = {
     setupGameLocation: (manualSetup: boolean) => Promise<GameLocationResult>;
@@ -59,4 +60,5 @@ export type IpcApi = {
     onCatalogIconRepairProgress: (callback: (progress: CatalogIconRepairProgress) => void) => () => void;
     getModLibraryStorage: () => Promise<ModLibraryStorageSummary>;
     openModLibraryFolder: () => Promise<void>;
+    cleanTemporaryFiles: () => Promise<TemporaryFileCleanupResult>;
 };

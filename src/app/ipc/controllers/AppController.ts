@@ -1,5 +1,7 @@
+import type { TemporaryFileCleanupResult } from "../../../shared/maintenance.js";
 import type { ModLibraryStorageSummary } from "../../../shared/mod.js";
 
+import { temporaryFileCleanupService } from "#maintenance/TemporaryFileCleanupService.js";
 import { modLibraryStorageService } from "#mod/ModLibraryStorageService.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
 import { ErrorUtils } from "#utils/ErrorUtils.js";
@@ -34,6 +36,18 @@ export class AppController {
     @IpcHelper.IpcHandle("app:open-mod-library-folder")
     openModLibraryFolder() {
         return this.openModsFolder("The mod library folder could not be opened.");
+    }
+
+    @IpcHelper.IpcHandle("app:clean-temporary-files")
+    async cleanTemporaryFiles(): Promise<TemporaryFileCleanupResult> {
+        try
+        {
+            return await temporaryFileCleanupService.clean();
+        }
+        catch (error)
+        {
+            throw ErrorUtils.withContext("The temporary files could not be cleaned.", error, "Windows could not remove the temporary files.");
+        }
     }
 
     private async openModsFolder(errorMessage: string) {

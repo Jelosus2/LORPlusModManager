@@ -9,6 +9,7 @@ import RefreshIcon from "./icons/RefreshIcon.vue";
 import DownloadIcon from "./icons/DownloadIcon.vue";
 import SearchIcon from "./icons/SearchIcon.vue";
 import FolderIcon from "./icons/FolderIcon.vue";
+import TrashIcon from "./icons/TrashIcon.vue";
 
 import { useUpdateStore } from "@/stores/updateStore.ts";
 import { ErrorUtils } from "@/utils/ErrorUtils.ts";
@@ -65,6 +66,10 @@ const isLoadingModLibraryStorage = ref(false);
 const modLibraryStorageError = ref("");
 const isOpeningModLibraryFolder = ref(false);
 const modLibraryFolderError = ref("");
+const isCleaningTemporaryFiles = ref(false);
+const temporaryCleanupMessage = ref("");
+const temporaryCleanupWarning = ref("");
+const temporaryCleanupError = ref("");
 
 async function loadGameSettings() {
     gameLocationError.value = "";
@@ -349,6 +354,53 @@ async function openModLibraryFolder() {
     finally
     {
         isOpeningModLibraryFolder.value = false;
+    }
+}
+
+async function cleanTemporaryFiles() {
+    if (
+        isCleaningTemporaryFiles.value ||
+        isReinstallingPlugin.value ||
+        isUpdatingPlugin.value ||
+        isSelectingGameLocation.value ||
+        isChangingGameLocation.value
+    )
+    {
+        return;
+    }
+
+    isCleaningTemporaryFiles.value = true;
+    temporaryCleanupMessage.value = "";
+    temporaryCleanupWarning.value = "";
+    temporaryCleanupError.value = "";
+
+    try
+    {
+        const result = await window.app.cleanTemporaryFiles();
+
+        if (result.removedLocations > 0)
+            temporaryCleanupMessage.value = `Cleaned ${result.removedLocations} temporary ${result.removedLocations === 1 ? "location" : "locations"}.`;
+        else if (result.failedLocations === 0)
+            temporaryCleanupMessage.value = "No temporary files were found.";
+
+        if (result.failedLocations > 0)
+        {
+            const summary = `${result.failedLocations} temporary ${ result.failedLocations === 1 ? "location could" : "locations could"} not be cleaned.`;
+
+            temporaryCleanupWarning.value = [
+                summary,
+                ...result.failureMessages
+            ].join(" ");
+        }
+    }
+    catch (error)
+    {
+        console.error("Could not clean the temporary files:", error);
+        temporaryCleanupError.value = ErrorUtils.getUserErrorMessage(error, "The temporary files could not be cleaned.");
+    }
+    finally
+    {
+        isCleaningTemporaryFiles.value = false;
     }
 }
 
@@ -1130,14 +1182,55 @@ onMounted(() => {
                         </button>
                     </div>
 
-                    <div class="setting-row">
+                    <div class="setting-row setting-row--icon-maintenance">
                         <div class="setting-copy">
                             <h3>Temporary files</h3>
-                            <p>Remove leftover downloads and temporary import data.</p>
+                            <p>
+                                Remove cached LOPlugin+ downloads, installation staging files,
+                                and abandoned import data. Imported mods and recovery records are kept.
+                            </p>
+
+                            <span
+                                v-if="temporaryCleanupMessage"
+                                class="maintenance-result"
+                                role="status"
+                            >
+                                {{ temporaryCleanupMessage }}
+                            </span>
+
+                            <span
+                                v-if="temporaryCleanupWarning"
+                                class="maintenance-warning"
+                                role="alert"
+                            >
+                                {{ temporaryCleanupWarning }}
+                            </span>
+
+                            <span
+                                v-if="temporaryCleanupError"
+                                class="setting-error maintenance-error"
+                                role="alert"
+                            >
+                                {{ temporaryCleanupError }}
+                            </span>
                         </div>
 
-                        <button class="settings-button settings-button--secondary" type="button">
-                            Clean temporary files
+                        <button
+                            class="settings-button settings-button--secondary"
+                            type="button"
+                            :disabled="
+                                isCleaningTemporaryFiles ||
+                                isReinstallingPlugin ||
+                                isUpdatingPlugin ||
+                                isSelectingGameLocation ||
+                                isChangingGameLocation
+                            "
+                            @click="cleanTemporaryFiles"
+                        >
+                            <TrashIcon class="settings-button-icon" />
+                            <span>
+                                {{ isCleaningTemporaryFiles ? "Cleaning…" : "Clean temporary files" }}
+                            </span>
                         </button>
                     </div>
 
@@ -1799,6 +1892,7 @@ h1 {
 }
 
 .maintenance-result,
+.maintenance-warning,
 .maintenance-error {
     margin-top: 5px;
     font-size: 12px;
@@ -1808,6 +1902,10 @@ h1 {
 
 .maintenance-result {
     color: #8fbea9;
+}
+
+.maintenance-warning {
+    color: #d6aa76;
 }
 
 .confirmation-popover {

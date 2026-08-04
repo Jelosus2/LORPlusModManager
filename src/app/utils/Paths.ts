@@ -22,11 +22,15 @@ export class Paths {
         return path.join(app.getPath("userData"), "downloads", "LOPlugin+");
     }
 
-    static getPluginInstallationStagingPath(version: string) {
+    static getPluginInstallationStagingRoot(): string {
+        return path.join(app.getPath("temp"), app.getName(), "LOPlugin+");
+    }
+
+    static getPluginInstallationStagingPath(version: string): string {
         if (!/^[0-9A-Za-z._-]+$/.test(version))
             throw new Error("Invalid LOPlugin+ version.");
 
-        return path.join(app.getPath("temp"), app.getName(), "LOPlugin+", version);
+        return path.join(Paths.getPluginInstallationStagingRoot(), version);
     }
 
     static getBundledCharacterCatalogPath(): string {

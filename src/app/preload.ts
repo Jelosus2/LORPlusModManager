@@ -100,7 +100,8 @@ const modManagerApi: IpcApi = {
         };
     },
     getModLibraryStorage: () => ipcRenderer.invoke("app:get-mod-library-storage"),
-    openModLibraryFolder: () => ipcRenderer.invoke("app:open-mod-library-folder")
+    openModLibraryFolder: () => ipcRenderer.invoke("app:open-mod-library-folder"),
+    cleanTemporaryFiles: () => ipcRenderer.invoke("app:clean-temporary-files")
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);
