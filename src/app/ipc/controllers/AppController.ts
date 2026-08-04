@@ -1,13 +1,14 @@
+import type { ApplicationInfo, ExternalApplicationPage } from "../../../shared/application.js";
 import type { TemporaryFileCleanupResult } from "../../../shared/maintenance.js";
 import type { ModLibraryStorageSummary } from "../../../shared/mod.js";
 
 import { temporaryFileCleanupService } from "#maintenance/TemporaryFileCleanupService.js";
 import { modLibraryStorageService } from "#mod/ModLibraryStorageService.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
+import { app, shell, type IpcMainInvokeEvent } from "electron";
 import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
 import { Paths } from "#utils/Paths.js";
-import { shell } from "electron";
 import fse from "fs-extra";
 
 export class AppController {
@@ -53,6 +54,43 @@ export class AppController {
     @IpcHelper.IpcHandle("app:open-log-folder")
     openLogFolder() {
         return this.openDirectory(Paths.getLogsPath(), "The application log folder could not be opened.");
+    }
+
+    @IpcHelper.IpcHandle("app:get-application-info")
+    getApplicationInfo(): ApplicationInfo {
+        return Object.freeze({
+            name: app.getName(),
+            version: app.getVersion()
+        });
+    }
+
+    @IpcHelper.IpcHandle("app:open-external-page")
+    async openExternalPage(_event: IpcMainInvokeEvent, page: unknown) {
+        let url: string;
+        let pageName: string;
+
+        switch (page)
+        {
+            case "support" satisfies ExternalApplicationPage:
+                url = "https://ko-fi.com/jelosus1";
+                pageName = "Ko-Fi";
+                break;
+            case "repository" satisfies ExternalApplicationPage:
+                url = "https://github.com/Jelosus2/LORPlusModManager";
+                pageName = "GitHub";
+                break;
+            default:
+                throw new Error("Invalid external page request.");
+        }
+
+        try
+        {
+            await shell.openExternal(url);
+        }
+        catch (error)
+        {
+            throw ErrorUtils.withContext(`${pageName} could not be opened.`, error, "Windows could not open the page in your browser.");
+        }
     }
 
     private openModsFolder(errorMessage: string) {

@@ -1,7 +1,8 @@
 appId: com.jelosus1.lorplusmodmanager
 productName: LORPlusModManager
 directories:
-  output: build/app
+  buildResources: build
+  output: release
 publish:
   provider: github
   owner: Jelosus2
@@ -11,4 +12,8 @@ releaseInfo:
   releaseNotesFile: release-notes.md
 win:
   target: nsis
+  icon: build/icon.ico
   artifactName: "LORPlusModManager-Setup-${version}.${ext}"
+nsis:
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico

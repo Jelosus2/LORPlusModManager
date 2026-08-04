@@ -3,6 +3,7 @@ import type { SetupState } from "../shared/setup.ts";
 
 import SetupScreen from "./components/SetupScreen.vue";
 import MainScreen from "./components/MainScreen.vue";
+import TitleBar from "./components/TitleBar.vue";
 
 import { ErrorUtils } from "./utils/ErrorUtils.ts";
 import { ref, onMounted } from "vue";
@@ -53,61 +54,91 @@ onMounted(loadSetupState);
 </script>
 
 <template>
-    <main v-if="isLoading" class="startup-state" aria-live="polite" aria-busy="true">
-        <span class="startup-spinner" aria-hidden="true"></span>
+    <div class="application-frame">
+        <TitleBar />
 
-        <div>
-            <h1>Checking mod library</h1>
-            <p>Cleaning up any interrupted operations.</p>
+        <div class="application-content">
+            <main
+                v-if="isLoading"
+                class="startup-state"
+                aria-live="polite"
+                aria-busy="true"
+            >
+                <span class="startup-spinner" aria-hidden="true"></span>
+
+                <div>
+                    <h1>Checking mod library</h1>
+                    <p>Cleaning up any interrupted operations.</p>
+                </div>
+            </main>
+
+            <main v-else-if="startupError" class="startup-state startup-state--error">
+                <section class="startup-recovery-error" aria-labelledby="startup-recovery-title">
+                    <p class="startup-error-label">Recovery could not finish</p>
+                    <h1 id="startup-recovery-title">The mod library needs attention</h1>
+                    <p class="startup-error-message" role="alert">{{ startupError }}</p>
+                    <p class="startup-error-help">
+                        Open the recovery folder to inspect the operation records, then try the check again.
+                    </p>
+
+                    <p v-if="recoveryFolderError" class="startup-folder-error" role="alert">
+                        {{ recoveryFolderError }}
+                    </p>
+
+                    <div class="startup-error-actions">
+                        <button
+                            type="button"
+                            class="startup-button startup-button--secondary"
+                            @click="openRecoveryFolder"
+                        >
+                            Open recovery folder
+                        </button>
+                        <button
+                            type="button"
+                            class="startup-button startup-button--primary"
+                            @click="loadSetupState"
+                        >
+                            Try again
+                        </button>
+                    </div>
+                </section>
+            </main>
+
+            <SetupScreen
+                v-else-if="setupState && !setupState.isComplete"
+                :initial-game-location="setupState.gameLocation"
+                :initial-step="setupState.gameLocation ? 'plugin' : 'location'"
+                @completed="loadSetupState"
+            />
+
+            <MainScreen v-else />
         </div>
-    </main>
-
-    <main v-else-if="startupError" class="startup-state startup-state--error">
-        <section class="startup-recovery-error" aria-labelledby="startup-recovery-title">
-            <p class="startup-error-label">Recovery could not finish</p>
-            <h1 id="startup-recovery-title">The mod library needs attention</h1>
-            <p class="startup-error-message" role="alert">{{ startupError }}</p>
-            <p class="startup-error-help">
-                Open the recovery folder to inspect the operation records, then try the check again.
-            </p>
-
-            <p v-if="recoveryFolderError" class="startup-folder-error" role="alert">
-                {{ recoveryFolderError }}
-            </p>
-
-            <div class="startup-error-actions">
-                <button
-                    type="button"
-                    class="startup-button startup-button--secondary"
-                    @click="openRecoveryFolder"
-                >
-                    Open recovery folder
-                </button>
-                <button
-                    type="button"
-                    class="startup-button startup-button--primary"
-                    @click="loadSetupState"
-                >
-                    Try again
-                </button>
-            </div>
-        </section>
-    </main>
-
-    <SetupScreen
-        v-else-if="setupState && !setupState.isComplete"
-        :initial-game-location="setupState.gameLocation"
-        :initial-step="setupState.gameLocation ? 'plugin' : 'location'"
-        @completed="loadSetupState"
-    />
-
-    <MainScreen v-else />
+    </div>
 </template>
 
 <style scoped>
+.application-frame {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+    flex-direction: column;
+    background: #090b0a;
+}
+
+.application-content {
+    width: 100%;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+    border-top: 1px solid #28302c;
+}
+
 .startup-state {
     display: flex;
-    min-height: 100vh;
+    height: 100%;
+    min-height: 0;
     align-items: center;
     justify-content: center;
     flex-direction: column;

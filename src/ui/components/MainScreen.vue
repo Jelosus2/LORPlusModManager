@@ -461,7 +461,7 @@ onMounted(() => {
 .app-shell {
     display: grid;
     width: 100%;
-    height: 100vh;
+    height: 100%;
     max-width: 100vw;
     min-height: 0;
     grid-template-columns: clamp(190px, 18vw, 230px) minmax(0, 1fr);

@@ -8,12 +8,17 @@ export class MainWindow {
 
         const mainWindow = new BrowserWindow({
             title: "LORPlusModManager",
-            //icon: getAppIconPath(),
+            icon: Paths.getWindowIconPath(),
             autoHideMenuBar: true,
             width: 1400,
             height: 768,
-            //backgroundColor: ,
-            //frame: false,
+            backgroundColor: "#090b0a",
+            titleBarStyle: "hidden",
+            titleBarOverlay: {
+                color: "#080a09",
+                symbolColor: "#dcd8cf",
+                height: 42
+            },
             show: false,
             webPreferences: {
                 preload: Paths.getPreloadPath(),
@@ -38,11 +43,6 @@ export class MainWindow {
         });
 
         mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-
-        mainWindow.on("close", async (event) => {
-            event.preventDefault();
-            mainWindow.close();
-        });
 
         if (app.isPackaged)
             await mainWindow.loadFile(Paths.getRendererHtmlPath());

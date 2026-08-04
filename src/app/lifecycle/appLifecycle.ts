@@ -19,6 +19,8 @@ export class AppLifecycle {
         });
 
         app.whenReady().then(async () => {
+            app.setAppUserModelId("com.jelosus1.lorplusmodmanager");
+
             if (app.isPackaged)
                 Menu.setApplicationMenu(null);
 

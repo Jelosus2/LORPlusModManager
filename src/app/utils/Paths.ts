@@ -106,6 +106,13 @@ export class Paths {
         return app.getPath("logs");
     }
 
+    static getWindowIconPath(): string | undefined {
+        if (app.isPackaged)
+            return undefined;
+
+        return path.join(app.getAppPath(), "build", "icon.ico");
+    }
+
     static isSubpath(parentPath: string, childPath: string): boolean {
         const relative = path.relative(parentPath, childPath);
         return Boolean(relative && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
