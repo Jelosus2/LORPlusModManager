@@ -106,7 +106,9 @@ const modManagerApi: IpcApi = {
     getApplicationInfo: () => ipcRenderer.invoke("app:get-application-info"),
     openExternalPage: (page) => ipcRenderer.invoke("app:open-external-page", page),
     getApplicationLogs: () => ipcRenderer.invoke("app:get-application-logs"),
-    writeApplicationLog: (request) => ipcRenderer.invoke("app:write-application-log", request)
+    writeApplicationLog: (request) => ipcRenderer.invoke("app:write-application-log", request),
+    getLOPluginConfiguration: () => ipcRenderer.invoke("plugin:get-configuration"),
+    saveLOPluginConfiguration: (request) => ipcRenderer.invoke("plugin:save-configuration", request)
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

@@ -3,14 +3,16 @@ import type { ModImportMode, SelectedModSource, ModExtractionRequest, ModExtract
 
 import ImportFilesIcon from "./icons/ImportFilesIcon.vue";
 import ModExtractionModal from "./ModExtractionModal.vue";
-import UpdateModal from "./UpdateModal.vue";
 import ImportFileIcon from "./icons/ImportFileIcon.vue";
 import CharactersScreen from "./CharactersScreen.vue";
 import CharacterIcon from "./icons/CharacterIcon.vue";
 import SettingsIcon from "./icons/SettingsIcon.vue";
 import ModImportScreen from "./ModImportScreen.vue";
 import SettingsScreen from "./SettingsScreen.vue";
+import PluginIcon from "./icons/PluginIcon.vue";
+import PluginScreen from "./PluginScreen.vue";
 import ModsIcon from "./icons/ModsIcon.vue";
+import UpdateModal from "./UpdateModal.vue";
 import ModsScreen from "./ModsScreen.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
@@ -21,7 +23,7 @@ import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { useModStore } from "@/stores/modStore.ts";
 import { ref, onMounted } from "vue";
 
-type MainSection = "mods" | "characters" | "settings";
+type MainSection = "mods" | "characters" | "settings" | "plugin";
 type ModsView = "library" | "import";
 
 const characterCatalog = useCharacterCatalogStore();
@@ -319,12 +321,27 @@ onMounted(() => {
                             <SettingsIcon class="navigation-icon" />
                             <span>Settings</span>
                         </button>
+
+                        <button
+                            class="navigation-item"
+                            :class="{
+                                'navigation-item--active': activeSection === 'plugin'
+                            }"
+                            type="button"
+                            :aria-current="activeSection === 'plugin' ? 'page' : undefined"
+                            @click="activeSection = 'plugin'"
+                        >
+                            <PluginIcon class="navigation-icon" />
+                            <span>Plugin</span>
+                        </button>
                     </div>
                 </section>
             </nav>
         </aside>
 
         <main class="main-content">
+            <PluginScreen v-if="activeSection === 'plugin'" />
+
             <SettingsScreen v-if="activeSection === 'settings'" />
 
             <CharactersScreen v-if="activeSection === 'characters'" />

@@ -124,6 +124,10 @@ export class Paths {
         return path.join(app.getAppPath(), "build", "icon.ico");
     }
 
+    static getLOPluginConfigurationPath(gameLocation: string): string {
+        return path.join(gameLocation, "BepInEx", "config", "com.jelosus1.lopluginplus.cfg");
+    }
+
     static isSubpath(parentPath: string, childPath: string): boolean {
         const relative = path.relative(parentPath, childPath);
         return Boolean(relative && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
