@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { ModImportMode, SelectedModSource, ModExtractionRequest, ModExtractionResult, ModImportProgress } from "../../shared/mod.ts";
 
+import VanillaLaunchIcon from "./icons/VanillaLaunchIcon.vue";
 import ImportFilesIcon from "./icons/ImportFilesIcon.vue";
 import ModExtractionModal from "./ModExtractionModal.vue";
+import GameLaunchIcon from "./icons/GameLaunchIcon.vue";
 import ImportFileIcon from "./icons/ImportFileIcon.vue";
 import CharactersScreen from "./CharactersScreen.vue";
 import CharacterIcon from "./icons/CharacterIcon.vue";
@@ -19,11 +21,12 @@ import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
 import { ApplicationLogSource } from "../../shared/application.ts";
 import { RendererLogger } from "@/utils/RendererLogger.ts";
 import { useUpdateStore } from "@/stores/updateStore.ts";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { useModStore } from "@/stores/modStore.ts";
-import { ref, onMounted } from "vue";
 
 type MainSection = "mods" | "characters" | "settings" | "plugin";
+type GameLaunchMode = "modded" | "vanilla";
 type ModsView = "library" | "import";
 
 const characterCatalog = useCharacterCatalogStore();
@@ -45,6 +48,11 @@ const extractionResult = ref<ModExtractionResult | null>(null);
 const modImportProgress = ref<ModImportProgress | null>(null);
 const hasAdminPrivileges = ref(false);
 const adminPrivilegeErrorMessage = ref("");
+const isLaunchingGame = ref(false);
+const activeGameLaunchMode = ref<GameLaunchMode | null>(null);
+const gameLaunchErrorMessage = ref("");
+
+let gameLaunchErrorTimeout: ReturnType<typeof setTimeout> | null = null;
 
 async function selectModSources(mode: ModImportMode) {
     if (isSelectingMods.value)
@@ -255,6 +263,52 @@ async function loadAdminPrivilegeState() {
     }
 }
 
+async function launchGame(vanilla: boolean) {
+    if (isLaunchingGame.value)
+        return;
+
+    dismissGameLaunchError();
+
+    isLaunchingGame.value = true;
+    activeGameLaunchMode.value = vanilla ? "vanilla" : "modded";
+
+    try
+    {
+        await window.app.launchGame({ vanilla });
+    }
+    catch (error)
+    {
+        RendererLogger.error(
+            ApplicationLogSource.gameLauncher,
+            vanilla
+                ? "Could not launch the game in vanilla mode."
+                : "Could not launch the game.",
+            error
+        );
+
+        gameLaunchErrorMessage.value = ErrorUtils.getUserErrorMessage(error, "The game could not be launched.");
+        gameLaunchErrorTimeout = window.setTimeout(() => {
+            gameLaunchErrorMessage.value = "";
+            gameLaunchErrorTimeout = null;
+        }, 8000);
+    }
+    finally
+    {
+        isLaunchingGame.value = false;
+        activeGameLaunchMode.value = null;
+    }
+}
+
+function dismissGameLaunchError() {
+    gameLaunchErrorMessage.value = "";
+
+    if (gameLaunchErrorTimeout)
+    {
+        window.clearTimeout(gameLaunchErrorTimeout);
+        gameLaunchErrorTimeout = null;
+    }
+}
+
 onMounted(() => {
     void Promise.all([
         characterCatalog.load(),
@@ -262,6 +316,11 @@ onMounted(() => {
         loadAdminPrivilegeState(),
         updateStore.initialize()
     ]);
+});
+
+onBeforeUnmount(() => {
+    if (gameLaunchErrorTimeout)
+        window.clearTimeout(gameLaunchErrorTimeout);
 });
 </script>
 
@@ -337,6 +396,54 @@ onMounted(() => {
                     </div>
                 </section>
             </nav>
+
+            <div class="sidebar-launcher" aria-label="Game launcher">
+                <button
+                    class="game-launch-button game-launch-button--primary"
+                    :class="{
+                        'game-launch-button--loading':
+                            isLaunchingGame && activeGameLaunchMode === 'modded'
+                    }"
+                    type="button"
+                    aria-label="Launch Game"
+                    title="Launch Game"
+                    :disabled="isLaunchingGame"
+                    :aria-busy="isLaunchingGame && activeGameLaunchMode === 'modded'"
+                    @click="launchGame(false)"
+                >
+                    <GameLaunchIcon class="game-launch-icon" />
+                    <span>
+                        {{
+                            isLaunchingGame && activeGameLaunchMode === "modded"
+                                ? "Launching…"
+                                : "Launch Game"
+                        }}
+                    </span>
+                </button>
+
+                <button
+                    class="game-launch-button"
+                    :class="{
+                        'game-launch-button--loading':
+                            isLaunchingGame && activeGameLaunchMode === 'vanilla'
+                    }"
+                    type="button"
+                    aria-label="Launch Game without mods"
+                    title="Launch Game without mods"
+                    :disabled="isLaunchingGame"
+                    :aria-busy="isLaunchingGame && activeGameLaunchMode === 'vanilla'"
+                    @click="launchGame(true)"
+                >
+                    <VanillaLaunchIcon class="game-launch-icon" />
+                    <span>
+                        {{
+                            isLaunchingGame && activeGameLaunchMode === "vanilla"
+                                ? "Launching…"
+                                : "Launch Game (Vanilla)"
+                        }}
+                    </span>
+                </button>
+            </div>
         </aside>
 
         <main class="main-content">
@@ -369,6 +476,25 @@ onMounted(() => {
                 :admin-privilege-error="adminPrivilegeErrorMessage"
             />
         </main>
+
+        <Transition name="game-launch-toast">
+            <aside
+                v-if="gameLaunchErrorMessage"
+                class="game-launch-error"
+                role="alert"
+                aria-live="assertive"
+            >
+                <span>{{ gameLaunchErrorMessage }}</span>
+                <button
+                    type="button"
+                    aria-label="Dismiss game launch error"
+                    title="Dismiss"
+                    @click="dismissGameLaunchError"
+                >
+                    ×
+                </button>
+            </aside>
+        </Transition>
 
         <section
             id="add-mod-popover"
@@ -584,6 +710,147 @@ onMounted(() => {
 .navigation-item:focus-visible {
     outline: 2px solid #f2eee5;
     outline-offset: 2px;
+}
+
+.sidebar-launcher {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid #272c29;
+}
+
+.game-launch-button {
+    display: flex;
+    width: 100%;
+    min-height: 42px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 7px;
+    color: #c4c9c5;
+    background: #171b18;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    text-align: left;
+    cursor: pointer;
+    transition: color 140ms ease, background-color 140ms ease;
+}
+
+.game-launch-button:hover:not(:disabled) {
+    color: #f2eee5;
+    background: #202521;
+}
+
+.game-launch-button--primary {
+    color: #10202a;
+    background: #94bdd3;
+}
+
+.game-launch-button--primary:hover:not(:disabled) {
+    color: #0b1720;
+    background: #a6c9dc;
+}
+
+.game-launch-button:focus-visible {
+    outline: 2px solid #f2eee5;
+    outline-offset: 2px;
+}
+
+.game-launch-button:disabled {
+    color: #626863;
+    background: #121613;
+    cursor: not-allowed;
+}
+
+.game-launch-button--loading .game-launch-icon {
+    animation: game-launch-pulse 900ms ease-in-out infinite alternate;
+}
+
+.game-launch-icon {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.game-launch-error {
+    position: fixed;
+    right: clamp(20px, 3vw, 42px);
+    bottom: clamp(20px, 3vw, 34px);
+    z-index: 80;
+    display: flex;
+    width: min(470px, calc(100vw - 40px));
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 14px 14px 16px;
+    border: 1px solid #623d3d;
+    border-radius: 8px;
+    color: #f2b2b2;
+    background: #241717;
+    box-shadow: 0 12px 30px rgb(0 0 0 / 38%);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.game-launch-error > span {
+    min-width: 0;
+}
+
+.game-launch-error button {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    color: #d9a0a0;
+    background: transparent;
+    font: inherit;
+    font-size: 19px;
+    cursor: pointer;
+}
+
+.game-launch-error button:hover {
+    color: #ffe1e1;
+    background: #352020;
+}
+
+.game-launch-error button:focus-visible {
+    outline: 2px solid #f2eee5;
+    outline-offset: 2px;
+}
+
+.game-launch-toast-enter-active,
+.game-launch-toast-leave-active {
+    transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.game-launch-toast-enter-from,
+.game-launch-toast-leave-to {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+@keyframes game-launch-pulse {
+    from {
+        opacity: 0.45;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .main-content {
@@ -889,6 +1156,26 @@ onMounted(() => {
         height: 3px;
     }
 
+    .sidebar-launcher {
+        flex-direction: row;
+        gap: 6px;
+        margin-top: 0;
+        margin-left: auto;
+        padding-top: 0;
+        border-top: 0;
+    }
+
+    .game-launch-button {
+        width: 40px;
+        min-height: 40px;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .game-launch-button span {
+        display: none;
+    }
+
     .main-content {
         padding: clamp(26px, 7vw, 48px);
     }
@@ -927,6 +1214,10 @@ onMounted(() => {
     }
 
     .add-mod-popover:popover-open {
+        animation: none;
+    }
+
+    .game-launch-button--loading .game-launch-icon {
         animation: none;
     }
 }

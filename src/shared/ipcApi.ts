@@ -26,6 +26,7 @@ import type { ApplicationInfo, ExternalApplicationPage, ApplicationLogEntry, App
 import type { PluginInstallResult, PluginProgress, PluginConfiguration, PluginConfigurationSaveRequest } from "./plugin.js";
 import type { CharacterCatalog, CatalogIconRepairProgress, CatalogIconRepairResult } from "./characters.js";
 import type { TemporaryFileCleanupResult } from "./maintenance.js";
+import type { GameLaunchRequest } from "./game.js";
 
 export type IpcApi = {
     setupGameLocation: (manualSetup: boolean) => Promise<GameLocationResult>;
@@ -69,4 +70,5 @@ export type IpcApi = {
     writeApplicationLog: (request: ApplicationLogWriteRequest) => Promise<void>;
     getLOPluginConfiguration: () => Promise<PluginConfiguration>;
     saveLOPluginConfiguration: (request: PluginConfigurationSaveRequest) => Promise<PluginConfiguration>;
+    launchGame: (request: GameLaunchRequest) => Promise<void>;
 };

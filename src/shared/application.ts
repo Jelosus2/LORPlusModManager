@@ -35,5 +35,6 @@ export const ApplicationLogSource = {
     updates: "Updates",
     maintenance: "Maintenance",
     diagnostics: "Diagnostics",
-    recovery: "Recovery"
+    recovery: "Recovery",
+    gameLauncher: "Game launcher"
 } as const;

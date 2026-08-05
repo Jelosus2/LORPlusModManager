@@ -108,7 +108,8 @@ const modManagerApi: IpcApi = {
     getApplicationLogs: () => ipcRenderer.invoke("app:get-application-logs"),
     writeApplicationLog: (request) => ipcRenderer.invoke("app:write-application-log", request),
     getLOPluginConfiguration: () => ipcRenderer.invoke("plugin:get-configuration"),
-    saveLOPluginConfiguration: (request) => ipcRenderer.invoke("plugin:save-configuration", request)
+    saveLOPluginConfiguration: (request) => ipcRenderer.invoke("plugin:save-configuration", request),
+    launchGame: (request) => ipcRenderer.invoke("game:launch", request)
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);
