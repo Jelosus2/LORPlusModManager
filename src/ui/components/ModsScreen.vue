@@ -16,7 +16,9 @@ import ModWarning from "./ModWarning.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
 import { useModStore, createCatalogIdentity } from "@/stores/modStore";
+import { ApplicationLogSource } from "../../shared/application.ts";
 import { getCharacterIconUrl } from "@/data/characterIcons";
+import { RendererLogger } from "@/utils/RendererLogger.ts";
 import { StringUtils } from "@/utils/StringUtils";
 import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { computed, ref, watch, nextTick } from "vue";
@@ -412,7 +414,7 @@ async function openModFolder(mod: InstalledMod) {
     }
     catch (error)
     {
-        console.error("Could not open the mod folder:", error);
+        RendererLogger.error(ApplicationLogSource.application, "Could not open the mod folder.", error);
         actionErrorMessage.value = ErrorUtils.getUserErrorMessage(error, "The mod folder could not be opened. Refresh the list and try again.");
     }
 }
@@ -454,7 +456,7 @@ async function confirmModDeletion() {
     }
     catch (error)
     {
-        console.error("Could not delete the mod:", error);
+        RendererLogger.error(ApplicationLogSource.modLibrary, "Could not delete the mod.", error);
         actionErrorMessage.value = ErrorUtils.getUserErrorMessage(error, "The mod could not be deleted.");
     }
     finally
@@ -514,7 +516,7 @@ async function confirmModRename() {
     }
     catch (error)
     {
-        console.error("Could not rename the mod:", error);
+        RendererLogger.error(ApplicationLogSource.modLibrary, "Could not rename the mod.", error);
 
         const message = error instanceof Error
             ? error.message
@@ -587,7 +589,7 @@ async function confirmBulkDeletion() {
     }
     catch (error)
     {
-        console.error("Could not delete the selected mods:", error);
+        RendererLogger.error(ApplicationLogSource.modLibrary, "Could not delete the selected mods.", error);
 
         bulkDeleteSummary.value = {
             requestedCount: requestedModIds.length,
@@ -653,7 +655,7 @@ async function synchronizeMods(method: ModSyncMethod) {
     }
     catch (error)
     {
-        console.error("Could not synchronize mods:", error);
+        RendererLogger.error(ApplicationLogSource.modSynchronization, "Could not synchronize mods.", error);
 
         syncProgress.value = 100;
         syncStatus.value = "Synchronization failed";

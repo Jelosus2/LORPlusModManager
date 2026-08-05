@@ -3,6 +3,8 @@ import type { ModSyncLogEntry, ModSyncMethod, ModSyncProgress, ModSyncRequest, M
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { ModSyncOperationJournal } from "./ModSyncOperationJournal.js";
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { Paths } from "#utils/Paths.js";
@@ -435,7 +437,7 @@ export class ModSynchronizer {
         }
         catch (error)
         {
-            console.error(`Could not finish synchronization operation ${operationId}:`, error);
+            ApplicationLogger.error(ApplicationLogSource.modSynchronization, `Could not finish synchronization operation ${operationId}.`, error);
         }
     }
 

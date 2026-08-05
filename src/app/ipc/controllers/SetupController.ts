@@ -5,6 +5,8 @@ import { LOPluginInstallationService } from "#plugin/LOPluginInstallationService
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { GameInstallationService } from "#game/GameInstallationService.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ApplicationLogSource } from "../../../shared/application.js";
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
 import { ModSynchronizer } from "#mod/ModSynchronizer.js";
 import { BrowserWindow, dialog, shell } from "electron";
@@ -92,6 +94,8 @@ export class SetupController {
 
         this.isChangingGameLocation = true;
 
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.setup, "Game location change");
+
         const sendProgress = (progress: GameLocationChangeProgress) => {
             if (!event.sender.isDestroyed())
                 event.sender.send("setup:game-location-change-progress", progress);
@@ -171,6 +175,11 @@ export class SetupController {
                 detail: gameLocation
             });
 
+            operation.complete({
+                gameLocation,
+                pluginVersion: version
+            });
+
             return {
                 success: true,
                 message: "",
@@ -180,7 +189,7 @@ export class SetupController {
         }
         catch (error)
         {
-            console.error("Could not change the game location:", error);
+            operation.fail(error);
 
             return {
                 success: false,

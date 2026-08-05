@@ -1,6 +1,8 @@
 import type { CharacterCatalog, CharacterSkin, CatalogIconRepairProgress, CatalogIconRepairResult } from "../../shared/characters.js";
 
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { GitHubRequestUtils } from "#utils/GitHubRequestUtils.js";
 import { HttpDownloadUtils } from "#utils/HttpDownloadUtils.js";
 import { StringUtils } from "#utils/StringUtils.js";
@@ -164,7 +166,7 @@ export class CatalogIconService {
             }
             catch (error)
             {
-                console.error("Could not remove a temporary character icon:", error);
+                ApplicationLogger.warning(ApplicationLogSource.catalog, "Could not remove a temporary character icon.", error);
             }
         }
     }

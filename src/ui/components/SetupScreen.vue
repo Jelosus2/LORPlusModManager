@@ -4,6 +4,8 @@ import ArrowRightIcon from "./icons/ArrowRightIcon.vue";
 import FolderIcon from "./icons/FolderIcon.vue";
 import SearchIcon from "./icons/SearchIcon.vue";
 
+import { ApplicationLogSource } from "../../shared/application.ts";
+import { RendererLogger } from "@/utils/RendererLogger.ts";
 import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { ref } from "vue";
 
@@ -51,7 +53,7 @@ async function setupGameLocation(manualSetup = false) {
     }
     catch (error)
     {
-        console.error("Failed to set the game location:", error);
+        RendererLogger.error(ApplicationLogSource.setup, "Failed to set the game location.", error);
         errorMessage.value = ErrorUtils.getUserErrorMessage(error, "Something went wrong while locating the game.");
     }
     finally
@@ -92,7 +94,7 @@ async function installLOPlugin() {
     }
     catch (error)
     {
-        console.error("Failed to install LOPlugin+:", error);
+        RendererLogger.error(ApplicationLogSource.plugin, "Failed to install LOPlugin+.", error);
 
         errorMessage.value = ErrorUtils.getUserErrorMessage(error, "Something went wrong while installing LOPlugin+.");
         installationProgress.value = null;

@@ -1,6 +1,8 @@
 import type { DownloadedPluginRelease } from "./LOPluginDownloader.js";
 import type { PluginProgress } from "../../shared/plugin.js";
 
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { UserFacingError } from "#utils/ErrorUtils.js";
 import { ZipArchive } from "#utils/ZipArchive.js";
 import { Paths } from "#utils/Paths.js";
@@ -81,7 +83,7 @@ export class LOPluginInstaller {
             }
             catch (error)
             {
-                console.error("Could not clean the staging directory:", error);
+                ApplicationLogger.warning(ApplicationLogSource.plugin, "Could not clean the staging directory.", error);
             }
         }
     }

@@ -14,6 +14,8 @@ import ModsIcon from "./icons/ModsIcon.vue";
 import ModsScreen from "./ModsScreen.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
+import { ApplicationLogSource } from "../../shared/application.ts";
+import { RendererLogger } from "@/utils/RendererLogger.ts";
 import { useUpdateStore } from "@/stores/updateStore.ts";
 import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { useModStore } from "@/stores/modStore.ts";
@@ -80,7 +82,7 @@ async function selectModSources(mode: ModImportMode) {
     }
     catch (error)
     {
-        console.error("Couldn't process the mod sources:", error);
+        RendererLogger.error(ApplicationLogSource.modImport, "Couldn't process the mod sources.", error);
 
         importFailed.value = true;
         importMessage.value = ErrorUtils.getUserErrorMessage(error, "The selected mods could not be read.");
@@ -161,7 +163,7 @@ async function prepareModExtraction() {
     }
     catch (error)
     {
-        console.error("Could not import the selected mod files:", error);
+        RendererLogger.error(ApplicationLogSource.modImport, "Could not import the selected mod files.", error);
 
         const message = ErrorUtils.getUserErrorMessage(error, "The selected mod files could not be imported.");
 
@@ -244,7 +246,7 @@ async function loadAdminPrivilegeState() {
     }
     catch (error)
     {
-        console.error("Could not check administrator privileges:", error);
+        RendererLogger.error(ApplicationLogSource.modSynchronization, "Could not check administrator privileges.", error);
 
         hasAdminPrivileges.value = false;
         adminPrivilegeErrorMessage.value = ErrorUtils.getUserErrorMessage(error, "Administrator privilege status could not be checked.");

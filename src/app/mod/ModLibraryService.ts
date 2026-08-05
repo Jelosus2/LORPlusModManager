@@ -4,6 +4,8 @@ import { ModSynchronizer, type ModSyncInstallMethod } from "./ModSynchronizer.js
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
 import { ModOperationJournal } from "./ModOperationJournal.js";
 import { Paths } from "#utils/Paths.js";
@@ -121,7 +123,7 @@ export class ModLibraryService {
             }
             catch (error)
             {
-                console.error(`Could not delete mod ${modId}:`, error);
+                ApplicationLogger.error(ApplicationLogSource.modLibrary, `Could not delete mod ${modId}.`, error);
 
                 failures.push({
                     modId,
@@ -222,7 +224,7 @@ export class ModLibraryService {
                 }
                 catch (rollbackError)
                 {
-                    console.error("Could not restore the mod after deletion failed:", rollbackError);
+                    ApplicationLogger.warning(ApplicationLogSource.modLibrary, "Could not restore the mod after deletion failed.", rollbackError);
                 }
             }
 
@@ -243,7 +245,7 @@ export class ModLibraryService {
             }
             catch (error)
             {
-                console.error("Could not clean the deleted mod directory:", error);
+                ApplicationLogger.warning(ApplicationLogSource.modLibrary, "Could not clean the deleted mod directory.", error);
                 return;
             }
         }
@@ -289,7 +291,7 @@ export class ModLibraryService {
                 }
                 catch (rollbackError)
                 {
-                    console.error("Could not restore the mod directory after renaming failed:", rollbackError);
+                    ApplicationLogger.warning(ApplicationLogSource.modLibrary, "Could not restore the mod directory after renaming failed.", rollbackError);
                 }
             }
 
@@ -366,7 +368,7 @@ export class ModLibraryService {
         }
         catch (error)
         {
-            console.error(`Could not complete mod operation ${operationId}:`, error);
+            ApplicationLogger.error(ApplicationLogSource.modLibrary, `Could not complete mod operation ${operationId}.`, error);
         }
     }
 
@@ -385,7 +387,7 @@ export class ModLibraryService {
             const shellError = await shell.openPath(directoryPath);
             if (shellError)
             {
-                console.log(`Could not open directory ${directoryPath}: ${shellError}`);
+                ApplicationLogger.error(ApplicationLogSource.modLibrary, `Could not open directory ${directoryPath}.`, shellError);
 
                 return {
                     opened: false,
@@ -400,7 +402,7 @@ export class ModLibraryService {
         }
         catch (error)
         {
-            console.log(`Could not access directory ${directoryPath}:`, error);
+            ApplicationLogger.warning(ApplicationLogSource.modLibrary, `Could not access directory ${directoryPath}.`, error);
 
             return {
                 opened: false,

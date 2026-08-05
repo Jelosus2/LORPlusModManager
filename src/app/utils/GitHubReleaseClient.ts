@@ -1,3 +1,5 @@
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { UserFacingError } from "./ErrorUtils.js";
 import { TypeCheck } from "./TypeCheck.js";
 
@@ -69,7 +71,7 @@ export class GitHubReleaseClient {
         }
         catch (error)
         {
-            console.error("Could not parse the request json", contents, error);
+            ApplicationLogger.error(ApplicationLogSource.application, `Could not parse the GitHub response JSON (${Buffer.byteLength(contents, "utf-8")} bytes).`, error);
             throw new UserFacingError("GitHub returned an invalid JSON.", { cause: error });
         }
     }

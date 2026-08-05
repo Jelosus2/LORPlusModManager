@@ -1,7 +1,9 @@
 import type { GitHubRelease, GitHubReleaseAsset } from "#utils/GitHubReleaseClient.js";
 import type { PluginProgress } from "../../shared/plugin.js";
 
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { GitHubReleaseClient } from "#utils/GitHubReleaseClient.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { UserFacingError } from "#utils/ErrorUtils.js";
 import { VersionUtils } from "#utils/VersionUtils.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
@@ -119,7 +121,7 @@ export class LOPluginDownloader {
             }
             catch (cleanupError)
             {
-                console.error("Could not clean the failed plugin download:", cleanupError);
+                ApplicationLogger.warning(ApplicationLogSource.plugin, "Could not clean the failed plugin download.", cleanupError);
             }
 
             throw error;

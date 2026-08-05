@@ -1,3 +1,5 @@
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { CatalogIconService } from "#update/CatalogIconService.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { net, protocol } from "electron";
@@ -57,7 +59,7 @@ export class CatalogIconProtocol {
                 if (TypeCheck.isNodeError(error) && error.code === "ENOENT")
                     return new Response(null, { status: 404 });
 
-                console.error("Could not serve a cached character icon:", error);
+                ApplicationLogger.error(ApplicationLogSource.catalog, "Could not serve a cached character icon.", error);
                 return new Response(null, { status: 500 });
             }
         });

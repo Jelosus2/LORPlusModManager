@@ -104,7 +104,9 @@ const modManagerApi: IpcApi = {
     cleanTemporaryFiles: () => ipcRenderer.invoke("app:clean-temporary-files"),
     openLogFolder: () => ipcRenderer.invoke("app:open-log-folder"),
     getApplicationInfo: () => ipcRenderer.invoke("app:get-application-info"),
-    openExternalPage: (page) => ipcRenderer.invoke("app:open-external-page", page)
+    openExternalPage: (page) => ipcRenderer.invoke("app:open-external-page", page),
+    getApplicationLogs: () => ipcRenderer.invoke("app:get-application-logs"),
+    writeApplicationLog: (request) => ipcRenderer.invoke("app:write-application-log", request)
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

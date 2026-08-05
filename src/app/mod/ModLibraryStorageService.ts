@@ -1,6 +1,8 @@
 import type { ModLibraryStorageSummary } from "../../shared/mod.js";
 
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { Paths } from "#utils/Paths.js";
 import path from "node:path";
@@ -71,7 +73,7 @@ export class ModLibraryStorageService {
     private async tryMeasureModDirectory(directoryName: string): Promise<DirectoryMeasurement | null> {
         if (!Paths.isSafeModDirectoryName(directoryName))
         {
-            console.log(`Could not measure mod directory with invalid name: ${directoryName}`);
+            ApplicationLogger.warning(ApplicationLogSource.modLibrary, `Could not measure mod directory with invalid name: ${directoryName}`);
             return null;
         }
 
@@ -92,7 +94,7 @@ export class ModLibraryStorageService {
         catch (error)
         {
             if (!TypeCheck.isNodeError(error) || error.code !== "ENOENT")
-                console.error(`Could not measure mod directory ${directoryPath}:`, error);
+                ApplicationLogger.error(ApplicationLogSource.modLibrary, `Could not measure mod directory ${directoryPath}.`, error);
 
             return null;
         }

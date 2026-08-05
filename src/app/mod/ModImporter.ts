@@ -3,7 +3,9 @@ import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js
 import type { ImportedModRecord } from "#database/repositories/ModRepository.js";
 
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { characterCatalog } from "#utils/CharacterCatalogService.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { AssetBundleModMatcher } from "./AssetBundleModMatcher.js";
 import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
 import { ModOperationJournal } from "./ModOperationJournal.js";
@@ -181,7 +183,7 @@ export class ModImporter {
                 }
                 catch (error)
                 {
-                    console.error(`Could not delete imported mod ${source.filePath}:`, error);
+                    ApplicationLogger.warning(ApplicationLogSource.modImport, `Could not delete imported mod ${source.filePath}.`, error);
 
                     const detail =
                         ErrorUtils.getFsErrorMessage(error, "The original mod file") ||
@@ -329,7 +331,7 @@ export class ModImporter {
                 }
                 catch (error)
                 {
-                    console.error("Could not complete the import operation journal:", error);
+                    ApplicationLogger.warning(ApplicationLogSource.modImport, "Could not complete the import operation journal.", error);
                 }
             }
 
@@ -340,7 +342,7 @@ export class ModImporter {
         }
         catch (error)
         {
-            console.error(`Could not commit ${source.filePath}:`, error);
+            ApplicationLogger.error(ApplicationLogSource.modImport, `Could not commit ${source.filePath}.`, error);
 
             const rollbackResults = await Promise.allSettled(
                 movedDirectories.map((directory) => fse.rm(directory, { recursive: true, force: true }))
@@ -357,7 +359,7 @@ export class ModImporter {
                 }
                 catch (recoveryError)
                 {
-                    console.error("Could not remove the rolled-back import operation:", recoveryError);
+                    ApplicationLogger.warning(ApplicationLogSource.modImport, "Could not remove the rolled-back import operation.", recoveryError);
                 }
             }
 
@@ -380,7 +382,7 @@ export class ModImporter {
             }
             catch (error)
             {
-                console.error(`Could not clean the import workspace for ${source.name}:`, error);
+                ApplicationLogger.warning(ApplicationLogSource.modImport, `Could not clean the import workspace for ${source.name}.`, error);
             }
         }
     }
@@ -420,7 +422,7 @@ export class ModImporter {
             }
             catch (error)
             {
-                console.error(`Could not inspect ${source.filePath}:`, error);
+                ApplicationLogger.error(ApplicationLogSource.modImport, `Could not inspect ${source.filePath}.`, error);
 
                 issues.push(this.createInspectionIssue(source, error));
                 reportSourceProgress(1, `Could not inspect ${source.name}`, "Moving to the next file");

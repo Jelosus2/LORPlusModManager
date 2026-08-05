@@ -1,5 +1,7 @@
 import type { CharacterCatalog, CharacterSkin } from "../../shared/characters";
 
+import { ApplicationLogSource } from "../../shared/application";
+import { RendererLogger } from "@/utils/RendererLogger";
 import { computed, ref, shallowRef } from "vue";
 import { ErrorUtils } from "@/utils/ErrorUtils";
 import { defineStore } from "pinia";
@@ -47,7 +49,7 @@ export const useCharacterCatalogStore = defineStore("character-catalog", () => {
             }
             catch (error)
             {
-                console.error("Failed to load the character catalog:", error);
+                RendererLogger.error(ApplicationLogSource.catalog, "Failed to load the character catalog.", error);
 
                 errorMessage.value = ErrorUtils.getUserErrorMessage(error, "Could not load the character information.");
                 return false;

@@ -1,5 +1,7 @@
 import type { CharacterCatalog, CharacterSkin } from "../../shared/characters.js";
 
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { VersionUtils } from "./VersionUtils.js";
 import { StringUtils } from "./StringUtils.js";
 import { ErrorUtils } from "./ErrorUtils.js";
@@ -86,14 +88,14 @@ export class CharacterCatalogService {
             }
             catch (error)
             {
-                console.error("Could not remove the temporary character catalog:", error);
+                ApplicationLogger.warning(ApplicationLogSource.catalog, "Could not remove the temporary character catalog.", error);
             }
         }
 
         this.buildIndexes(catalog);
         this.catalog = catalog;
 
-        console.log(`Installed character catalog ${catalog.version}.`);
+        ApplicationLogger.info(ApplicationLogSource.catalog, `Installed character catalog ${catalog.version}.`);
 
         return catalog;
     }
@@ -144,7 +146,7 @@ export class CharacterCatalogService {
                     continue;
 
                 failures.push(error);
-                console.error(`Could not load character catalog from ${filePath}:`, error);
+                ApplicationLogger.error(ApplicationLogSource.catalog, `Could not load character catalog from ${filePath}.`, error);
             }
         }
 
@@ -158,7 +160,7 @@ export class CharacterCatalogService {
         const selected = validCatalogs.at(-1)!;
 
         this.buildIndexes(selected.catalog);
-        console.log(`Loaded character catalog ${selected.catalog.version} from ${selected.filePath}.`);
+        ApplicationLogger.info(ApplicationLogSource.catalog, `Loaded character catalog ${selected.catalog.version} from ${selected.filePath}.`);
 
         return selected.catalog;
     }

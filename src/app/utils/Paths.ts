@@ -106,6 +106,17 @@ export class Paths {
         return app.getPath("logs");
     }
 
+    static getLogFilePath(sessionId: string, part = 1): string {
+        if (!TypeCheck.isValidString(sessionId, 100) || !/^[0-9A-Za-z_-]+$/.test(sessionId))
+            throw new Error("Invalid logging session ID.");
+        if (!TypeCheck.isValidInteger(part, true) || part < 1)
+            throw new Error("Invalid logging session part.");
+
+        const partSuffix = part > 1 ? `.part-${part}` : "";
+
+        return path.join(Paths.getLogsPath(), `application-${sessionId}${partSuffix}.jsonl`);
+    }
+
     static getWindowIconPath(): string | undefined {
         if (app.isPackaged)
             return undefined;

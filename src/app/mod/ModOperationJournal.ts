@@ -1,4 +1,6 @@
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { randomUUID } from "node:crypto";
@@ -175,7 +177,7 @@ export class ModOperationJournal {
                 const failure = ErrorUtils.withContext(`Could not recover ${operationDescription}.`, error, "An unexpected recovery error occurred.");
                 failures.push(failure);
 
-                console.error(failure.message, error);
+                ApplicationLogger.error(ApplicationLogSource.recovery, failure.message, error);
             }
         }
 
@@ -322,7 +324,7 @@ export class ModOperationJournal {
                 const ownerId = directoryOwners.get(Paths.normalizeDirectoryName(mod.directoryName));
                 if (ownerId)
                 {
-                    console.log(`Not removing ${mod.directoryName}; it belongs to another registered mod.`);
+                    ApplicationLogger.warning(ApplicationLogSource.recovery, `Not removing ${mod.directoryName}; it belongs to another registered mod.`);
                     continue;
                 }
 
@@ -462,7 +464,7 @@ export class ModOperationJournal {
 
         const legacyRenames = entries.filter((entry) => entry.isDirectory() && entry.name.startsWith(".rename-"));
         if (legacyRenames.length > 0)
-            console.log(`${legacyRenames.length} unjournaled rename directories were left untouched.`);
+            ApplicationLogger.warning(ApplicationLogSource.recovery, `${legacyRenames.length} unjournaled rename directories were left untouched.`);
 
         const trashRoot = Paths.getModsTrashRoot();
 
@@ -470,7 +472,7 @@ export class ModOperationJournal {
         {
             const trashEntries = await fse.readdir(trashRoot);
             if (trashEntries.length > 0)
-                console.log(`${trashEntries.length} unjournaled trash directories were left untouched.`);
+                ApplicationLogger.warning(ApplicationLogSource.recovery, `${trashEntries.length} unjournaled trash directories were left untouched.`);
         }
     }
 

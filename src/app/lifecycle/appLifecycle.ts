@@ -1,5 +1,8 @@
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { AppDatabase } from "#database/AppDatabase.js";
 import { app, BrowserWindow, Menu } from "electron";
+import os from "node:os";
 
 export type WindowFactory = () => Promise<BrowserWindow>;
 
@@ -23,6 +26,17 @@ export class AppLifecycle {
 
             if (app.isPackaged)
                 Menu.setApplicationMenu(null);
+
+            await ApplicationLogger.initialize();
+
+            ApplicationLogger.info(ApplicationLogSource.application, `Starting ${app.getName()} ${app.getVersion()}.`);
+            ApplicationLogger.info(ApplicationLogSource.environment, "Runtime environment detected.", {
+                "Node.js": process.versions.node,
+                "Electron": process.versions.electron,
+                "Windows": os.version(),
+                "Windows kernel": os.release(),
+                "Architecture": process.arch
+            });
 
             AppDatabase.initialize();
             AppLifecycle.mainWindow = await createMainWindow();

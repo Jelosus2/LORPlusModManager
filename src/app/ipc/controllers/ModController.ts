@@ -17,6 +17,8 @@ import { ModLibraryService, ModLibraryError } from "#mod/ModLibraryService.js";
 import { ModRecoveryCoordinator } from "#mod/ModRecoveryCoordinator.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ApplicationLogSource } from "../../../shared/application.js";
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ModSynchronizer } from "#mod/ModSynchronizer.js";
 import { ModVerifier } from "#mod/ModVerifier.js";
 import { BrowserWindow, dialog } from "electron";
@@ -133,6 +135,11 @@ export class ModController {
             });
         }
 
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.modImport, "Mod import", {
+            sourceCount: sources.length,
+            deleteOriginals: request.deleteOriginals
+        });
+
         try
         {
             const result = await this.modImporter.extract(sources, request.deleteOriginals, (progress) => {
@@ -141,6 +148,18 @@ export class ModController {
                 if (!event.sender.isDestroyed())
                     event.sender.send("mod:import-progress", progress);
             });
+
+            const summary = {
+                importedMods: result.mods.length,
+                importedSources: result.importedSourceIds.length,
+                warnings: result.warnings.length,
+                issues: result.issues.length
+            };
+
+            if (result.warnings.length > 0 || result.issues.length > 0)
+                operation.completeWithWarnings(summary);
+            else
+                operation.complete(summary);
 
             for (const sourceId of result.importedSourceIds)
                 session.sources.delete(sourceId);
@@ -154,7 +173,7 @@ export class ModController {
         }
         catch (error)
         {
-            console.error("Could not import the selected mods:", error);
+            operation.fail(error);
 
             const message = error instanceof ModImportError
                 ? error.message
@@ -179,7 +198,19 @@ export class ModController {
     @IpcHelper.IpcHandle("mod:delete")
     async deleteMod(_event: IpcMainInvokeEvent, value: unknown) {
         const modId = this.parseModId(value);
-        await this.modLibrary.delete(modId);
+
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.modLibrary, "Mod deletion", { modId });
+
+        try
+        {
+            await this.modLibrary.delete(modId);
+            operation.complete({ modId });
+        }
+        catch (error)
+        {
+            operation.fail(error);
+            throw error;
+        }
     }
 
     @IpcHelper.IpcHandle("mod:delete-many")
@@ -199,7 +230,32 @@ export class ModController {
             modIds.push(modId);
         }
 
-        return this.modLibrary.deleteMany(modIds);
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.modLibrary, "Bulk mod deletion", {
+            requested: modIds.length
+        });
+
+        try
+        {
+            const result = await this.modLibrary.deleteMany(modIds);
+
+            const summary = {
+                requested: modIds.length,
+                deleted: result.deletedModIds.length,
+                failed: result.failures.length
+            };
+
+            if (result.failures.length > 0)
+                operation.completeWithWarnings(summary);
+            else
+                operation.complete(summary);
+
+            return result;
+        }
+        catch (error)
+        {
+            operation.fail(error);
+            throw error;
+        }
     }
 
     @IpcHelper.IpcHandle("mod:rename")
@@ -207,12 +263,41 @@ export class ModController {
         if (!TypeCheck.isRecord(value) || !TypeCheck.isValidString(value.modId, 100) || !TypeCheck.isValidString(value.directoryName, 100))
             throw new ModLibraryError("Invalid mod rename request.");
 
-        await this.modLibrary.rename(value.modId, value.directoryName);
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.modLibrary, "Mod rename", {
+            modId: value.modId,
+            requestedName: value.directoryName
+        });
+
+        try
+        {
+            await this.modLibrary.rename(value.modId, value.directoryName);
+
+            operation.complete({
+                modId: value.modId,
+                directoryName: value.directoryName
+            });
+        }
+        catch (error)
+        {
+            operation.fail(error);
+            throw error;
+        }
     }
 
     @IpcHelper.IpcHandle("mod:startup-recover")
     async recoverMods() {
-        await ModRecoveryCoordinator.waitUntilReady();
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.recovery, "Interrupted mod operation recovery");
+
+        try
+        {
+            await ModRecoveryCoordinator.waitUntilReady();
+            operation.complete();
+        }
+        catch (error)
+        {
+            operation.fail(error);
+            throw error;
+        }
     }
 
     private async inspectSource(filePath: string): Promise<StoredModSource | null> {
@@ -249,15 +334,39 @@ export class ModController {
 
         this.isSynchronizing = true;
 
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.modSynchronization, "Mod synchronization", {
+            method: request.method,
+            selectedMods: request.enabledModIds.length
+        });
+
         try
         {
             if (request.method === "symlink" && !await AdminPrivilegeService.hasAdminPrivileges())
                 throw new Error("Administrator privileges are required to use symbolic links.");
 
-            return await this.modSynchronizer.synchronize(request, (progress) => {
+            const result = await this.modSynchronizer.synchronize(request, (progress) => {
                 if (!event.sender.isDestroyed())
                     event.sender.send("mod:sync-progress", progress);
             });
+
+            const summary = {
+                synced: result.entries.filter((entry) => entry.status === "synced").length,
+                unsynchronized: result.entries.filter((entry) => entry.status === "unsynced").length,
+                unchanged: result.entries.filter((entry) => entry.status === "unchanged").length,
+                failed: result.entries.filter((entry) => entry.status === "failed").length
+            };
+
+            if (summary.failed > 0)
+                operation.completeWithWarnings(summary);
+            else
+                operation.complete(summary);
+
+            return result;
+        }
+        catch (error)
+        {
+            operation.fail(error);
+            throw error;
         }
         finally
         {

@@ -9,6 +9,8 @@ import type {
 import type { PluginProgress } from "../../shared/plugin";
 
 import { useCharacterCatalogStore } from "./characterCatalogStore";
+import { ApplicationLogSource } from "../../shared/application";
+import { RendererLogger } from "@/utils/RendererLogger";
 import { computed, ref, shallowRef } from "vue";
 import { ErrorUtils } from "@/utils/ErrorUtils";
 import { defineStore } from "pinia";
@@ -106,7 +108,7 @@ export const useUpdateStore = defineStore("updates", () => {
             }
             catch (error)
             {
-                console.error("Could not load the update settings:", error);
+                RendererLogger.error(ApplicationLogSource.updates, "Could not load the update settings.", error);
 
                 errorMessage.value = ErrorUtils.getUserErrorMessage(error, "The update settings could not be loaded.");
                 return false;
@@ -177,7 +179,7 @@ export const useUpdateStore = defineStore("updates", () => {
             }
             catch (error)
             {
-                console.error("Could not check for updates:", error);
+                RendererLogger.error(ApplicationLogSource.updates, "Could not check for updates.", error);
 
                 errorMessage.value = ErrorUtils.getUserErrorMessage(error, "Updates could not be checked.");
                 return false;
@@ -207,7 +209,7 @@ export const useUpdateStore = defineStore("updates", () => {
         }
         catch (error)
         {
-            console.error(`Could not save the ${component} update preference:`, error);
+            RendererLogger.error(ApplicationLogSource.updates, `Could not save the ${component} update preference.`, error);
 
             errorMessage.value = ErrorUtils.getUserErrorMessage(error, "The automatic update preference could not be saved.");
             return false;
@@ -263,7 +265,7 @@ export const useUpdateStore = defineStore("updates", () => {
         }
         catch (error)
         {
-            console.error("Could not download the application update:", error);
+            RendererLogger.error(ApplicationLogSource.updates, "Could not download the application update.", error);
 
             downloadError.value = ErrorUtils.getUserErrorMessage(error, "The application update could not be downloaded.");
             return false;
@@ -288,7 +290,7 @@ export const useUpdateStore = defineStore("updates", () => {
         }
         catch (error)
         {
-            console.error("Could not install the application update:", error);
+            RendererLogger.error(ApplicationLogSource.updates, "Could not install the application update.", error);
 
             downloadError.value = ErrorUtils.getUserErrorMessage(error, "The application update could not be installed.");
             isInstalling.value = false;
@@ -352,7 +354,7 @@ export const useUpdateStore = defineStore("updates", () => {
         }
         catch (error)
         {
-            console.error("Could not update LOPlugin+:", error);
+            RendererLogger.error(ApplicationLogSource.updates, "Could not update LOPlugin+.", error);
 
             pluginUpdateError.value = ErrorUtils.getUserErrorMessage(error, "LOPlugin+ could not be updated.");
             return false;
@@ -400,7 +402,7 @@ export const useUpdateStore = defineStore("updates", () => {
         }
         catch (error)
         {
-            console.error("Could not update the character catalog:", error);
+            RendererLogger.error(ApplicationLogSource.updates, "Could not update the character catalog.", error);
 
             catalogUpdateError.value = ErrorUtils.getUserErrorMessage(error, "The character catalog could not be updated.");
             return false;

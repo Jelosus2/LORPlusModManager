@@ -1,32 +1,25 @@
 <script setup lang="ts">
-import type { ApplicationInfo, ExternalApplicationPage } from "../../shared/application";
+import type { ApplicationInfo, ExternalApplicationPage, ApplicationLogEntry, ApplicationLogSeverity } from "../../shared/application";
 
-import KoFiIcon from "./icons/KoFiIcon.vue";
-import GithubIcon from "./icons/GithubIcon.vue";
-import LogsIcon from "./icons/LogsIcon.vue";
-import CloseIcon from "./icons/CloseIcon.vue";
+import RefreshIcon from "./icons/RefreshIcon.vue";
 import SearchIcon from "./icons/SearchIcon.vue";
 import FolderIcon from "./icons/FolderIcon.vue";
+import GithubIcon from "./icons/GithubIcon.vue";
+import CloseIcon from "./icons/CloseIcon.vue";
+import TrashIcon from "./icons/TrashIcon.vue";
+import KoFiIcon from "./icons/KoFiIcon.vue";
+import LogsIcon from "./icons/LogsIcon.vue";
 
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ApplicationLogSource } from "../../shared/application";
+import { RendererLogger } from "@/utils/RendererLogger.ts";
 import { ErrorUtils } from "@/utils/ErrorUtils.ts";
-
-type LogSeverity = "debug" | "info" | "warning" | "error";
-
-type ApplicationLogEntry = Readonly<{
-    id: string;
-    timestamp: string;
-    severity: LogSeverity;
-    source: string;
-    message: string;
-    details?: string;
-}>;
 
 const applicationInfo = ref<ApplicationInfo>({ name: "LORPlusModManager", version: "..." });
 const titleBarError = ref("");
 const logEntries = ref<ApplicationLogEntry[]>([]);
 const logQuery = ref("");
-const logSeverity = ref<LogSeverity | "all">("all");
+const logSeverity = ref<ApplicationLogSeverity | "all">("all");
 const logSource = ref("all");
 const logError = ref("");
 const isLoadingLogs = ref(false);
@@ -62,7 +55,7 @@ async function loadApplicationInfo() {
     }
     catch (error)
     {
-        console.error("Could not load the application information:", error);
+        RendererLogger.error(ApplicationLogSource.application, "Could not load the application information.", error);
         showTitleBarError(ErrorUtils.getUserErrorMessage(error, "The application version could not be loaded."));
     }
 }
@@ -74,7 +67,7 @@ async function openExternalPage(page: ExternalApplicationPage) {
     }
     catch (error)
     {
-        console.error(`Could not open external page ${page}:`, error);
+        RendererLogger.error(ApplicationLogSource.application, `Could not open external page ${page}.`, error);
         showTitleBarError(ErrorUtils.getUserErrorMessage(error, "The page could not be opened."));
     }
 }
@@ -92,12 +85,34 @@ async function openLogFolder() {
     }
     catch (error)
     {
-        console.error("Could not open the application log folder:", error);
+        RendererLogger.error(ApplicationLogSource.application, "Could not open the application log folder.", error);
         logError.value = ErrorUtils.getUserErrorMessage(error, "The application log folder could not be opened.");
     }
     finally
     {
         isOpeningLogFolder.value = false;
+    }
+}
+
+async function loadApplicationLogs() {
+    if (isLoadingLogs.value)
+        return;
+
+    isLoadingLogs.value = true;
+    logError.value = "";
+
+    try
+    {
+        logEntries.value = [...await window.app.getApplicationLogs()];
+    }
+    catch (error)
+    {
+        RendererLogger.error(ApplicationLogSource.diagnostics, "Could not load the application logs.", error);
+        logError.value = ErrorUtils.getUserErrorMessage(error, "The application logs could not be loaded.");
+    }
+    finally
+    {
+        isLoadingLogs.value = false;
     }
 }
 
@@ -108,6 +123,7 @@ function logsPopover(): HTMLElement | null {
 function showLogs() {
     logError.value = "";
     logsPopover()?.showPopover();
+    void loadApplicationLogs();
 }
 
 function closeLogs() {
@@ -118,6 +134,12 @@ function clearLogFilters() {
     logQuery.value = "";
     logSeverity.value = "all";
     logSource.value = "all";
+}
+
+function clearDisplayedLogs() {
+    logEntries.value = [];
+    logError.value = "";
+    clearLogFilters();
 }
 
 function showTitleBarError(message: string) {
@@ -132,7 +154,7 @@ function showTitleBarError(message: string) {
     }, 7000);
 }
 
-function formatLogSeverity(severity: LogSeverity): string {
+function formatLogSeverity(severity: ApplicationLogSeverity): string {
     switch (severity)
     {
         case "debug":
@@ -347,19 +369,46 @@ onBeforeUnmount(() => {
         </section>
 
         <footer class="logs-footer">
-            <button
-                class="logs-button logs-button--secondary"
-                type="button"
-                :disabled="isOpeningLogFolder"
-                @click="openLogFolder"
-            >
-                <FolderIcon />
-                <span>{{ isOpeningLogFolder ? "Opening…" : "Open log folder" }}</span>
-            </button>
+            <div class="logs-footer-group">
+                <button
+                    class="logs-button logs-button--secondary"
+                    type="button"
+                    :disabled="isOpeningLogFolder"
+                    @click="openLogFolder"
+                >
+                    <FolderIcon />
+                    <span>{{ isOpeningLogFolder ? "Opening…" : "Open log folder" }}</span>
+                </button>
+            </div>
 
-            <button class="logs-button logs-button--primary" type="button" @click="closeLogs">
-                Close
-            </button>
+            <div class="logs-footer-group">
+                <button
+                    class="logs-button logs-button--secondary logs-button--clear"
+                    type="button"
+                    title="Clear the displayed entries without deleting the log file"
+                    :disabled="isLoadingLogs || logEntries.length === 0"
+                    @click="clearDisplayedLogs"
+                >
+                    <TrashIcon />
+                    <span>Clear view</span>
+                </button>
+
+                <button
+                    class="logs-button logs-button--secondary logs-button--refresh"
+                    :class="{ 'is-loading': isLoadingLogs }"
+                    type="button"
+                    title="Reload entries from the current session log"
+                    :disabled="isLoadingLogs"
+                    @click="loadApplicationLogs"
+                >
+                    <RefreshIcon />
+                    <span>{{ isLoadingLogs ? "Refreshing…" : "Refresh" }}</span>
+                </button>
+
+                <button class="logs-button logs-button--primary" type="button" @click="closeLogs">
+                    Close
+                </button>
+            </div>
         </footer>
     </section>
 </template>
@@ -865,7 +914,7 @@ onBeforeUnmount(() => {
     align-items: center;
     gap: 10px;
     color: #7e8882;
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .log-severity {
@@ -890,7 +939,7 @@ onBeforeUnmount(() => {
 .log-entry-content > p {
     margin: 6px 0 0;
     color: #d6d3cb;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.5;
     overflow-wrap: anywhere;
 }
@@ -902,7 +951,7 @@ onBeforeUnmount(() => {
     border-radius: 5px;
     color: #aeb5b0;
     background: #111613;
-    font: 11px/1.55 "Cascadia Mono", "Consolas", monospace;
+    font: 12.5px/1.55 "Cascadia Mono", "Consolas", monospace;
     white-space: pre-wrap;
 }
 
@@ -910,9 +959,16 @@ onBeforeUnmount(() => {
     display: flex;
     height: 74px;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 9px;
     padding: 15px 26px;
+}
+
+.logs-footer-group {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 9px;
 }
 
 .logs-button {
@@ -938,6 +994,15 @@ onBeforeUnmount(() => {
 .logs-button--primary {
     color: #10191e;
     background: #91b8cf;
+}
+
+.logs-button--clear:not(:disabled) {
+    color: #e4b0ac;
+    background: #241817;
+}
+
+.logs-button--refresh.is-loading svg {
+    animation: logs-spin 800ms linear infinite;
 }
 
 .logs-button:hover:not(:disabled) {
@@ -993,6 +1058,20 @@ onBeforeUnmount(() => {
 
     .logs-viewport {
         min-height: 140px;
+    }
+
+    .logs-footer {
+        height: auto;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .logs-footer-group {
+        justify-content: flex-end;
+    }
+
+    .logs-footer-group:first-child {
+        justify-content: flex-start;
     }
 }
 

@@ -2,6 +2,8 @@ import type { ModSyncMethod } from "../../shared/mod.js";
 
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
 import { randomUUID } from "node:crypto";
@@ -102,7 +104,7 @@ export class ModSyncOperationJournal {
                 const failure = ErrorUtils.withContext(`Could not recover ${operationDescription}.`, error, "An unexpected synchronization recovery error occurred.");
                 failures.push(failure);
 
-                console.error(failure.message, error);
+                ApplicationLogger.error(ApplicationLogSource.recovery, failure.message, error);
             }
         }
 

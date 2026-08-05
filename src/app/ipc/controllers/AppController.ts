@@ -1,10 +1,12 @@
-import type { ApplicationInfo, ExternalApplicationPage } from "../../../shared/application.js";
+import type { ApplicationInfo, ExternalApplicationPage, ApplicationLogEntry } from "../../../shared/application.js";
 import type { TemporaryFileCleanupResult } from "../../../shared/maintenance.js";
 import type { ModLibraryStorageSummary } from "../../../shared/mod.js";
 
 import { temporaryFileCleanupService } from "#maintenance/TemporaryFileCleanupService.js";
 import { modLibraryStorageService } from "#mod/ModLibraryStorageService.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
+import { ApplicationLogSource } from "../../../shared/application.js";
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { app, shell, type IpcMainInvokeEvent } from "electron";
 import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
@@ -41,13 +43,29 @@ export class AppController {
 
     @IpcHelper.IpcHandle("app:clean-temporary-files")
     async cleanTemporaryFiles(): Promise<TemporaryFileCleanupResult> {
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.maintenance, "Temporary file cleanup");
+
         try
         {
-            return await temporaryFileCleanupService.clean();
+            const result = await temporaryFileCleanupService.clean();
+
+            if (result.failedLocations > 0)
+                operation.completeWithWarnings(result);
+            else
+                operation.complete(result);
+
+            return result;
         }
         catch (error)
         {
-            throw ErrorUtils.withContext("The temporary files could not be cleaned.", error, "Windows could not remove the temporary files.");
+            const contextualError = ErrorUtils.withContext(
+                "The temporary files could not be cleaned.",
+                error,
+                "Windows could not remove the temporary files."
+            );
+
+            operation.fail(contextualError);
+            throw contextualError;
         }
     }
 
@@ -91,6 +109,19 @@ export class AppController {
         {
             throw ErrorUtils.withContext(`${pageName} could not be opened.`, error, "Windows could not open the page in your browser.");
         }
+    }
+
+    @IpcHelper.IpcHandle("app:get-application-logs")
+    getApplicationLogs(): Promise<readonly ApplicationLogEntry[]> {
+        return ApplicationLogger.getRecentEntries();
+    }
+
+    @IpcHelper.IpcHandle("app:write-application-log")
+    writeApplicationLog(_event: IpcMainInvokeEvent, value: unknown) {
+        if (!ApplicationLogger.isWriteRequest(value))
+            throw new Error("Invalid application log request.");
+
+        ApplicationLogger.write(value.severity, `Renderer · ${value.source}`, value.message, value.details);
     }
 
     private openModsFolder(errorMessage: string) {

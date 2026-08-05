@@ -1,8 +1,10 @@
 import type { InstalledMod } from "../../shared/mod";
 
-import { computed, ref, shallowRef } from "vue";
+import { ApplicationLogSource } from "../../shared/application";
+import { RendererLogger } from "@/utils/RendererLogger";
 import { StringUtils } from "@/utils/StringUtils";
 import { ErrorUtils } from "@/utils/ErrorUtils";
+import { computed, ref, shallowRef } from "vue";
 import { defineStore } from "pinia";
 
 const EMPTY_MODS: readonly InstalledMod[] = Object.freeze([]);
@@ -64,7 +66,7 @@ export const useModStore = defineStore("mods", () => {
             }
             catch (error)
             {
-                console.error("Failed to load installed mods:", error);
+                RendererLogger.error(ApplicationLogSource.modLibrary, "Failed to load installed mods.", error);
 
                 errorMessage.value = ErrorUtils.getUserErrorMessage(error, "Could not load the installed mods.");
                 return false;

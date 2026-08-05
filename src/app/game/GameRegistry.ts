@@ -1,3 +1,5 @@
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
+import { ApplicationLogSource } from "../../shared/application.js";
 import Winreg from "winreg";
 
 export class GameRegistry {
@@ -11,7 +13,7 @@ export class GameRegistry {
             GameRegistry.gameRegistry.get(name, (error, result) => {
                 if (error)
                 {
-                    console.error(`Failed to read registry key "${name}":`, error);
+                    ApplicationLogger.error(ApplicationLogSource.setup, `Failed to read registry key "${name}".`, error);
                     return resolve(null);
                 }
 

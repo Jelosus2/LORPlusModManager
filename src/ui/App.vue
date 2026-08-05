@@ -5,6 +5,8 @@ import SetupScreen from "./components/SetupScreen.vue";
 import MainScreen from "./components/MainScreen.vue";
 import TitleBar from "./components/TitleBar.vue";
 
+import { ApplicationLogSource } from "../shared/application.ts";
+import { RendererLogger } from "./utils/RendererLogger.ts";
 import { ErrorUtils } from "./utils/ErrorUtils.ts";
 import { ref, onMounted } from "vue";
 
@@ -24,7 +26,7 @@ async function loadSetupState() {
     }
     catch (error)
     {
-        console.error("Failed to initialize the application:", error);
+        RendererLogger.error(ApplicationLogSource.application, "Failed to initialize the application.", error);
 
         setupState.value = null;
         startupError.value = ErrorUtils.getUserErrorMessage(error, "Could not finish checking the mod library.");
@@ -44,8 +46,7 @@ async function openRecoveryFolder() {
     }
     catch (error)
     {
-        console.error("Could not open the recovery folder:", error);
-
+        RendererLogger.error(ApplicationLogSource.application, "Could not open the recovery folder.", error);
         recoveryFolderError.value = ErrorUtils.getUserErrorMessage(error, "The recovery folder could not be opened.");
     }
 }

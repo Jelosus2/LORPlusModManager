@@ -2,6 +2,8 @@ import type { PluginInstallResult, PluginProgress } from "../../../shared/plugin
 import type { IpcMainInvokeEvent } from "electron";
 
 import { LOPluginInstallationService } from "#plugin/LOPluginInstallationService.js";
+import { ApplicationLogSource } from "../../../shared/application.js";
+import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
 
@@ -10,6 +12,8 @@ export class PluginController {
 
     @IpcHelper.IpcHandle("plugin:install")
     async installPlugin(event: IpcMainInvokeEvent): Promise<PluginInstallResult> {
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.plugin, "LOPlugin+ installation");
+
         const sendProgress = (progress: PluginProgress) => {
             if (!event.sender.isDestroyed())
                 event.sender.send("plugin:install-progress", progress);
@@ -19,6 +23,8 @@ export class PluginController {
         {
             const version = await this.installationService.installConfigured(sendProgress);
 
+            operation.complete({ version });
+
             return {
                 success: true,
                 message: "",
@@ -27,7 +33,7 @@ export class PluginController {
         }
         catch (error)
         {
-            console.error("Failed to install LOPlugin+:", error);
+            operation.fail(error);
 
             return {
                 success: false,

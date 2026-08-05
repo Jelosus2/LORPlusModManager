@@ -11,6 +11,8 @@ import SearchIcon from "./icons/SearchIcon.vue";
 import FolderIcon from "./icons/FolderIcon.vue";
 import TrashIcon from "./icons/TrashIcon.vue";
 
+import { ApplicationLogSource } from "../../shared/application.ts";
+import { RendererLogger } from "@/utils/RendererLogger.ts";
 import { useUpdateStore } from "@/stores/updateStore.ts";
 import { ErrorUtils } from "@/utils/ErrorUtils.ts";
 import { useModStore } from "@/stores/modStore.ts";
@@ -85,7 +87,7 @@ async function loadGameSettings() {
     }
     catch (error)
     {
-        console.error("Could not load the game settings:", error);
+        RendererLogger.error(ApplicationLogSource.setup, "Could not load the game settings.", error);
         gameLocationError.value = ErrorUtils.getUserErrorMessage(error, "The game settings could not be loaded.");
     }
 }
@@ -115,7 +117,7 @@ async function selectGameLocation(manualSetup: boolean) {
     }
     catch (error)
     {
-        console.error("Could not select the game location:", error);
+        RendererLogger.error(ApplicationLogSource.setup, "Could not select the game location.", error);
         gameLocationError.value = ErrorUtils.getUserErrorMessage(error, "The game location could not be selected.");
     }
     finally
@@ -160,7 +162,7 @@ async function confirmGameLocationChange() {
     }
     catch (error)
     {
-        console.error("Could not change the game location:", error);
+        RendererLogger.error(ApplicationLogSource.setup, "Could not change the game location.", error);
         gameLocationChangeError.value = ErrorUtils.getUserErrorMessage(error, "The game location could not be changed.");
     }
     finally
@@ -184,7 +186,7 @@ async function openGameLocation() {
     }
     catch (error)
     {
-        console.error("Could not open the game folder:", error);
+        RendererLogger.error(ApplicationLogSource.application, "Could not open the game folder.", error);
         gameLocationError.value = ErrorUtils.getUserErrorMessage(error, "The game folder could not be opened.");
     }
     finally
@@ -225,7 +227,7 @@ async function reinstallPlugin() {
     }
     catch (error)
     {
-        console.error("Could not reinstall LOPlugin+:", error);
+        RendererLogger.error(ApplicationLogSource.plugin, "Could not reinstall LOPlugin+.", error);
         pluginInstallError.value = ErrorUtils.getUserErrorMessage(error, "LOPlugin+ could not be reinstalled.");
     }
     finally
@@ -304,7 +306,7 @@ async function repairCatalogIcons() {
     }
     catch (error)
     {
-        console.error("Could not repair the character icons:", error);
+        RendererLogger.error(ApplicationLogSource.maintenance, "Could not repair the character icons.", error);
         catalogIconRepairError.value = ErrorUtils.getUserErrorMessage(error, "The character icons could not be repaired.");
     }
     finally
@@ -328,7 +330,7 @@ async function loadModLibraryStorage() {
     }
     catch (error)
     {
-        console.error("Could not calculate the mod library storage:", error);
+        RendererLogger.error(ApplicationLogSource.modLibrary, "Could not calculate the mod library storage.", error);
         modLibraryStorageError.value = ErrorUtils.getUserErrorMessage(error, "The mod library storage usage could not be calculated.");
     }
     finally
@@ -350,7 +352,7 @@ async function openModLibraryFolder() {
     }
     catch (error)
     {
-        console.error("Could not open the mod library folder:", error);
+        RendererLogger.error(ApplicationLogSource.application, "Could not open the mod library folder.", error);
         modLibraryFolderError.value = ErrorUtils.getUserErrorMessage(error, "The mod library folder could not be opened.");
     }
     finally
@@ -397,7 +399,7 @@ async function cleanTemporaryFiles() {
     }
     catch (error)
     {
-        console.error("Could not clean the temporary files:", error);
+        RendererLogger.error(ApplicationLogSource.maintenance, "Could not clean the temporary files.", error);
         temporaryCleanupError.value = ErrorUtils.getUserErrorMessage(error, "The temporary files could not be cleaned.");
     }
     finally
@@ -419,7 +421,7 @@ async function openLogFolder() {
     }
     catch (error)
     {
-        console.error("Could not open the application log folder:", error);
+        RendererLogger.error(ApplicationLogSource.application, "Could not open the application log folder.", error);
         logFolderError.value = ErrorUtils.getUserErrorMessage(error, "The application log folder could not be opened.");
     }
     finally
