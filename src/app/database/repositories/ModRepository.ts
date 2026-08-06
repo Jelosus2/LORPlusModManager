@@ -28,6 +28,11 @@ type ModDirectoryRow = {
     directoryName: string;
 };
 
+export type ModAssetLocation = Readonly<{
+    directoryName: string;
+    assetName: string;
+}>;
+
 export class ModRepository {
     addImportedMods(mods: readonly ImportedModRecord[]) {
         if (mods.length === 0)
@@ -121,6 +126,22 @@ export class ModRepository {
         }
 
         return [...mods.values()];
+    }
+
+    getAssetLocation(modId: string, assetName: string): ModAssetLocation | null {
+        const row = AppDatabase.connection.prepare<[string, string], ModAssetLocation>(`
+            SELECT
+                mods.directory_name AS directoryName,
+                mod_assets.file_name AS assetName
+            FROM mods
+            INNER JOIN mod_assets ON mod_assets.mod_id = mods.id
+            WHERE
+                mods.id = ?
+                AND mod_assets.file_name COLLATE NOCASE = ? COLLATE NOCASE
+            LIMIT 1
+        `).get(modId, assetName);
+
+        return row ?? null;
     }
 
     getDirectoryNames(): readonly string[] {

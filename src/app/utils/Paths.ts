@@ -185,4 +185,18 @@ export class Paths {
             path.extname(value).toLowerCase() === ".png"
         );
     }
+
+    static isSafeModAssetName(value: unknown): value is string {
+        if (
+            !Paths.isSafeDirectoryName(value) ||
+            value !== value.trim() ||
+            value.startsWith(".") ||
+            /[. ]$/.test(value) ||
+            /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(value)
+        ) {
+            return false;
+        }
+
+        return [".json", ".atlas", ".png"].includes(path.extname(value).toLowerCase());
+    }
 }

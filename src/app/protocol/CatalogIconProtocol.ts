@@ -8,34 +8,14 @@ import { Paths } from "#utils/Paths.js";
 import fse from "fs-extra";
 
 export class CatalogIconProtocol {
-    private static readonly SCHEME = "lorplus-catalog-icon";
-    private static schemeRegistered = false;
     private static handlerRegistered = false;
-
-    static registerScheme() {
-        if (this.schemeRegistered)
-            return;
-
-        protocol.registerSchemesAsPrivileged([
-            {
-                scheme: this.SCHEME,
-                privileges: {
-                    standard: true,
-                    secure: true,
-                    supportFetchAPI: true,
-                    corsEnabled: true
-                }
-            }
-        ]);
-
-        this.schemeRegistered = true;
-    }
+    static readonly SCHEME = "lorplus-catalog-icon";
 
     static registerHandler() {
-        if (this.handlerRegistered)
+        if (CatalogIconProtocol.handlerRegistered)
             return;
 
-        protocol.handle(this.SCHEME, async (request) => {
+        protocol.handle(CatalogIconProtocol.SCHEME, async (request) => {
             try
             {
                 const url = new URL(request.url);
@@ -64,6 +44,6 @@ export class CatalogIconProtocol {
             }
         });
 
-        this.handlerRegistered = true;
+        CatalogIconProtocol.handlerRegistered = true;
     }
 }

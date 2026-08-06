@@ -7,12 +7,14 @@ import RefreshIcon from "./icons/RefreshIcon.vue";
 import SearchIcon from "./icons/SearchIcon.vue";
 import FolderIcon from "./icons/FolderIcon.vue";
 import RenameIcon from "./icons/RenameIcon.vue";
+import CloseIcon from "./icons/CloseIcon.vue";
 import CheckIcon from "./icons/CheckIcon.vue";
 import TrashIcon from "./icons/TrashIcon.vue";
 import SyncIcon from "./icons/SyncIcon.vue";
 import CopyIcon from "./icons/CopyIcon.vue";
 import LinkIcon from "./icons/LinkIcon.vue";
 import ModWarning from "./ModWarning.vue";
+import EyeIcon from "./icons/EyeIcon.vue";
 
 import { useCharacterCatalogStore } from "@/stores/characterCatalogStore";
 import { useModStore, createCatalogIdentity } from "@/stores/modStore";
@@ -108,6 +110,8 @@ const syncProgress = ref(0);
 const syncStatus = ref("");
 const syncDetail = ref("");
 const syncLogEntries = ref<ModSyncLogEntry[]>([]);
+const previewDialog = ref<HTMLDialogElement | null>(null);
+const modPendingPreview = ref<ModTableRow | null>(null);
 
 let knownModIds = new Set<string>();
 
@@ -872,6 +876,19 @@ function unsyncMods() {
     selectedModIds.value = new Set();
     void synchronizeMods("unsync");
 }
+
+async function openModPreview(row: ModTableRow) {
+    actionErrorMessage.value = "";
+    modPendingPreview.value = row;
+
+    await nextTick();
+    previewDialog.value?.show();
+}
+
+function closeModPreview() {
+    previewDialog.value?.close();
+    modPendingPreview.value = null;
+}
 </script>
 
 <template>
@@ -1378,6 +1395,19 @@ function unsyncMods() {
                                 <div class="mod-actions">
                                     <button
                                         type="button"
+                                        aria-label="Preview mod"
+                                        title="Preview mod"
+                                        :disabled="
+                                            isBulkDeleteMode ||
+                                            row.mod.verification.status !== 'valid'
+                                        "
+                                        @click="openModPreview(row)"
+                                    >
+                                        <EyeIcon />
+                                    </button>
+
+                                    <button
+                                        type="button"
                                         :aria-label="
                                             row.mod.enabled
                                                 ? 'Open synchronized mod folder'
@@ -1525,6 +1555,52 @@ function unsyncMods() {
             </footer>
         </template>
     </section>
+
+    <dialog
+        ref="previewDialog"
+        class="mod-preview-dialog"
+        aria-labelledby="mod-preview-title"
+        @cancel.prevent="closeModPreview"
+        @keydown.esc.prevent="closeModPreview"
+    >
+        <div v-if="modPendingPreview" class="mod-preview-layout">
+            <header class="mod-preview-header">
+                <div class="mod-preview-heading">
+                    <p>Mod preview</p>
+                    <h2
+                        id="mod-preview-title"
+                        :title="modPendingPreview.mod.directoryName"
+                    >
+                        {{ modPendingPreview.mod.directoryName }}
+                    </h2>
+                    <span :title="modPendingPreview.characterLabel">
+                        {{ modPendingPreview.characterLabel }}
+                    </span>
+                </div>
+
+                <button
+                    class="mod-preview-close"
+                    type="button"
+                    aria-label="Close mod preview"
+                    title="Close preview"
+                    autofocus
+                    @click="closeModPreview"
+                >
+                    <CloseIcon />
+                </button>
+            </header>
+
+            <main class="mod-preview-stage">
+                <div class="mod-preview-placeholder">
+                    <span aria-hidden="true">
+                        <EyeIcon />
+                    </span>
+                    <strong>Preview renderer</strong>
+                    <p>The Spine preview will appear here.</p>
+                </div>
+            </main>
+        </div>
+    </dialog>
 
     <dialog
         ref="syncMethodDialog"
@@ -2200,7 +2276,7 @@ h1 {
 }
 
 .mods-table th:nth-child(4) {
-    width: 31%;
+    width: auto;
 }
 
 .mods-table th:nth-child(5) {
@@ -2208,7 +2284,7 @@ h1 {
 }
 
 .mods-table th:nth-child(6) {
-    width: 13%;
+    width: 160px;
 }
 
 .mods-table th {
@@ -2790,6 +2866,167 @@ h1 {
 .mod-dialog-actions button:focus-visible {
     outline: 2px solid #f2eee5;
     outline-offset: 2px;
+}
+
+.mod-preview-dialog {
+    position: fixed;
+    z-index: 100;
+    inset: var(--titlebar-height) 0 0;
+    width: 100vw;
+    width: 100dvw;
+    max-width: none;
+    height: calc(100vh - var(--titlebar-height));
+    height: calc(100dvh - var(--titlebar-height));
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    color: #e4e0d7;
+    background: #080b09;
+}
+
+.mod-preview-dialog::backdrop {
+    background: transparent;
+}
+
+.mod-preview-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.mod-preview-header {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #292e2b;
+    background: #0d100e;
+}
+
+.mod-preview-heading {
+    min-width: 0;
+}
+
+.mod-preview-heading p,
+.mod-preview-heading h2,
+.mod-preview-heading span,
+.mod-preview-placeholder p {
+    margin: 0;
+}
+
+.mod-preview-heading p {
+    margin-bottom: 3px;
+    color: #91b8cf;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mod-preview-heading h2 {
+    overflow: hidden;
+    color: #f2eee5;
+    font-size: 20px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mod-preview-heading span {
+    display: block;
+    max-width: min(760px, calc(100vw - 130px));
+    margin-top: 4px;
+    overflow: hidden;
+    color: #9da19b;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mod-preview-close {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    color: #aeb2ac;
+    background: #171b18;
+    cursor: pointer;
+}
+
+.mod-preview-close:hover {
+    color: #f2eee5;
+    background: #202521;
+}
+
+.mod-preview-close:focus-visible {
+    outline: 2px solid #f2eee5;
+    outline-offset: 2px;
+}
+
+.mod-preview-close svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+}
+
+.mod-preview-stage {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+    place-items: center;
+    overflow: hidden;
+}
+
+.mod-preview-placeholder {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    color: #747b75;
+    text-align: center;
+}
+
+.mod-preview-placeholder > span {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 14px;
+    place-items: center;
+    border-radius: 50%;
+    color: #91b8cf;
+    background: #142027;
+}
+
+.mod-preview-placeholder svg {
+    width: 25px;
+    height: 25px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+}
+
+.mod-preview-placeholder strong {
+    color: #d7d4cc;
+    font-size: 15px;
+}
+
+.mod-preview-placeholder p {
+    margin-top: 5px;
+    font-size: 13px;
 }
 
 .mod-action-dialog {
