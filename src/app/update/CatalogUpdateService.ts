@@ -1,8 +1,15 @@
-import type { CharacterCatalog, CatalogIconRepairProgress, CatalogIconRepairResult } from "../../shared/characters.js";
+import type {
+    CharacterCatalog,
+    CatalogIconRepairProgress,
+    CatalogIconRepairResult,
+    CatalogBackgroundRepairProgress,
+    CatalogBackgroundRepairResult
+} from "../../shared/characters.js";
 import type { CheckedUpdateVersions, UpdateChecker } from "./UpdateChecker.js";
 import type { UpdateComponent } from "../../shared/updates.js";
 
 import { CharacterCatalogService, characterCatalog } from "#utils/CharacterCatalogService.js";
+import { catalogBackgroundService } from "./CatalogBackgroundService.js";
 import { ErrorUtils, UserFacingError } from "#utils/ErrorUtils.js";
 import { GitHubRequestUtils } from "#utils/GitHubRequestUtils.js";
 import { HttpDownloadUtils } from "#utils/HttpDownloadUtils.js";
@@ -39,6 +46,15 @@ export class CatalogUpdateService implements UpdateChecker {
         return catalogIconService.repairCatalogIcons(activeCatalog, bundledCatalog, this.getCatalogUrl(), onProgress);
     }
 
+    async repairCatalogBackgrounds(onProgress?: (progress: CatalogBackgroundRepairProgress) => void): Promise<CatalogBackgroundRepairResult> {
+        const [activeCatalog, bundledCatalog] = await Promise.all([
+            characterCatalog.getCatalog(),
+            characterCatalog.getBundledCatalog()
+        ]);
+
+        return catalogBackgroundService.repairCatalogBackgrounds(activeCatalog, bundledCatalog, this.getCatalogUrl(), onProgress);
+    }
+
     update(): Promise<CharacterCatalog> {
         if (this.updatePromise)
             return this.updatePromise;
@@ -60,9 +76,12 @@ export class CatalogUpdateService implements UpdateChecker {
         if (comparison === 0)
             return installedCatalog;
 
-        await catalogIconService.installRequiredIcons(installedCatalog, downloaded.catalog, downloaded.sourceUrl);
-        return characterCatalog.installCatalogContents(downloaded.contents);
+        await Promise.all([
+            catalogIconService.installRequiredIcons(installedCatalog, downloaded.catalog, downloaded.sourceUrl),
+            catalogBackgroundService.installRequiredBackgrounds(installedCatalog, downloaded.catalog, downloaded.sourceUrl)
+        ]);
 
+        return characterCatalog.installCatalogContents(downloaded.contents);
     }
 
     private async downloadLatest(): Promise<DownloadedCatalog> {

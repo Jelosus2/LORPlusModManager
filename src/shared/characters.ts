@@ -118,3 +118,17 @@ export type CatalogIconRepairResult = Readonly<{
     cached: number;
     downloaded: number;
 }>;
+
+export type CatalogBackgroundRepairProgress = Readonly<{
+    processed: number;
+    total: number;
+    downloaded: number;
+    currentBackground: string | null;
+}>;
+
+export type CatalogBackgroundRepairResult = Readonly<{
+    required: number;
+    bundled: number;
+    cached: number;
+    downloaded: number;
+}>;

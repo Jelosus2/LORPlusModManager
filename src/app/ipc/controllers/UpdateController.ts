@@ -6,7 +6,7 @@ import type {
     UpdateSettingsState,
     ApplicationUpdateDownloadResult
 } from "../../../shared/updates.js";
-import type { CharacterCatalog, CatalogIconRepairResult } from "../../../shared/characters.js";
+import type { CharacterCatalog, CatalogIconRepairResult, CatalogBackgroundRepairResult } from "../../../shared/characters.js";
 import type { IpcMainInvokeEvent } from "electron";
 
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
@@ -145,6 +145,27 @@ export class UpdateController {
                 downloaded: result.downloaded
             });
 
+            return result;
+        }
+        catch (error)
+        {
+            operation.fail(error);
+            throw error;
+        }
+    }
+
+    @IpcHelper.IpcHandle("updates:repair-catalog-backgrounds")
+    async repairCatalogBackgrounds(event: IpcMainInvokeEvent): Promise<CatalogBackgroundRepairResult> {
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.catalog, "Skin background repair");
+
+        try
+        {
+            const result = await catalogUpdateService.repairCatalogBackgrounds((progress) => {
+                if (!event.sender.isDestroyed())
+                    event.sender.send("updates:catalog-background-repair-progress", progress);
+            });
+
+            operation.complete(result);
             return result;
         }
         catch (error)

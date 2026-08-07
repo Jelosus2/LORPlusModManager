@@ -16,8 +16,20 @@ for (const [modulePath, url] of Object.entries(backgroundModules))
 }
 
 export function getSkinBackgroundUrl(backgroundFile: string | null): string | undefined {
-    if (!backgroundFile)
+    if (
+        !backgroundFile ||
+        backgroundFile !== backgroundFile.trim() ||
+        backgroundFile === "." ||
+        backgroundFile === ".." ||
+        /[\\/\u0000]/.test(backgroundFile) ||
+        !backgroundFile.toLowerCase().endsWith(".webp")
+    ) {
         return undefined;
+    }
 
-    return backgroundUrls.get(backgroundFile.toLowerCase());
+    const bundledBackground = backgroundUrls.get(backgroundFile.toLowerCase());
+    if (bundledBackground)
+        return bundledBackground;
+
+    return `lorplus-catalog-background://catalog/${encodeURIComponent(backgroundFile)}`;
 }

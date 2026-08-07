@@ -1,6 +1,6 @@
+import type { CatalogIconRepairProgress, CatalogBackgroundRepairProgress } from "../shared/characters.js";
 import type { ApplicationUpdateDownloadProgress } from "../shared/updates.js";
 import type { ModImportProgress, ModSyncProgress } from "../shared/mod.js";
-import type { CatalogIconRepairProgress } from "../shared/characters.js";
 import type { GameLocationChangeProgress } from "../shared/setup.js";
 import type { PluginProgress } from "../shared/plugin.js";
 import type { IpcApi } from "../shared/ipcApi.js";
@@ -109,7 +109,19 @@ const modManagerApi: IpcApi = {
     writeApplicationLog: (request) => ipcRenderer.invoke("app:write-application-log", request),
     getLOPluginConfiguration: () => ipcRenderer.invoke("plugin:get-configuration"),
     saveLOPluginConfiguration: (request) => ipcRenderer.invoke("plugin:save-configuration", request),
-    launchGame: (request) => ipcRenderer.invoke("game:launch", request)
+    launchGame: (request) => ipcRenderer.invoke("game:launch", request),
+    repairCatalogBackgrounds: () => ipcRenderer.invoke("updates:repair-catalog-backgrounds"),
+    onCatalogBackgroundRepairProgress: (callback) => {
+        const listener = (_event: IpcRendererEvent, progress: CatalogBackgroundRepairProgress) => {
+            callback(progress);
+        };
+
+        ipcRenderer.on("updates:catalog-background-repair-progress", listener);
+
+        return () => {
+            ipcRenderer.removeListener("updates:catalog-background-repair-progress", listener);
+        };
+    }
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

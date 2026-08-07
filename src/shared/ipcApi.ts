@@ -21,10 +21,16 @@ import type {
     ApplicationUpdateDownloadProgress,
     ApplicationUpdateDownloadResult
 } from "./updates.js";
+import type {
+    CharacterCatalog,
+    CatalogIconRepairProgress,
+    CatalogIconRepairResult,
+    CatalogBackgroundRepairProgress,
+    CatalogBackgroundRepairResult
+} from "./characters.js";
 import type { GameLocationResult, SetupState, GameLocationChangeProgress, GameLocationChangeResult, GameLocationSelectionResult } from "./setup.js";
 import type { ApplicationInfo, ExternalApplicationPage, ApplicationLogEntry, ApplicationLogWriteRequest } from "./application.js";
 import type { PluginInstallResult, PluginProgress, PluginConfiguration, PluginConfigurationSaveRequest } from "./plugin.js";
-import type { CharacterCatalog, CatalogIconRepairProgress, CatalogIconRepairResult } from "./characters.js";
 import type { TemporaryFileCleanupResult } from "./maintenance.js";
 import type { GameLaunchRequest } from "./game.js";
 
@@ -71,4 +77,6 @@ export type IpcApi = {
     getLOPluginConfiguration: () => Promise<PluginConfiguration>;
     saveLOPluginConfiguration: (request: PluginConfigurationSaveRequest) => Promise<PluginConfiguration>;
     launchGame: (request: GameLaunchRequest) => Promise<void>;
+    repairCatalogBackgrounds: () => Promise<CatalogBackgroundRepairResult>;
+    onCatalogBackgroundRepairProgress: (callback: (progress: CatalogBackgroundRepairProgress) => void) => () => void;
 };

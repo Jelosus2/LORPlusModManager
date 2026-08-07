@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import type { CatalogIconRepairProgress, CatalogBackgroundRepairProgress } from "../../shared/characters.ts";
 import type { ComponentUpdateResult, UpdateComponent } from "../../shared/updates.ts";
-import type { CatalogIconRepairProgress } from "../../shared/characters.ts";
 import type { GameLocationChangeProgress } from "../../shared/setup.ts";
 import type { ModLibraryStorageSummary } from "../../shared/mod.ts";
 import type { PluginProgress } from "../../shared/plugin.ts";
@@ -74,6 +74,10 @@ const temporaryCleanupWarning = ref("");
 const temporaryCleanupError = ref("");
 const isOpeningLogFolder = ref(false);
 const logFolderError = ref("");
+const isRepairingCatalogBackgrounds = ref(false);
+const catalogBackgroundRepairProgress = ref<CatalogBackgroundRepairProgress | null>(null);
+const catalogBackgroundRepairMessage = ref("");
+const catalogBackgroundRepairError = ref("");
 
 async function loadGameSettings() {
     gameLocationError.value = "";
@@ -269,7 +273,7 @@ async function updatePlugin() {
 }
 
 async function repairCatalogIcons() {
-    if (isRepairingCatalogIcons.value || isUpdatingCatalog.value || isCheckingUpdates.value)
+    if (isRepairingCatalogIcons.value || isRepairingCatalogBackgrounds.value || isUpdatingCatalog.value || isCheckingUpdates.value)
         return;
 
     isRepairingCatalogIcons.value = true;
@@ -314,6 +318,53 @@ async function repairCatalogIcons() {
         removeProgressListener();
         isRepairingCatalogIcons.value = false;
         catalogIconRepairProgress.value = null;
+    }
+}
+
+async function repairCatalogBackgrounds() {
+    if (isRepairingCatalogBackgrounds.value || isRepairingCatalogIcons.value || isUpdatingCatalog.value || isCheckingUpdates.value)
+        return;
+
+    isRepairingCatalogBackgrounds.value = true;
+    catalogBackgroundRepairMessage.value = "";
+    catalogBackgroundRepairError.value = "";
+    catalogBackgroundRepairProgress.value = {
+        processed: 0,
+        total: 0,
+        downloaded: 0,
+        currentBackground: null
+    };
+
+    const removeProgressListener = window.app.onCatalogBackgroundRepairProgress((progress) => {
+        catalogBackgroundRepairProgress.value = progress;
+    });
+
+    try
+    {
+        const result = await window.app.repairCatalogBackgrounds();
+        if (result.downloaded === 0)
+        {
+            catalogBackgroundRepairMessage.value = `All ${result.required} skin backgrounds required by the catalog are available.`;
+            return;
+        }
+
+        const alreadyAvailable = result.bundled + result.cached;
+
+        catalogBackgroundRepairMessage.value =
+            `Downloaded ${result.downloaded} missing or invalid ` +
+            `${result.downloaded === 1 ? "background" : "backgrounds"}. ` +
+            `${alreadyAvailable} ${alreadyAvailable === 1 ? "was" : "were"} already available.`;
+    }
+    catch (error)
+    {
+        RendererLogger.error(ApplicationLogSource.maintenance, "Could not repair the skin backgrounds.", error);
+        catalogBackgroundRepairError.value = ErrorUtils.getUserErrorMessage(error, "The skin backgrounds could not be repaired.");
+    }
+    finally
+    {
+        removeProgressListener();
+        isRepairingCatalogBackgrounds.value = false;
+        catalogBackgroundRepairProgress.value = null;
     }
 }
 
@@ -1028,7 +1079,10 @@ onMounted(() => {
                 </p>
             </section>
 
-            <section class="settings-section" aria-labelledby="maintenance-settings-title">
+            <section
+                class="settings-section settings-section--maintenance"
+                aria-labelledby="maintenance-settings-title"
+            >
                 <header class="section-heading">
                     <div>
                         <h2 id="maintenance-settings-title">Storage &amp; maintenance</h2>
@@ -1170,6 +1224,7 @@ onMounted(() => {
                             type="button"
                             :disabled="
                                 isRepairingCatalogIcons ||
+                                isRepairingCatalogBackgrounds ||
                                 isUpdatingCatalog ||
                                 isCheckingUpdates
                             "
@@ -1178,6 +1233,90 @@ onMounted(() => {
                             <DownloadIcon class="settings-button-icon" />
                             <span>
                                 {{ isRepairingCatalogIcons ? "Checking…" : "Repair icons" }}
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="setting-row setting-row--icon-maintenance">
+                        <div class="setting-copy">
+                            <h3>Skin backgrounds</h3>
+                            <p>
+                                Check the preview backgrounds required by the current catalog and
+                                redownload anything missing or invalid.
+                            </p>
+
+                            <div
+                                v-if="catalogBackgroundRepairProgress"
+                                class="maintenance-progress"
+                                aria-live="polite"
+                            >
+                                <div class="maintenance-progress-copy">
+                                    <span
+                                        :title="catalogBackgroundRepairProgress.currentBackground || undefined"
+                                    >
+                                        {{
+                                            catalogBackgroundRepairProgress.currentBackground
+                                                ? `Checking ${catalogBackgroundRepairProgress.currentBackground}`
+                                                : "Checking skin backgrounds..."
+                                        }}
+                                    </span>
+                                    <strong>
+                                        {{ catalogBackgroundRepairProgress.processed }} of
+                                        {{ catalogBackgroundRepairProgress.total }}
+                                    </strong>
+                                </div>
+
+                                <div
+                                    class="maintenance-progress-track"
+                                    role="progressbar"
+                                    aria-label="Skin background repair progress"
+                                    aria-valuemin="0"
+                                    :aria-valuemax="catalogBackgroundRepairProgress.total"
+                                    :aria-valuenow="catalogBackgroundRepairProgress.processed"
+                                >
+                                    <span
+                                        class="maintenance-progress-fill"
+                                        :style="{
+                                            width: `${Math.round(
+                                                (catalogBackgroundRepairProgress.processed /
+                                                    Math.max(catalogBackgroundRepairProgress.total, 1)) * 100
+                                            )}%`
+                                        }"
+                                    ></span>
+                                </div>
+                            </div>
+
+                            <span
+                                v-if="catalogBackgroundRepairMessage"
+                                class="maintenance-result"
+                                role="status"
+                            >
+                                {{ catalogBackgroundRepairMessage }}
+                            </span>
+
+                            <span
+                                v-if="catalogBackgroundRepairError"
+                                class="setting-error maintenance-error"
+                                role="alert"
+                            >
+                                {{ catalogBackgroundRepairError }}
+                            </span>
+                        </div>
+
+                        <button
+                            class="settings-button settings-button--secondary"
+                            type="button"
+                            :disabled="
+                                isRepairingCatalogBackgrounds ||
+                                isRepairingCatalogIcons ||
+                                isUpdatingCatalog ||
+                                isCheckingUpdates
+                            "
+                            @click="repairCatalogBackgrounds"
+                        >
+                            <DownloadIcon class="settings-button-icon" />
+                            <span>
+                                {{ isRepairingCatalogBackgrounds ? "Checking..." : "Repair backgrounds" }}
                             </span>
                         </button>
                     </div>
@@ -1883,6 +2022,11 @@ h1 {
 
 .setting-row--icon-maintenance > .settings-button {
     margin-top: 1px;
+}
+
+.settings-section--maintenance .settings-list .setting-row > .settings-button {
+    width: 190px;
+    flex: 0 0 190px;
 }
 
 .maintenance-progress {

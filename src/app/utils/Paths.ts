@@ -71,7 +71,7 @@ export class Paths {
     }
 
     static getOperationsManifestPath(id: string): string {
-        return path.join(this.getOperationsRoot(), `${id}.json`);
+        return path.join(Paths.getOperationsRoot(), `${id}.json`);
     }
 
     static getSyncOperationsRoot(): string {
@@ -128,6 +128,14 @@ export class Paths {
         return path.join(gameLocation, "BepInEx", "config", "com.jelosus1.lopluginplus.cfg");
     }
 
+    static getCachedSkinBackgroundsPath(): string {
+        return path.join(app.getPath("userData"), "catalogs", "backgrounds");
+    }
+
+    static getCachedSkinBackgroundPath(backgroundFile: string): string {
+        return path.join(Paths.getCachedSkinBackgroundsPath(), backgroundFile);
+    }
+
     static isSubpath(parentPath: string, childPath: string): boolean {
         const relative = path.relative(parentPath, childPath);
         return Boolean(relative && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
@@ -175,28 +183,28 @@ export class Paths {
         return Paths.isSafeDirectoryName(value) && !value.startsWith(".");
     }
 
-    static isSafeCatalogIconName(value: unknown): value is string {
+    static isSafeFileName(value: unknown): value is string {
         return (
             Paths.isSafeDirectoryName(value) &&
             value === value.trim() &&
             !value.startsWith(".") &&
             !/[. ]$/.test(value) &&
-            !/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(value) &&
-            path.extname(value).toLowerCase() === ".png"
+            !/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(value)
         );
     }
 
+    static isSafeCatalogIconName(value: unknown): value is string {
+        return Paths.isSafeFileName(value) && path.extname(value).toLowerCase() === ".png";
+    }
+
     static isSafeModAssetName(value: unknown): value is string {
-        if (
-            !Paths.isSafeDirectoryName(value) ||
-            value !== value.trim() ||
-            value.startsWith(".") ||
-            /[. ]$/.test(value) ||
-            /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(value)
-        ) {
+        if (!Paths.isSafeFileName(value))
             return false;
-        }
 
         return [".json", ".atlas", ".png"].includes(path.extname(value).toLowerCase());
+    }
+
+    static isSafeCatalogBackgroundName(value: unknown): value is string {
+        return Paths.isSafeFileName(value) && path.extname(value).toLowerCase() === ".webp";
     }
 }
