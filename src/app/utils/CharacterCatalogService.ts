@@ -1,4 +1,12 @@
-import type { CharacterCatalog, CharacterSkin, SpineHitbox, SpinePreviewData } from "../../shared/characters.js";
+import type {
+    CharacterCatalog,
+    CharacterSkin,
+    SpineHitbox,
+    SpinePreviewData,
+    CharacterBackgroundPreview,
+    PreviewSprite,
+    PreviewTransform
+} from "../../shared/characters.js";
 
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ApplicationLogSource } from "../../shared/application.js";
@@ -30,6 +38,10 @@ export class CharacterCatalogService {
     private readonly MAX_HITBOX_COORDINATE = 100_000;
     private readonly MAX_HITBOX_SIZE = 100_000;
     private readonly MAX_SPECIAL_TOUCH_HITBOXES = 2;
+    private readonly MAX_BACKGROUND_LAYERS = 32;
+    private readonly MAX_PREVIEW_DIMENSION = 100_000;
+    private readonly MAX_PREVIEW_TRANSFORM_VALUE = 100_000;
+    private readonly MAX_BACKGROUND_ZOOM = 10;
     static readonly MAX_CATALOG_SIZE = 1 * 1024 ** 2;
 
     async getCatalog(): Promise<CharacterCatalog> {
@@ -218,6 +230,8 @@ export class CharacterCatalogService {
             assetsValue.map((asset, assetIndex) => this.readFileName(asset, `entry ${index} asset ${assetIndex}`))
         );
 
+        const backgroundPreview = this.parseBackgroundPreview(value.backgroundPreview, index);
+
         const isSpineSkin = this.readBoolean(value.isSpineSkin, `entry ${index} isSpineSkin`);
         const isAnimatorSkin = this.readBoolean(value.isAnimatorSkin, `entry ${index} isAnimatorSkin`);
         const isStaticSkin = this.readBoolean(value.isStaticSkin, `entry ${index} isStaticSkin`);
@@ -233,6 +247,7 @@ export class CharacterCatalogService {
             skinName: this.readString(value.skinName, `entry ${index} skinName`),
             iconFile: this.readFileName(value.iconFile, `entry ${index} iconFile`),
             isRPlusSkin: this.readBoolean(value.isRPlusSkin, `entry ${index} isRPlusSkin`),
+            backgroundPreview,
             assets
         };
 
@@ -287,15 +302,48 @@ export class CharacterCatalogService {
             specialTouchValue.map((hitbox, hitboxIndex) => this.parseSpineHitbox(hitbox, `entry ${index} special-touch hitbox ${hitboxIndex}`))
         );
 
+        const postSpecialTouchValue = value.animations.postSpecialTouch;
+        let postSpecialTouch: SpinePreviewData["animations"]["postSpecialTouch"] = null;
+
+        if (postSpecialTouchValue !== null)
+        {
+            if (!TypeCheck.isRecord(postSpecialTouchValue))
+                throw new Error(`Spine character catalog entry ${index} has invalid post-special-touch animations.`);
+
+            const postTouchValue = postSpecialTouchValue.touch;
+
+            postSpecialTouch = Object.freeze({
+                idle: this.readString(
+                    postSpecialTouchValue.idle,
+                    `entry ${index} Spine preview post-special-touch idle animation`,
+                    this.MAX_SPINE_NAME_LENGTH
+                ),
+                touch: postTouchValue === null
+                    ? null
+                    : this.readString(
+                        postTouchValue,
+                        `entry ${index} Spine preview post-special-touch touch animation`,
+                        this.MAX_SPINE_NAME_LENGTH
+                    ),
+                specialTouch: this.readString(
+                    postSpecialTouchValue.specialTouch,
+                    `entry ${index} Spine preview post-special-touch special-touch animation`,
+                    this.MAX_SPINE_NAME_LENGTH
+                )
+            });
+        }
+
         return Object.freeze({
             scale,
+            transform: this.parsePreviewTransform(value.transform, `entry ${index} Spine preview transform`),
             baseSkin: this.readString(value.baseSkin, `entry ${index} Spine preview baseSkin`, this.MAX_SPINE_NAME_LENGTH),
             defaultParts: this.readBoolean(value.defaultParts, `entry ${index} Spine preview defaultParts`),
             defaultParts2: this.readBoolean(value.defaultParts2, `entry ${index} Spine preview defaultParts2`),
             animations: Object.freeze({
                 idle: this.readString(value.animations.idle, `entry ${index} Spine preview idle animation`, this.MAX_SPINE_NAME_LENGTH),
                 touch: this.readString(value.animations.touch, `entry ${index} Spine preview touch animation`, this.MAX_SPINE_NAME_LENGTH),
-                specialTouch: this.readString(value.animations.specialTouch, `entry ${index} Spine preview special-touch animation`, this.MAX_SPINE_NAME_LENGTH)
+                specialTouch: this.readString(value.animations.specialTouch, `entry ${index} Spine preview special-touch animation`, this.MAX_SPINE_NAME_LENGTH),
+                postSpecialTouch
             }),
             hitboxes: Object.freeze({
                 touch: this.parseSpineHitbox(value.hitboxes.touch, `entry ${index} touch hitbox`),
@@ -328,6 +376,110 @@ export class CharacterCatalogService {
             height,
             rotation
         });
+    }
+
+    private parseBackgroundPreview(value: unknown, index: number): CharacterBackgroundPreview | null {
+        if (value === null)
+            return null;
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Entry ${index} has invalid background preview data.`);
+        if (!TypeCheck.isValidArray(value.layers, this.MAX_BACKGROUND_LAYERS))
+            throw new Error(`Entry ${index} has an invalid number of background layers.`);
+
+        const layers = Object.freeze(
+            value.layers.map((layer, layerIndex) => {
+                const fieldName = `entry ${index} background layer ${layerIndex}`;
+
+                if (!TypeCheck.isRecord(layer))
+                    throw new Error(`Invalid ${fieldName}.`);
+
+                const file = this.readFileName(layer.file, `${fieldName} file`);
+                if (!file.toLowerCase().endsWith(".webp"))
+                    throw new Error(`${fieldName} is not a WebP image.`);
+
+                const sortingOrder = this.readFiniteNumber(layer.sortingOrder, `${fieldName} sorting order`);
+                if (!Number.isSafeInteger(sortingOrder))
+                    throw new Error(`${fieldName} has an invalid sorting order.`);
+
+                return Object.freeze({
+                    ...this.parsePreviewSprite(layer, fieldName),
+                    file,
+                    sortingOrder
+                });
+            })
+        );
+
+        let camera: CharacterBackgroundPreview["camera"] = null;
+
+        if (value.camera !== null)
+        {
+            if (!TypeCheck.isRecord(value.camera))
+                throw new Error(`Entry ${index} has invalid background camera data.`);
+
+            const zoom = this.readFiniteNumber(value.camera.zoom, `entry ${index} background camera zoom`);
+            if (zoom <= 0 || zoom > this.MAX_BACKGROUND_ZOOM)
+                throw new Error(`Entry ${index} has an invalid background camera zoom.`);
+
+            camera = Object.freeze({
+                ...this.parsePreviewSprite(value.camera, `entry ${index} background camera`),
+                zoom
+            });
+        }
+
+        return Object.freeze({
+            layers,
+            camera
+        });
+    }
+
+    private parsePreviewSprite(value: unknown, fieldName: string): PreviewSprite {
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Invalid ${fieldName}.`);
+        if (!TypeCheck.isRecord(value.pivot))
+            throw new Error(`${fieldName} has an invalid pivot.`);
+
+        const width = this.readFiniteNumber(value.width, `${fieldName} width`);
+        const height = this.readFiniteNumber(value.height, `${fieldName} height`);
+        const pivotX = this.readFiniteNumber(value.pivot.x, `${fieldName} pivot x`);
+        const pivotY = this.readFiniteNumber(value.pivot.y, `${fieldName} pivot y`);
+
+        if (width <= 0 || height <= 0 || width > this.MAX_PREVIEW_DIMENSION || height > this.MAX_PREVIEW_DIMENSION)
+            throw new Error(`${fieldName} has invalid dimensions.`);
+        if (pivotX < 0 || pivotX > 1 || pivotY < 0 || pivotY > 1)
+            throw new Error(`${fieldName} has an invalid pivot.`);
+
+        return Object.freeze({
+            width,
+            height,
+            pivot: Object.freeze({
+                x: pivotX,
+                y: pivotY
+            }),
+            transform: this.parsePreviewTransform(value.transform, `${fieldName} transform`)
+        });
+    }
+
+    private parsePreviewTransform(value: unknown, fieldName: string): PreviewTransform {
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Invalid ${fieldName}.`);
+
+        const transform = {
+            a: this.readFiniteNumber(value.a, `${fieldName} a`),
+            b: this.readFiniteNumber(value.b, `${fieldName} b`),
+            c: this.readFiniteNumber(value.c, `${fieldName} c`),
+            d: this.readFiniteNumber(value.d, `${fieldName} d`),
+            tx: this.readFiniteNumber(value.tx, `${fieldName} tx`),
+            ty: this.readFiniteNumber(value.ty, `${fieldName} ty`)
+        };
+
+        if (Object.values(transform).some((component) => Math.abs(component) > this.MAX_PREVIEW_TRANSFORM_VALUE))
+            throw new Error(`${fieldName} exceeds the supported coordinate range.`);
+
+        const determinant = transform.a * transform.d - transform.b * transform.c;
+        if (Math.abs(determinant) < 1e-7)
+            throw new Error(`${fieldName} is not invertible.`);
+
+        return Object.freeze(transform);
     }
 
     private buildIndexes(catalog: CharacterCatalog) {

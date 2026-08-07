@@ -3,10 +3,12 @@ import type { InstalledMod, ModSyncLogEntry, ModSyncMethod, ModSyncRequest } fro
 import type { CharacterSkin } from "../../shared/characters";
 
 import ModSyncProgressDialog from "./ModSyncProgressDialog.vue";
+import SpineModPreview from "./SpineModPreview.vue";
 import RefreshIcon from "./icons/RefreshIcon.vue";
 import SearchIcon from "./icons/SearchIcon.vue";
 import FolderIcon from "./icons/FolderIcon.vue";
 import RenameIcon from "./icons/RenameIcon.vue";
+import EyeOffIcon from "./icons/EyeOffIcon.vue";
 import CloseIcon from "./icons/CloseIcon.vue";
 import CheckIcon from "./icons/CheckIcon.vue";
 import TrashIcon from "./icons/TrashIcon.vue";
@@ -112,6 +114,7 @@ const syncDetail = ref("");
 const syncLogEntries = ref<ModSyncLogEntry[]>([]);
 const previewDialog = ref<HTMLDialogElement | null>(null);
 const modPendingPreview = ref<ModTableRow | null>(null);
+const arePreviewControlsVisible = ref(true);
 
 let knownModIds = new Set<string>();
 
@@ -879,10 +882,15 @@ function unsyncMods() {
 
 async function openModPreview(row: ModTableRow) {
     actionErrorMessage.value = "";
+    arePreviewControlsVisible.value = true;
     modPendingPreview.value = row;
 
     await nextTick();
     previewDialog.value?.show();
+}
+
+function togglePreviewControls() {
+    arePreviewControlsVisible.value = !arePreviewControlsVisible.value;
 }
 
 function closeModPreview() {
@@ -1563,7 +1571,11 @@ function closeModPreview() {
         @cancel.prevent="closeModPreview"
         @keydown.esc.prevent="closeModPreview"
     >
-        <div v-if="modPendingPreview" class="mod-preview-layout">
+        <div
+            v-if="modPendingPreview"
+            class="mod-preview-layout"
+            :class="{ 'is-preview-controls-hidden': !arePreviewControlsVisible }"
+        >
             <header class="mod-preview-header">
                 <div class="mod-preview-heading">
                     <p>Mod preview</p>
@@ -1578,25 +1590,45 @@ function closeModPreview() {
                     </span>
                 </div>
 
-                <button
-                    class="mod-preview-close"
-                    type="button"
-                    aria-label="Close mod preview"
-                    title="Close preview"
-                    autofocus
-                    @click="closeModPreview"
-                >
-                    <CloseIcon />
-                </button>
+                <div class="mod-preview-header-actions">
+                    <button
+                        class="mod-preview-header-button"
+                        type="button"
+                        :aria-pressed="!arePreviewControlsVisible"
+                        :aria-label="arePreviewControlsVisible ? 'Hide preview controls' : 'Show preview controls'"
+                        :title="arePreviewControlsVisible ? 'Hide preview controls' : 'Show preview controls'"
+                        @click="togglePreviewControls"
+                    >
+                        <EyeOffIcon v-if="arePreviewControlsVisible" />
+                        <EyeIcon v-else />
+                    </button>
+
+                    <button
+                        class="mod-preview-header-button"
+                        type="button"
+                        aria-label="Close mod preview"
+                        title="Close preview"
+                        autofocus
+                        @click="closeModPreview"
+                    >
+                        <CloseIcon />
+                    </button>
+                </div>
             </header>
 
             <main class="mod-preview-stage">
-                <div class="mod-preview-placeholder">
+                <SpineModPreview
+                    v-if="modPendingPreview.catalogSkin?.isSpineSkin"
+                    :mod="modPendingPreview.mod"
+                    :skin="modPendingPreview.catalogSkin"
+                />
+
+                <div v-else class="mod-preview-placeholder">
                     <span aria-hidden="true">
                         <EyeIcon />
                     </span>
-                    <strong>Preview renderer</strong>
-                    <p>The Spine preview will appear here.</p>
+                    <strong>Preview not available yet</strong>
+                    <p>Animator and static previews will be added later.</p>
                 </div>
             </main>
         </div>
@@ -2939,7 +2971,7 @@ h1 {
 
 .mod-preview-heading span {
     display: block;
-    max-width: min(760px, calc(100vw - 130px));
+    max-width: min(760px, calc(100vw - 180px));
     margin-top: 4px;
     overflow: hidden;
     color: #9da19b;
@@ -2948,7 +2980,14 @@ h1 {
     white-space: nowrap;
 }
 
-.mod-preview-close {
+.mod-preview-header-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.mod-preview-header-button {
     display: inline-flex;
     width: 40px;
     height: 40px;
@@ -2963,23 +3002,28 @@ h1 {
     cursor: pointer;
 }
 
-.mod-preview-close:hover {
+.mod-preview-header-button:hover {
     color: #f2eee5;
     background: #202521;
 }
 
-.mod-preview-close:focus-visible {
+.mod-preview-header-button:focus-visible {
     outline: 2px solid #f2eee5;
     outline-offset: 2px;
 }
 
-.mod-preview-close svg {
+.mod-preview-header-button svg {
     width: 19px;
     height: 19px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.8;
     stroke-linecap: round;
+}
+
+.mod-preview-layout.is-preview-controls-hidden :deep(.spine-preview-controls),
+.mod-preview-layout.is-preview-controls-hidden :deep(.spine-preview-navigation) {
+    display: none;
 }
 
 .mod-preview-stage {

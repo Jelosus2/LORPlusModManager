@@ -1,3 +1,36 @@
+export type PreviewVector = Readonly<{
+    x: number;
+    y: number;
+}>;
+
+export type PreviewTransform = Readonly<{
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+    tx: number;
+    ty: number;
+}>;
+
+export type PreviewSprite = Readonly<{
+    width: number;
+    height: number;
+    pivot: PreviewVector;
+    transform: PreviewTransform;
+}>;
+
+export type BackgroundPreviewLayer = PreviewSprite & Readonly<{
+    file: string;
+    sortingOrder: number;
+}>;
+
+export type CharacterBackgroundPreview = Readonly<{
+    layers: readonly BackgroundPreviewLayer[];
+    camera: (PreviewSprite & Readonly<{
+        zoom: number;
+    }>) | null;
+}>;
+
 export type SpineHitbox = Readonly<{
     x: number;
     y: number;
@@ -6,8 +39,15 @@ export type SpineHitbox = Readonly<{
     rotation: number;
 }>;
 
+export type SpineAnimationSet = Readonly<{
+    idle: string;
+    touch: string | null;
+    specialTouch: string;
+}>;
+
 export type SpinePreviewData = Readonly<{
     scale: number;
+    transform: PreviewTransform;
     baseSkin: string;
     defaultParts: boolean;
     defaultParts2: boolean;
@@ -15,6 +55,7 @@ export type SpinePreviewData = Readonly<{
         idle: string;
         touch: string;
         specialTouch: string;
+        postSpecialTouch: SpineAnimationSet | null;
     }>;
     hitboxes: Readonly<{
         touch: SpineHitbox;
@@ -29,6 +70,7 @@ type CharacterSkinBase = Readonly<{
     skinName: string;
     iconFile: string;
     isRPlusSkin: boolean;
+    backgroundPreview: CharacterBackgroundPreview | null;
     assets: readonly string[];
 }>;
 
