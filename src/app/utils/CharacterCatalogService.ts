@@ -12,6 +12,7 @@ import type {
     StaticPreviewLayer,
     StaticPreviewRenderer,
     StaticPreviewSpriteSource,
+    SpineMosaicMask
 } from "../../shared/characters.js";
 
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
@@ -55,6 +56,8 @@ export class CharacterCatalogService {
     private readonly MAX_STATIC_PIVOT_DISTANCE = 100;
     private readonly MAX_STATIC_MESH_VERTICES = 4096;
     private readonly MAX_STATIC_MESH_INDICES = 24_576;
+    private readonly MAX_SPINE_MOSAIC_MASKS = 8;
+    private readonly MAX_MOSAIC_MULTIPLIER = 100;
     static readonly MAX_CATALOG_SIZE = 5 * 1024 ** 2;
 
     async getCatalog(): Promise<CharacterCatalog> {
@@ -353,6 +356,13 @@ export class CharacterCatalogService {
             });
         }
 
+        if (!Array.isArray(value.mosaicMasks) || value.mosaicMasks.length > this.MAX_SPINE_MOSAIC_MASKS)
+            throw new Error(`Spine character catalog entry ${index} has too many mosaic masks.`);
+
+        const mosaicMasks = Object.freeze(
+            value.mosaicMasks.map((mask, maskIndex) => this.parseSpineMosaicMask(mask, `entry ${index} Spine mosaic mask ${maskIndex}`))
+        );
+
         return Object.freeze({
             scale,
             transform: this.parsePreviewTransform(value.transform, `entry ${index} Spine preview transform`),
@@ -365,6 +375,7 @@ export class CharacterCatalogService {
                 specialTouch: this.readString(value.animations.specialTouch, `entry ${index} Spine preview special-touch animation`, this.MAX_SPINE_NAME_LENGTH),
                 postSpecialTouch
             }),
+            mosaicMasks,
             hitboxes: Object.freeze({
                 touch: this.parseSpineHitbox(value.hitboxes.touch, `entry ${index} touch hitbox`),
                 specialTouch
@@ -395,6 +406,28 @@ export class CharacterCatalogService {
             width,
             height,
             rotation
+        });
+    }
+
+    private parseSpineMosaicMask(value: unknown, fieldName: string): SpineMosaicMask {
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Invalid ${fieldName}.`);
+
+        const referenceScreenSize = this.readFiniteNumber(value.referenceScreenSize, `${fieldName} reference screen size`);
+        const minMultiplier = this.readFiniteNumber(value.minMultiplier, `${fieldName} minimum multiplier`);
+        const maxMultiplier = this.readFiniteNumber(value.maxMultiplier, `${fieldName} maximum multiplier`);
+
+        if (referenceScreenSize <= 0 || referenceScreenSize > this.MAX_PREVIEW_DIMENSION)
+            throw new Error(`${fieldName} has an invalid reference screen size.`);
+        if (minMultiplier <= 0 || maxMultiplier < minMultiplier || maxMultiplier > this.MAX_MOSAIC_MULTIPLIER)
+            throw new Error(`${fieldName} has invalid scale multipliers.`);
+
+        return Object.freeze({
+            ...this.parsePreviewSprite(value, fieldName),
+            boneName: this.readString(value.boneName, `${fieldName} bone name`, this.MAX_SPINE_NAME_LENGTH),
+            referenceScreenSize,
+            minMultiplier,
+            maxMultiplier
         });
     }
 

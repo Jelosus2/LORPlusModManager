@@ -10,15 +10,20 @@ import PlayIcon from "./icons/PlayIcon.vue";
 
 import { Application, Assets, Cache, Container, Graphics, Matrix, Sprite, Texture } from "pixi.js";
 import { SpineMultiplyAlphaCutoff } from "@/data/SpineMultiplyAlphaCutoff.ts";
+import { Skin, Spine, type Bone } from "@esotericsoftware/spine-pixi-v8";
 import { ApplicationLogSource } from "../../shared/application.ts";
-import { Skin, Spine } from "@esotericsoftware/spine-pixi-v8";
 import { getSkinBackgroundUrl } from "@/data/skinBackgrounds";
 import { RendererLogger } from "@/utils/RendererLogger.ts";
+import { PixelateFilter } from "pixi-filters/pixelate";
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { getModAssetUrl } from "@/data/modAssets";
 import { ErrorUtils } from "@/utils/ErrorUtils";
 
-type CensorshipType = keyof typeof CENSORSHIP_SKIN_NAMES;
+type CensorshipType =
+    | "rplus"
+    | "unedited"
+    | "censored"
+    | "pixelated";
 
 type FaceSkinOption = Readonly<{
     name: string;
@@ -43,6 +48,7 @@ const MIN_PREVIEW_ZOOM = 0.25;
 const MAX_PREVIEW_ZOOM = 4;
 const PREVIEW_ZOOM_SENSITIVITY = 0.0015;
 const PAN_DRAG_THRESHOLD = 4;
+const MOSAIC_PIXEL_SIZE = 12;
 
 const props = defineProps<{
     mod: InstalledMod;
@@ -79,6 +85,9 @@ let hitboxLayer: Container | null = null;
 let previewScene: Container | null = null;
 let spineRoot: Container | null = null;
 let multiplyAlphaCutoff: SpineMultiplyAlphaCutoff | null = null;
+let mosaicSpine: Spine | null = null;
+let mosaicMaskLayer: Graphics | null = null;
+let mosaicPixelateFilter: PixelateFilter | null = null;
 let resizeFrame: number | null = null;
 let skeletonCacheKey: string | null = null;
 let isPostSpecialTouchState = false;
@@ -157,6 +166,13 @@ async function createPreview() {
         const runtimeScale = props.skin.spinePreview.scale;
         skeletonCacheKey = `${skeletonAlias}-${atlasAlias}-${runtimeScale}`;
 
+        spineRoot = new Container();
+        spineRoot.zIndex = 0;
+        spineRoot.sortableChildren = true;
+        spineRoot.setFromMatrix(toPixiMatrix(props.skin.spinePreview.transform));
+
+        previewScene.addChild(spineRoot);
+
         spine = Spine.from({
             skeleton: skeletonAlias,
             atlas: atlasAlias,
@@ -165,29 +181,50 @@ async function createPreview() {
             ticker: application.ticker
         });
 
+        mosaicSpine = Spine.from({
+            skeleton: skeletonAlias,
+            atlas: atlasAlias,
+            scale: runtimeScale,
+            autoUpdate: true,
+            ticker: application.ticker
+        });
+
+        spine.zIndex = 0;
+        mosaicSpine.zIndex = 1;
+
+        mosaicMaskLayer = new Graphics();
+        mosaicMaskLayer.zIndex = 2;
+        mosaicMaskLayer.eventMode = "none";
+
+        mosaicPixelateFilter = new PixelateFilter(MOSAIC_PIXEL_SIZE);
+        mosaicSpine.filters = [mosaicPixelateFilter];
+        mosaicSpine.mask = mosaicMaskLayer;
+
+        spineRoot.addChild(spine);
+        spineRoot.addChild(mosaicSpine);
+        spineRoot.addChild(mosaicMaskLayer);
+
         multiplyAlphaCutoff = new SpineMultiplyAlphaCutoff(UNITY_MULTIPLY_ALPHA_CUTOFF);
         multiplyAlphaCutoff.apply(spine);
 
         initializeCensorshipTypes();
         initializeDecorationOptions();
         initializeFaceSkins();
-        assembleGameSkin();
+        applySkinComposition();
 
         const idleAnimation = props.skin.spinePreview.animations.idle;
         if (!spine.skeleton.data.findAnimation(idleAnimation))
             throw new Error(`The idle animation "${idleAnimation}" was not found.`);
 
-        spine.state.setAnimation(0, idleAnimation, true);
-        spine.update(0);
+        setPreviewAnimation(idleAnimation, true);
 
-        spineRoot = new Container();
-        spineRoot.zIndex = 0;
-        spineRoot.setFromMatrix(toPixiMatrix(props.skin.spinePreview.transform));
-        spineRoot.addChild(spine);
+        for (const runtime of getRuntimeSpines())
+            runtime.update(0);
 
-        previewScene.addChild(spineRoot);
+        application.ticker.add(updateSpineMosaicMasks);
+
+        updateMosaicOverlayVisibility();
         createHitboxLayer();
-
         fitPreview();
 
         resizeObserver = new ResizeObserver(schedulePreviewFit);
@@ -219,12 +256,24 @@ async function destroyPreview() {
 
     if (application)
     {
-        application.destroy({ removeView: true }, { children: true });
+        application.ticker.remove(updateSpineMosaicMasks);
+
+        setPreviewChildAttached(spineRoot, mosaicSpine, true);
+        setPreviewChildAttached(spineRoot, mosaicMaskLayer, true);
+
+        const pixelateFilter = mosaicPixelateFilter;
+
+        application.stage.destroy({ children: true });
+        pixelateFilter?.destroy();
+        application.destroy({ removeView: false }, false);
 
         application = null;
         previewScene = null;
         spineRoot = null;
         spine = null;
+        mosaicSpine = null;
+        mosaicMaskLayer = null;
+        mosaicPixelateFilter = null;
         hitboxLayer = null;
 
         multiplyAlphaCutoff?.destroy();
@@ -252,19 +301,15 @@ async function destroyPreview() {
     }
 }
 
-function assembleGameSkin() {
-    if (!spine)
-        return;
-
+function assembleGameSkin(target: Spine) {
     const previewData = props.skin.spinePreview;
-    const skeletonData = spine.skeleton.data;
+    const skeletonData = target.skeleton.data;
     const compositeSkin = new Skin("lorplus-preview");
 
-    if (!addSkinIfPresent(compositeSkin, previewData.baseSkin))
+    if (!addSkinIfPresent(target, compositeSkin, previewData.baseSkin))
         throw new Error(`The base Spine skin "${previewData.baseSkin}" was not found.`);
 
-    const censorshipSkinName = CENSORSHIP_SKIN_NAMES[selectedCensorshipType.value];
-    addSkinIfPresent(compositeSkin, censorshipSkinName);
+    addSkinIfPresent(target, compositeSkin, resolveCensorshipSkinName(selectedCensorshipType.value));
 
     if (selectedFaceSkinName.value)
     {
@@ -291,15 +336,12 @@ function assembleGameSkin() {
         }
     }
 
-    spine.skeleton.setSkin(compositeSkin);
-    spine.skeleton.setSlotsToSetupPose();
+    target.skeleton.setSkin(compositeSkin);
+    target.skeleton.setSlotsToSetupPose();
 }
 
-function addSkinIfPresent(compositeSkin: Skin, skinName: string): boolean {
-    if (!spine)
-        return false;
-
-    const foundSkin = spine.skeleton.data.findSkin(skinName);
+function addSkinIfPresent(target: Spine, compositeSkin: Skin, skinName: string): boolean {
+    const foundSkin = target.skeleton.data.findSkin(skinName);
     if (!foundSkin)
         return false;
 
@@ -313,17 +355,20 @@ function initializeCensorshipTypes() {
 
     const detectedTypes = new Set<CensorshipType>();
 
-    for (const [type, skinName] of Object.entries(CENSORSHIP_SKIN_NAMES))
-    {
-        if (spine.skeleton.data.findSkin(skinName))
-            detectedTypes.add(type as CensorshipType);
-    }
+    if (spine.skeleton.data.findSkin(CENSORSHIP_SKIN_NAMES.rplus))
+        detectedTypes.add("rplus");
+    if (spine.skeleton.data.findSkin(CENSORSHIP_SKIN_NAMES.unedited))
+        detectedTypes.add("unedited");
+    if (spine.skeleton.data.findSkin(CENSORSHIP_SKIN_NAMES.censored))
+        detectedTypes.add("censored");
+    if (hasMappedMosaicCensorship())
+        detectedTypes.add("pixelated");
 
     availableCensorshipTypes.value = detectedTypes;
 
     const preferenceOrder: readonly CensorshipType[] = props.skin.isRPlusSkin
-        ? ["rplus", "unedited", "censored"]
-        : ["unedited", "censored", "rplus"];
+        ? ["rplus", "unedited", "censored", "pixelated"]
+        : ["unedited", "censored", "rplus", "pixelated"];
 
     selectedCensorshipType.value = preferenceOrder.find((type) => detectedTypes.has(type)) ?? "unedited";
 }
@@ -422,11 +467,13 @@ function createBackgroundLayers() {
 }
 
 function applySkinComposition() {
-    if (!spine)
-        return;
+    for (const runtime of getRuntimeSpines())
+    {
+        assembleGameSkin(runtime);
+        runtime.update(0);
+    }
 
-    assembleGameSkin();
-    spine.update(0);
+    updateMosaicOverlayVisibility();
 }
 
 function fitPreview() {
@@ -560,7 +607,7 @@ function playInteractionAnimation(kind: "touch" | "special") {
     }
 
     isInteractionPlaying = true;
-    const entry = spine.state.setAnimation(0, animationName, false);
+    const entry = setPreviewAnimation(animationName, false);
 
     entry.listener = {
         complete: () => {
@@ -570,7 +617,7 @@ function playInteractionAnimation(kind: "touch" | "special") {
             if (entersPostSpecialTouchState)
                 isPostSpecialTouchState = true;
 
-            spine.state.setAnimation(0, nextIdleAnimation, true);
+            setPreviewAnimation(nextIdleAnimation, true);
             isInteractionPlaying = false;
         },
         interrupt: () => {
@@ -638,6 +685,139 @@ function setFittedPreviewView(scale: number, x: number, y: number) {
     previewScene.scale.set(scale);
     previewScene.position.set(x, y);
     previewZoom.value = 100;
+}
+
+function getRuntimeSpines(): Spine[] {
+    const runtimes: Spine[] = [];
+
+    if (spine)
+        runtimes.push(spine);
+    if (mosaicSpine)
+        runtimes.push(mosaicSpine);
+
+    return runtimes;
+}
+
+function setPreviewAnimation(animationName: string, loop: boolean) {
+    if (!spine)
+        throw new Error("The Spine preview is unavailable.");
+
+    const entry = spine.state.setAnimation(0, animationName, loop);
+    mosaicSpine?.state.setAnimation(0, animationName, loop);
+
+    return entry;
+}
+
+function setPreviewChildAttached(parent: Container | null, child: Container | null, attached: boolean) {
+    if (!parent || !child)
+        return;
+
+    if (attached)
+    {
+        if (child.parent !== parent)
+            parent.addChild(child);
+    }
+    else if (child.parent === parent)
+    {
+        parent.removeChild(child);
+    }
+}
+
+function updateMosaicOverlayVisibility() {
+    const shouldShow = selectedCensorshipType.value === "pixelated" && hasMappedMosaicCensorship();
+
+    setPreviewChildAttached(spineRoot, mosaicSpine, shouldShow);
+    setPreviewChildAttached(spineRoot, mosaicMaskLayer, shouldShow);
+
+    if (shouldShow)
+        updateSpineMosaicMasks();
+}
+
+function updateSpineMosaicMasks() {
+    if (selectedCensorshipType.value !== "pixelated" || !mosaicSpine || !mosaicMaskLayer || !mosaicMaskLayer.parent)
+        return;
+
+    mosaicMaskLayer.clear();
+    let hasGeometry = false;
+
+    for (const mask of props.skin.spinePreview.mosaicMasks)
+    {
+        const bone = mosaicSpine.skeleton.findBone(mask.boneName);
+        if (!bone)
+            continue;
+
+        const left = -mask.pivot.x * mask.width;
+        const right = left + mask.width;
+        const bottom = -mask.pivot.y * mask.height;
+        const top = bottom + mask.height;
+
+        const corners = [
+            transformMosaicPoint(mask.transform, left, bottom),
+            transformMosaicPoint(mask.transform, right, bottom),
+            transformMosaicPoint(mask.transform, right, top),
+            transformMosaicPoint(mask.transform, left, top)
+        ];
+
+        const polygon: number[] = [];
+
+        for (const point of corners)
+        {
+            const worldPoint = transformThroughSkeletonUtilityHierarchy(point, bone);
+            polygon.push(worldPoint.x, -worldPoint.y);
+        }
+
+        mosaicMaskLayer.poly(polygon, true);
+        hasGeometry = true;
+    }
+
+    if (hasGeometry)
+        mosaicMaskLayer.fill({ color: 0xffffff });
+}
+
+function transformThroughSkeletonUtilityHierarchy(point: Readonly<{ x: number; y: number }>, bone: Bone) {
+    let x = point.x;
+    let y = point.y;
+    let currentBone: Bone | null = bone;
+
+    while (currentBone)
+    {
+        const rotation = currentBone.arotation * Math.PI / 180;
+        const cosine = Math.cos(rotation);
+        const sine = Math.sin(rotation);
+
+        const scaledX = x * currentBone.ascaleX;
+        const scaledY = y * currentBone.ascaleY;
+
+        x = currentBone.ax + scaledX * cosine - scaledY * sine;
+        y = currentBone.ay + scaledX * sine + scaledY * cosine;
+
+        currentBone = currentBone.parent;
+    }
+
+    return { x, y };
+}
+
+function transformMosaicPoint(transform: PreviewTransform, x: number, y: number) {
+    return {
+        x: transform.a * x + transform.c * y + transform.tx,
+        y: transform.b * x + transform.d * y + transform.ty
+    };
+}
+
+function hasMappedMosaicCensorship(): boolean {
+    if (!spine || props.skin.spinePreview.mosaicMasks.length === 0)
+        return false;
+    if (!spine.skeleton.data.findSkin(CENSORSHIP_SKIN_NAMES.rplus))
+        return false;
+
+    return props.skin.spinePreview.mosaicMasks.every((mask) => spine?.skeleton.findBone(mask.boneName) !== null);
+}
+
+function resolveCensorshipSkinName(type: CensorshipType): string {
+    if (type === "pixelated")
+        return CENSORSHIP_SKIN_NAMES.rplus;
+
+    return CENSORSHIP_SKIN_NAMES[type];
 }
 
 function resetPreviewView() {
@@ -784,7 +964,10 @@ function toggleAnimationPlayback() {
         return;
 
     isAnimationPaused.value = !isAnimationPaused.value;
-    spine.state.timeScale = isAnimationPaused.value ? 0 : 1;
+    const timeScale = isAnimationPaused.value ? 0 : 1;
+
+    for (const runtime of getRuntimeSpines())
+        runtime.state.timeScale = timeScale;
 }
 
 function resetCharacterState() {
@@ -795,15 +978,21 @@ function resetCharacterState() {
     isPostSpecialTouchState = false;
     isInteractionPlaying = false;
 
-    spine.state.timeScale = 1;
-    spine.state.clearTracks();
-    spine.skeleton.setToSetupPose();
+    for (const runtime of getRuntimeSpines())
+    {
+        runtime.state.timeScale = 1;
+        runtime.state.clearTracks();
+        runtime.skeleton.setToSetupPose();
 
-    assembleGameSkin();
+        assembleGameSkin(runtime);
+    }
 
-    const idleAnimation = props.skin.spinePreview.animations.idle;
-    spine.state.setAnimation(0, idleAnimation, true);
-    spine.update(0);
+    setPreviewAnimation(props.skin.spinePreview.animations.idle, true);
+
+    for (const runtime of getRuntimeSpines())
+        runtime.update(0);
+
+    updateMosaicOverlayVisibility();
 }
 
 function formatFaceSkinLabel(skinName: string): string {
@@ -867,6 +1056,9 @@ onBeforeUnmount(() => {
                         </option>
                         <option value="censored" :disabled="!availableCensorshipTypes.has('censored')">
                             Censored{{ availableCensorshipTypes.has("censored") ? "" : " (not available)" }}
+                        </option>
+                        <option value="pixelated" :disabled="!availableCensorshipTypes.has('pixelated')">
+                            Pixelated{{ availableCensorshipTypes.has("pixelated") ? "" : " (not available)" }}
                         </option>
                     </select>
 

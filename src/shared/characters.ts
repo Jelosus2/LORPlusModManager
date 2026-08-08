@@ -45,6 +45,13 @@ export type SpineAnimationSet = Readonly<{
     specialTouch: string;
 }>;
 
+export type SpineMosaicMask = PreviewSprite & Readonly<{
+    boneName: string;
+    referenceScreenSize: number;
+    minMultiplier: number;
+    maxMultiplier: number;
+}>;
+
 export type SpinePreviewData = Readonly<{
     scale: number;
     transform: PreviewTransform;
@@ -57,6 +64,7 @@ export type SpinePreviewData = Readonly<{
         specialTouch: string;
         postSpecialTouch: SpineAnimationSet | null;
     }>;
+    mosaicMasks: readonly SpineMosaicMask[];
     hitboxes: Readonly<{
         touch: SpineHitbox;
         specialTouch: readonly SpineHitbox[];

@@ -35,7 +35,7 @@ type PreviewBounds = Readonly<{
 type CensorshipType =
     | "rplus"
     | "unedited"
-    | "censored";
+    | "pixelated";
 
 type FaceOption = StaticPreviewFaceExpression & Readonly<{
     label: string;
@@ -50,7 +50,7 @@ type SpriteLayerInstance = Readonly<{
 type RuntimeLayer = Readonly<{
     definition: StaticPreviewLayer;
     normal: SpriteLayerInstance;
-    censored: SpriteLayerInstance;
+    pixelated: SpriteLayerInstance;
 }>;
 
 type RuntimeMaskLayer = Readonly<{
@@ -89,11 +89,11 @@ let application: Application | null = null;
 let previewScene: Container | null = null;
 let characterRoot: Container | null = null;
 let normalCharacterRoot: Container | null = null;
-let censoredCharacterRoot: Container | null = null;
+let pixelatedCharacterRoot: Container | null = null;
 let mosaicMaskRoot: Container | null = null;
 let hitboxLayer: Container | null = null;
 let normalFace: SpriteLayerInstance | null = null;
-let censoredFace: SpriteLayerInstance | null = null;
+let pixelatedFace: SpriteLayerInstance | null = null;
 let resizeObserver: ResizeObserver | null = null;
 let resizeFrame: number | null = null;
 let fittedPreviewScale = 1;
@@ -166,14 +166,14 @@ async function createPreview() {
         normalCharacterRoot = new Container();
         normalCharacterRoot.sortableChildren = true;
 
-        censoredCharacterRoot = new Container();
-        censoredCharacterRoot.sortableChildren = true;
-        censoredCharacterRoot.filters = [new PixelateFilter(12)];
+        pixelatedCharacterRoot = new Container();
+        pixelatedCharacterRoot.sortableChildren = true;
+        pixelatedCharacterRoot.filters = [new PixelateFilter(12)];
 
         mosaicMaskRoot = new Container();
         mosaicMaskRoot.sortableChildren = true;
 
-        censoredCharacterRoot.mask = mosaicMaskRoot;
+        pixelatedCharacterRoot.mask = mosaicMaskRoot;
 
         characterRoot.addChild(normalCharacterRoot);
 
@@ -219,42 +219,42 @@ async function destroyPreview() {
         resizeFrame = null;
     }
 
-    const detachedCensoredRoot = censoredCharacterRoot && !censoredCharacterRoot.parent
-        ? censoredCharacterRoot
+    const detachedPixelatedRoot = pixelatedCharacterRoot && !pixelatedCharacterRoot.parent
+        ? pixelatedCharacterRoot
         : null;
 
-    if (normalCharacterRoot && censoredCharacterRoot && mosaicMaskRoot)
+    if (normalCharacterRoot && pixelatedCharacterRoot && mosaicMaskRoot)
     {
         for (const runtime of runtimeLayers)
         {
             setContainerAttached(normalCharacterRoot, runtime.normal.root, true);
-            setContainerAttached(censoredCharacterRoot, runtime.censored.root, true);
+            setContainerAttached(pixelatedCharacterRoot, runtime.pixelated.root, true);
         }
 
         for (const runtime of runtimeMaskLayers)
             setContainerAttached(mosaicMaskRoot, runtime.instance.root, true);
 
         setContainerAttached(normalCharacterRoot, normalFace?.root ?? null, true);
-        setContainerAttached(censoredCharacterRoot, censoredFace?.root ?? null, true);
+        setContainerAttached(pixelatedCharacterRoot, pixelatedFace?.root ?? null, true);
         setContainerAttached(characterRoot, normalCharacterRoot, true);
         setContainerAttached(characterRoot, mosaicMaskRoot, true);
-        setContainerAttached(characterRoot, censoredCharacterRoot, true);
+        setContainerAttached(characterRoot, pixelatedCharacterRoot, true);
         setContainerAttached(characterRoot, hitboxLayer, true);
         setContainerAttached(previewScene, characterRoot, true);
     }
 
     application?.destroy({ removeView: true }, { children: true });
-    detachedCensoredRoot?.destroy({ children: true });
+    detachedPixelatedRoot?.destroy({ children: true });
 
     application = null;
     previewScene = null;
     characterRoot = null;
     normalCharacterRoot = null;
-    censoredCharacterRoot = null;
+    pixelatedCharacterRoot = null;
     mosaicMaskRoot = null;
     hitboxLayer = null;
     normalFace = null;
-    censoredFace = null;
+    pixelatedFace = null;
     activePanPointerId = null;
     didDragPreview = false;
 
@@ -293,7 +293,7 @@ function initializeControlState() {
         available.add("rplus");
 
         if (props.skin.staticPreview.mosaicMasks.length > 0)
-            available.add("censored");
+            available.add("pixelated");
     }
 
     availableCensorshipTypes.value = available;
@@ -313,25 +313,25 @@ function applyRenderState() {
         const visible = !!source && isRendererVisible(runtime.definition);
 
         setContainerAttached(normalCharacterRoot, runtime.normal.root, visible);
-        setContainerAttached(censoredCharacterRoot, runtime.censored.root, visible);
+        setContainerAttached(pixelatedCharacterRoot, runtime.pixelated.root, visible);
 
         if (!source)
             continue;
 
         configureLayerSprite(runtime.normal, runtime.definition, source);
-        configureLayerSprite(runtime.censored, runtime.definition, source);
+        configureLayerSprite(runtime.pixelated, runtime.definition, source);
     }
 
-    const shouldShowCensored = selectedCensorshipType.value === "censored";
+    const shouldShowPixelated = selectedCensorshipType.value === "pixelated";
 
-    if (shouldShowCensored)
+    if (shouldShowPixelated)
     {
         setContainerAttached(characterRoot, mosaicMaskRoot, true);
-        setContainerAttached(characterRoot, censoredCharacterRoot, true);
+        setContainerAttached(characterRoot, pixelatedCharacterRoot, true);
     }
     else
     {
-        setContainerAttached(characterRoot, censoredCharacterRoot, false);
+        setContainerAttached(characterRoot, pixelatedCharacterRoot, false);
         setContainerAttached(characterRoot, mosaicMaskRoot, false);
     }
 
@@ -340,12 +340,12 @@ function applyRenderState() {
 
     const face = props.skin.staticPreview.face;
 
-    if (face && normalFace && censoredFace)
+    if (face && normalFace && pixelatedFace)
     {
         const visible = selectedFaceAssetName.value !== "" && isRendererVisible(face);
 
         setContainerAttached(normalCharacterRoot, normalFace.root, visible);
-        setContainerAttached(censoredCharacterRoot, censoredFace.root, visible);
+        setContainerAttached(pixelatedCharacterRoot, pixelatedFace.root, visible);
     }
 }
 
@@ -406,7 +406,7 @@ function createBackgroundLayers() {
 }
 
 function createCharacterLayers() {
-    if (!normalCharacterRoot || !censoredCharacterRoot)
+    if (!normalCharacterRoot || !pixelatedCharacterRoot)
         return;
 
     for (const layer of props.skin.staticPreview.layers)
@@ -416,15 +416,15 @@ function createCharacterLayers() {
             continue;
 
         const normal = createSpriteLayer(layer, source);
-        const censored = createSpriteLayer(layer, source);
+        const pixelated = createSpriteLayer(layer, source);
 
         normalCharacterRoot.addChild(normal.root);
-        censoredCharacterRoot.addChild(censored.root);
+        pixelatedCharacterRoot.addChild(pixelated.root);
 
         runtimeLayers.push({
             definition: layer,
             normal,
-            censored
+            pixelated
         });
     }
 }
@@ -512,14 +512,14 @@ function getCroppedTexture(source: StaticPreviewSpriteSource): Texture {
 }
 
 function resolveLayerSource(layer: StaticPreviewLayer): StaticPreviewSpriteSource | null {
-    if ((selectedCensorshipType.value === "rplus"|| selectedCensorshipType.value === "censored") && layer.sources.rplus)
+    if ((selectedCensorshipType.value === "rplus"|| selectedCensorshipType.value === "pixelated") && layer.sources.rplus)
         return layer.sources.rplus;
 
     return layer.sources.unedited ?? layer.sources.rplus;
 }
 
 function createFace() {
-    if (!normalCharacterRoot || !censoredCharacterRoot)
+    if (!normalCharacterRoot || !pixelatedCharacterRoot)
         return;
 
     const face = props.skin.staticPreview.face;
@@ -534,10 +534,10 @@ function createFace() {
     selectedFaceAssetName.value = "";
 
     normalFace = createFaceInstance(face);
-    censoredFace = createFaceInstance(face);
+    pixelatedFace = createFaceInstance(face);
 
     normalCharacterRoot.addChild(normalFace.root);
-    censoredCharacterRoot.addChild(censoredFace.root);
+    pixelatedCharacterRoot.addChild(pixelatedFace.root);
 
     applySelectedFace();
 }
@@ -562,14 +562,14 @@ function createFaceInstance(face: NonNullable<StaticCharacterSkin["staticPreview
 
 function applySelectedFace() {
     const face = props.skin.staticPreview.face;
-    if (!face || !normalFace || !censoredFace)
+    if (!face || !normalFace || !pixelatedFace)
         return;
 
     const expression = face.expressions.find((candidate) => candidate.assetName === selectedFaceAssetName.value);
     const visible = !!expression && isRendererVisible(face);
 
     setContainerAttached(normalCharacterRoot, normalFace.root, visible);
-    setContainerAttached(censoredCharacterRoot, censoredFace.root, visible);
+    setContainerAttached(pixelatedCharacterRoot, pixelatedFace.root, visible);
 
     if (!expression)
         return;
@@ -582,7 +582,7 @@ function applySelectedFace() {
     if (!texture || !geometry)
         return;
 
-    for (const instance of [normalFace, censoredFace])
+    for (const instance of [normalFace, pixelatedFace])
     {
         const sprite = instance.sprite;
 
@@ -1066,10 +1066,10 @@ onBeforeUnmount(() => {
                             Unedited
                         </option>
                         <option
-                            value="censored"
-                            :disabled="!availableCensorshipTypes.has('censored')"
+                            value="pixelated"
+                            :disabled="!availableCensorshipTypes.has('pixelated')"
                         >
-                            Censored{{ availableCensorshipTypes.has("censored") ? "" : " (not available)" }}
+                            Pixelated{{ availableCensorshipTypes.has("pixelated") ? "" : " (not available)" }}
                         </option>
                     </select>
 

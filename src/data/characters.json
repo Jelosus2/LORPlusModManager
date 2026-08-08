@@ -456,6 +456,7 @@
           "specialTouch": "touch_special",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -1797,6 +1798,7 @@
           "specialTouch": "Stouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 10.454545,
@@ -4612,6 +4614,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.788889,
@@ -11307,6 +11310,7 @@
           "specialTouch": "SPtoch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 1.75,
@@ -11362,6 +11366,7 @@
           "specialTouch": "SPtoch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 1.75,
@@ -12660,6 +12665,28 @@
             "specialTouch": "s_touch_2"
           }
         },
+        "mosaicMasks": [
+          {
+            "boneName": "bone_pelvis",
+            "width": 1,
+            "height": 1,
+            "pivot": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "transform": {
+              "a": 1.6,
+              "b": 0,
+              "c": 0,
+              "d": 1.6,
+              "tx": -2.087,
+              "ty": 0.425
+            },
+            "referenceScreenSize": 300,
+            "minMultiplier": 0.25,
+            "maxMultiplier": 4
+          }
+        ],
         "hitboxes": {
           "touch": {
             "x": 0.333333,
@@ -19217,6 +19244,7 @@
             "specialTouch": "S_Touth"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.309149,
@@ -21907,6 +21935,7 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.235556,
@@ -21984,6 +22013,7 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.235556,
@@ -23348,6 +23378,7 @@
             "specialTouch": "SpecialTouch2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.37037,
@@ -23943,6 +23974,7 @@
           "specialTouch": "temptation",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.375,
@@ -26743,6 +26775,7 @@
           "specialTouch": "touch_special",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.159095,
@@ -29312,6 +29345,7 @@
           "specialTouch": "s_touch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 20,
@@ -29520,6 +29554,7 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -29575,6 +29610,28 @@
           "specialTouch": "Temptation",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [
+          {
+            "boneName": "Pelvis",
+            "width": 1,
+            "height": 1,
+            "pivot": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0.198,
+              "ty": -1.102
+            },
+            "referenceScreenSize": 300,
+            "minMultiplier": 0.25,
+            "maxMultiplier": 4
+          }
+        ],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -35354,6 +35411,7 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.394286,
@@ -35988,6 +36046,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.196078,
@@ -36885,6 +36944,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.138889,
@@ -38122,6 +38182,28 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [
+          {
+            "boneName": "pelvis",
+            "width": 1,
+            "height": 1,
+            "pivot": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0.1,
+              "ty": -0.3
+            },
+            "referenceScreenSize": 300,
+            "minMultiplier": 0.25,
+            "maxMultiplier": 4
+          }
+        ],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -38451,6 +38533,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.255556,
@@ -39105,6 +39188,7 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 3.473773,
@@ -44684,6 +44768,7 @@
             "specialTouch": "s_touch01"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -48240,6 +48325,7 @@
           "specialTouch": "s_touch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -3.082497,
@@ -51191,6 +51277,7 @@
           "specialTouch": "Special_Touth",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.666667,
@@ -55400,6 +55487,7 @@
           "specialTouch": "temptation",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -4,
@@ -55877,6 +55965,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -1.75,
@@ -56124,6 +56213,7 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -1.25,
@@ -61708,6 +61798,7 @@
           "specialTouch": "stouch_new",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -1.042857,
@@ -63667,6 +63758,7 @@
           "specialTouch": "temptation3",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -2.5,
@@ -63905,6 +63997,7 @@
             "specialTouch": "S_T_2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.714286,
@@ -64002,6 +64095,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.333333,
@@ -64099,6 +64193,7 @@
             "specialTouch": "S_T_2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.714286,
@@ -64196,6 +64291,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.333333,
@@ -66016,6 +66112,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 3.333333,
@@ -66833,6 +66930,7 @@
             "specialTouch": "Temptaions2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.306667,
@@ -67401,6 +67499,28 @@
           "specialTouch": "Temptation",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [
+          {
+            "boneName": "Pelvis",
+            "width": 1,
+            "height": 1,
+            "pivot": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "transform": {
+              "a": 1.3,
+              "b": 0,
+              "c": 0,
+              "d": 1.3,
+              "tx": 0,
+              "ty": -0.7
+            },
+            "referenceScreenSize": 300,
+            "minMultiplier": 0.25,
+            "maxMultiplier": 4
+          }
+        ],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -67653,6 +67773,7 @@
           "specialTouch": "temptation",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 1.343307,
@@ -68307,6 +68428,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -68617,6 +68739,7 @@
           "specialTouch": "s_touch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 4,
@@ -68710,6 +68833,7 @@
           "specialTouch": "s_touch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 2,
@@ -69056,6 +69180,7 @@
           "specialTouch": "Temptation",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -69294,6 +69419,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 3.764706,
@@ -70699,6 +70825,7 @@
           "specialTouch": "s_touch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 1.954286,
@@ -74817,6 +74944,28 @@
             "specialTouch": "temptations2"
           }
         },
+        "mosaicMasks": [
+          {
+            "boneName": "pelvis",
+            "width": 1,
+            "height": 1,
+            "pivot": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "transform": {
+              "a": 2,
+              "b": 0,
+              "c": 0,
+              "d": 2,
+              "tx": 0,
+              "ty": -1.4
+            },
+            "referenceScreenSize": 300,
+            "minMultiplier": 0.25,
+            "maxMultiplier": 4
+          }
+        ],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -76787,6 +76936,7 @@
           "specialTouch": "temptation",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 1.416667,
@@ -77223,6 +77373,7 @@
           "specialTouch": "Special_Touth3",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -1.23385,
@@ -77465,6 +77616,7 @@
           "specialTouch": "Stouch3",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.214992,
@@ -77988,6 +78140,7 @@
             "specialTouch": "special"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.9,
@@ -79478,6 +79631,7 @@
           "specialTouch": "touch_special",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.013061,
@@ -81065,6 +81219,7 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.693333,
@@ -81907,6 +82062,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.583333,
@@ -85934,6 +86090,7 @@
           "specialTouch": "S_Touch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.184623,
@@ -86201,6 +86358,7 @@
             "specialTouch": "special"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -87109,6 +87267,7 @@
           "specialTouch": "Special_Touth",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.259678,
@@ -88499,6 +88658,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0,
@@ -90835,6 +90995,7 @@
           "specialTouch": "special_touch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.064368,
@@ -95291,6 +95452,7 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.166667,
@@ -101618,6 +101780,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -5.952381,
@@ -101942,6 +102105,7 @@
             "specialTouch": "SpecialTouch"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -3.386364,
@@ -105223,6 +105387,7 @@
             "specialTouch": "SpecialTouch"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.461773,
@@ -105602,6 +105767,28 @@
           "specialTouch": "Temptation",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [
+          {
+            "boneName": "pelvis",
+            "width": 1,
+            "height": 1,
+            "pivot": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "transform": {
+              "a": 1.2,
+              "b": 0,
+              "c": 0,
+              "d": 1.2,
+              "tx": 0,
+              "ty": -0.61
+            },
+            "referenceScreenSize": 300,
+            "minMultiplier": 0.25,
+            "maxMultiplier": 4
+          }
+        ],
         "hitboxes": {
           "touch": {
             "x": -0.153846,
@@ -107018,6 +107205,7 @@
           "specialTouch": "temptation",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 5,
@@ -107516,6 +107704,7 @@
             "specialTouch": "temptation2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -1,
@@ -108156,6 +108345,7 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.666667,
@@ -109529,6 +109719,7 @@
           "specialTouch": "S_Touch5_fix",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.210177,
@@ -111364,6 +111555,28 @@
             "specialTouch": "S_T"
           }
         },
+        "mosaicMasks": [
+          {
+            "boneName": "pelvis",
+            "width": 1,
+            "height": 1,
+            "pivot": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "transform": {
+              "a": 2,
+              "b": 0,
+              "c": 0,
+              "d": 2,
+              "tx": 3.26,
+              "ty": -2.03
+            },
+            "referenceScreenSize": 300,
+            "minMultiplier": 0.25,
+            "maxMultiplier": 4
+          }
+        ],
         "hitboxes": {
           "touch": {
             "x": -0.222222,
@@ -116340,6 +116553,7 @@
           "specialTouch": "s_touch/s_touch2_fix_nopareo",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.767968,
@@ -119443,6 +119657,7 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 0.6,
@@ -121838,6 +122053,7 @@
           "specialTouch": "S_T",
           "postSpecialTouch": null
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -0.789014,
@@ -122506,6 +122722,7 @@
             "specialTouch": "S_T_2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": -4.702381,
@@ -125842,6 +126059,7 @@
             "specialTouch": "SpecialTouch2"
           }
         },
+        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "x": 1.583333,
