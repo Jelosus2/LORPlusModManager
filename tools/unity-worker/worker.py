@@ -1,11 +1,13 @@
 from importlib.metadata import version
 from contextlib import redirect_stdout
 from pathlib import Path
+from PIL import Image
 import traceback
 import UnityPy
 import shutil
 import struct
 import json
+import math
 import sys
 import re
 import io
@@ -15,7 +17,8 @@ SUPPORTED_TYPES = {"Texture2D", "TextAsset"}
 INVALID_FILENAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 RESERVED_NAMES = re.compile(r"^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$", re.IGNORECASE)
 MAX_UNITY_HEADER_STRING = 256
-
+PREVIEW_SUPPORTED_TYPES = {"Texture2D", "Sprite"}
+MAX_PREVIEW_SELECTIONS = 64
 
 class BoundedFile(io.BufferedIOBase):
     def __init__(self, file_path: Path, length: int):
@@ -187,6 +190,203 @@ def validate_output_name(output_name: str):
         raise ValueError(f"Invalid output filename: {output_name}")
 
 
+def create_untrimmed_sprite_image(sprite, context: str) -> tuple[Image.Image, dict]:
+    rect = sprite.m_Rect
+    pivot = sprite.m_Pivot
+    pixels_per_unit = float(sprite.m_PixelsToUnits)
+
+    values = [
+        rect.width,
+        rect.height,
+        pixels_per_unit,
+        getattr(pivot, "x", None),
+        getattr(pivot, "y", None)
+    ]
+
+    if (
+        any(not isinstance(value, (int, float)) or not math.isfinite(value) for value in values)
+        or rect.width <= 0
+        or rect.height <= 0
+        or pixels_per_unit <= 0
+    ):
+        raise ValueError(f"{context} has invalid Sprite geometry.")
+
+    pixel_width = round(rect.width)
+    pixel_height = round(rect.height)
+
+    if pixel_width <= 0 or pixel_height <= 0:
+        raise ValueError(f"{context} has an invalid Sprite rectangle.")
+
+    cropped_image = sprite.image.convert("RGBA")
+    texture_offset = sprite.m_RD.textureRectOffset
+
+    left = round(texture_offset.x)
+    top = round(pixel_height - texture_offset.y - cropped_image.height)
+
+    if (
+        left < 0
+        or top < 0
+        or left + cropped_image.width > pixel_width
+        or top + cropped_image.height > pixel_height
+    ):
+        raise ValueError(f"{context} has an invalid packed Sprite offset.")
+
+    image = Image.new("RGBA", (pixel_width, pixel_height), (0, 0, 0, 0))
+    image.alpha_composite(cropped_image, (left, top))
+
+    return image, {
+        "pixelWidth": pixel_width,
+        "pixelHeight": pixel_height,
+        "pixelsPerUnit": pixels_per_unit,
+        "pivot": {
+            "x": float(pivot.x),
+            "y": float(pivot.y)
+        }
+    }
+
+
+def preview_lookup_names(asset_type: str, asset_name: str) -> set[str]:
+    names = {asset_name.casefold()}
+
+    if asset_type == "Texture2D":
+        names.update(
+            candidate.casefold()
+            for candidate in get_catalog_candidates(asset_type, asset_name)
+        )
+
+    return names
+
+
+def extract_preview_assets(bundle_path: Path, destination: Path, selections: object) -> dict:
+    if not isinstance(selections, list) or not selections:
+        raise ValueError("At least one preview asset selection is required.")
+
+    if len(selections) > MAX_PREVIEW_SELECTIONS:
+        raise ValueError("Too many preview assets were selected.")
+
+    environment = load_unity_environment(bundle_path)
+    objects_by_key: dict[tuple[str, str], list] = {}
+
+    for obj in environment.objects:
+        asset_type = obj.type.name
+
+        if asset_type not in PREVIEW_SUPPORTED_TYPES:
+            continue
+
+        asset_name = obj.peek_name()
+        if not asset_name:
+            continue
+
+        for lookup_name in preview_lookup_names(asset_type, asset_name):
+            objects_by_key.setdefault(
+                (asset_type, lookup_name),
+                []
+            ).append(obj)
+
+    validated_selections = []
+    selected_assets = set()
+    output_names = set()
+
+    for selection in selections:
+        if not isinstance(selection, dict):
+            raise ValueError("Invalid preview asset selection.")
+
+        asset_type = selection.get("type")
+        asset_name = selection.get("name")
+        output_name = selection.get("outputName")
+
+        if asset_type not in PREVIEW_SUPPORTED_TYPES:
+            raise ValueError("A preview asset selection has an invalid type.")
+
+        if not isinstance(asset_name, str) or not asset_name.strip() or len(asset_name) > 512:
+            raise ValueError("A preview asset selection has an invalid name.")
+        
+        if not isinstance(output_name, str):
+            raise ValueError("A preview asset selection has an invalid filename.")
+
+        validate_output_name(output_name)
+
+        if not output_name.casefold().endswith(".png"):
+            raise ValueError("Preview assets must be extracted as PNG files.")
+
+        asset_key = (asset_type, asset_name.casefold())
+
+        if asset_key in selected_assets:
+            raise ValueError(f"Preview asset selected more than once: {asset_type} {asset_name}")
+
+        output_key = output_name.casefold()
+
+        if output_key in output_names:
+            raise ValueError(f"Multiple preview assets target {output_name}.")
+
+        matches = objects_by_key.get(asset_key, [])
+
+        if not matches:
+            raise ValueError(f'The {asset_type} asset "{asset_name}" was not found in bundle "{bundle_path.name}".')
+
+        if len(matches) > 1:
+            raise ValueError(f'The bundle contains multiple {asset_type} assets named "{asset_name}".')
+
+        selected_assets.add(asset_key)
+        output_names.add(output_key)
+
+        validated_selections.append({
+            "type": asset_type,
+            "name": asset_name,
+            "outputName": output_name,
+            "object": matches[0]
+        })
+
+    destination = destination.resolve()
+
+    if destination.exists():
+        raise ValueError("The preview extraction destination already exists.")
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.mkdir()
+
+    written = []
+
+    try:
+        for selection in validated_selections:
+            obj = selection["object"]
+            asset_type = selection["type"]
+            asset_name = selection["name"]
+            output_name = selection["outputName"]
+            target = destination / output_name
+            data = obj.parse_as_object()
+            sprite_metadata = None
+
+            with target.open("xb") as output:
+                if asset_type == "Texture2D":
+                    data.image.save(output, format="PNG")
+                else:
+                    image, sprite_metadata = create_untrimmed_sprite_image(data, f'Sprite "{asset_name}"')
+                    image.save(output, format="PNG")
+
+            result = {
+                "type": asset_type,
+                "name": asset_name,
+                "outputName": output_name,
+                "size": target.stat().st_size
+            }
+
+            if sprite_metadata is not None:
+                result["sprite"] = sprite_metadata
+
+            written.append(result)
+    except Exception:
+        shutil.rmtree(destination, ignore_errors=True)
+        raise
+
+    return {
+        "success": True,
+        "protocolVersion": PROTOCOL_VERSION,
+        "bundleName": bundle_path.name,
+        "written": written
+    }
+
+
 def extract_assets(bundle_path: Path, destination: Path, selections: object) -> dict:
     if not isinstance(selections, list) or not selections:
         raise ValueError("At least one asset selection is required.")
@@ -327,6 +527,9 @@ def main() -> int:
             elif command == "extract":
                 destination = require_path(request, "destination", must_exist=False)
                 result = extract_assets(bundle_path, destination, request.get("assets"))
+            elif command == "extract-preview":
+                destination = require_path(request, "destination", must_exist=False)
+                result = extract_preview_assets(bundle_path, destination, request.get("assets"))
             else:
                 raise ValueError("Unsupported worker command.")
 

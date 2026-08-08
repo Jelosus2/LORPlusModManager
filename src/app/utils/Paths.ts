@@ -136,6 +136,30 @@ export class Paths {
         return path.join(Paths.getCachedSkinBackgroundsPath(), backgroundFile);
     }
 
+    static getGameDownloadsPath(gameLocation: string): string {
+        return path.join(gameLocation, "Downloads");
+    }
+
+    static getGameAssetBundleCachePath(gameLocation: string, bundleName: string): string {
+        if (!Paths.isSafeGameAssetBundleName(bundleName))
+            throw new Error("Invalid game asset bundle name.");
+
+        return path.join(Paths.getGameDownloadsPath(gameLocation), bundleName);
+    }
+
+    static getUnityPreviewCachePath(): string {
+        return path.join(app.getPath("userData"), "preview-assets", "unity");
+    }
+
+    static getUnityPreviewBundleCachePath(bundleName: string, versionHash: string): string {
+        if (!Paths.isSafeGameAssetBundleName(bundleName))
+            throw new Error("Invalid game asset bundle name.");
+        if (!Paths.isSafeGameAssetBundleVersionHash(versionHash))
+            throw new Error("Invalid game asset bundle version hash.");
+
+        return path.join(Paths.getUnityPreviewCachePath(), bundleName, versionHash);
+    }
+
     static isSubpath(parentPath: string, childPath: string): boolean {
         const relative = path.relative(parentPath, childPath);
         return Boolean(relative && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
@@ -206,5 +230,13 @@ export class Paths {
 
     static isSafeCatalogBackgroundName(value: unknown): value is string {
         return Paths.isSafeFileName(value) && path.extname(value).toLowerCase() === ".webp";
+    }
+
+    static isSafeGameAssetBundleName(value: unknown): value is string {
+        return TypeCheck.isValidString(value, 128) && /^[0-9A-Za-z][0-9A-Za-z._-]*$/.test(value);
+    }
+
+    static isSafeGameAssetBundleVersionHash(value: unknown): value is string {
+        return TypeCheck.isValidString(value, 32) && /^[0-9a-f]{32}$/i.test(value);
     }
 }

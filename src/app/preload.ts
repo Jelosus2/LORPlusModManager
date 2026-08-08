@@ -121,7 +121,8 @@ const modManagerApi: IpcApi = {
         return () => {
             ipcRenderer.removeListener("updates:catalog-background-repair-progress", listener);
         };
-    }
+    },
+    prepareStaticModPreview: (modId) => ipcRenderer.invoke("mod:prepare-static-preview", modId)
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

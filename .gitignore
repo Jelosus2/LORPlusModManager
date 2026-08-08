@@ -5,3 +5,4 @@ tools/unity-worker/test-data/
 build/unity-worker/
 build/pyinstaller/
 release/
+__pycache__/

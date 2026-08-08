@@ -33,6 +33,34 @@ export type UnityBundleExtraction = {
     written: ExtractedUnityAsset[];
 };
 
+export type UnityPreviewAssetType = "Texture2D" | "Sprite";
+
+export type UnityPreviewAssetSelection = {
+    type: UnityPreviewAssetType;
+    name: string;
+    outputName: string;
+};
+
+export type UnitySpriteGeometry = {
+    pixelWidth: number;
+    pixelHeight: number;
+    pixelsPerUnit: number;
+    pivot: {
+        x: number;
+        y: number;
+    };
+};
+
+export type ExtractedUnityPreviewAsset = UnityPreviewAssetSelection & {
+    size: number;
+    sprite?: UnitySpriteGeometry;
+};
+
+export type UnityPreviewExtraction = {
+    bundleName: string;
+    written: ExtractedUnityPreviewAsset[];
+};
+
 type WorkerRequest =
     | {
         protocolVersion: number;
@@ -45,6 +73,13 @@ type WorkerRequest =
         bundlePath: string;
         destination: string;
         assets: UnityAssetSelection[];
+    }
+    | {
+        protocolVersion: number;
+        command: "extract-preview";
+        bundlePath: string;
+        destination: string;
+        assets: UnityPreviewAssetSelection[];
     };
 
 export class UnityWorkerError extends Error {
@@ -103,6 +138,30 @@ export class UnityWorkerClient {
         )
         {
             throw new UnityWorkerError("The Unity worker returned an invalid extraction result.");
+        }
+
+        return {
+            bundleName: response.bundleName,
+            written: response.written
+        };
+    }
+
+    async extractPreviewAssets(bundlePath: string, destination: string, assets: readonly UnityPreviewAssetSelection[]): Promise<UnityPreviewExtraction> {
+        const response = await this.execute({
+            protocolVersion: this.PROTOCOL_VERSION,
+            command: "extract-preview",
+            bundlePath,
+            destination,
+            assets: assets.map((asset) => ({ ...asset }))
+        }, this.EXTRACTION_TIMEOUT);
+
+        if (
+            !TypeCheck.isValidString(response.bundleName) ||
+            !TypeCheck.isValidArray(response.written, 64) ||
+            !response.written.every((asset) => this.isExtractedPreviewAsset(asset))
+        )
+        {
+            throw new UnityWorkerError("The Unity worker returned an invalid preview extraction result.");
         }
 
         return {
@@ -248,5 +307,42 @@ export class UnityWorkerClient {
             TypeCheck.isValidString(value.outputName) &&
             TypeCheck.isValidInteger(value.size, true)
         );
+    }
+
+    private isExtractedPreviewAsset(value: unknown): value is ExtractedUnityPreviewAsset {
+        if (
+            !TypeCheck.isRecord(value) ||
+            (value.type !== "Texture2D" && value.type !== "Sprite") ||
+            !TypeCheck.isValidString(value.name) ||
+            !TypeCheck.isValidString(value.outputName) ||
+            !TypeCheck.isValidInteger(value.size, true)
+        )
+        {
+            return false;
+        }
+
+        if (value.type === "Sprite")
+            return this.isSpriteGeometry(value.sprite);
+
+        return value.sprite === undefined;
+    }
+
+    private isSpriteGeometry(value: unknown): value is UnitySpriteGeometry {
+        return (
+            TypeCheck.isRecord(value) &&
+            TypeCheck.isValidInteger(value.pixelWidth, true) &&
+            value.pixelWidth > 0 &&
+            TypeCheck.isValidInteger(value.pixelHeight, true) &&
+            value.pixelHeight > 0 &&
+            this.isFiniteNumber(value.pixelsPerUnit) &&
+            value.pixelsPerUnit > 0 &&
+            TypeCheck.isRecord(value.pivot) &&
+            this.isFiniteNumber(value.pivot.x) &&
+            this.isFiniteNumber(value.pivot.y)
+        );
+    }
+
+    private isFiniteNumber(value: unknown): value is number {
+        return typeof value === "number" && Number.isFinite(value);
     }
 }

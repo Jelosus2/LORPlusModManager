@@ -5,7 +5,13 @@ import type {
     SpinePreviewData,
     CharacterBackgroundPreview,
     PreviewSprite,
-    PreviewTransform
+    PreviewTransform,
+    StaticPreviewData,
+    StaticPreviewFace,
+    StaticPreviewHitbox,
+    StaticPreviewLayer,
+    StaticPreviewRenderer,
+    StaticPreviewSpriteSource,
 } from "../../shared/characters.js";
 
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
@@ -42,7 +48,14 @@ export class CharacterCatalogService {
     private readonly MAX_PREVIEW_DIMENSION = 100_000;
     private readonly MAX_PREVIEW_TRANSFORM_VALUE = 100_000;
     private readonly MAX_BACKGROUND_ZOOM = 10;
-    static readonly MAX_CATALOG_SIZE = 1 * 1024 ** 2;
+    private readonly MAX_STATIC_LAYERS = 128;
+    private readonly MAX_STATIC_MOSAIC_MASKS = 8;
+    private readonly MAX_STATIC_FACE_EXPRESSIONS = 32;
+    private readonly MAX_STATIC_NAME_LENGTH = 128;
+    private readonly MAX_STATIC_PIVOT_DISTANCE = 100;
+    private readonly MAX_STATIC_MESH_VERTICES = 4096;
+    private readonly MAX_STATIC_MESH_INDICES = 24_576;
+    static readonly MAX_CATALOG_SIZE = 5 * 1024 ** 2;
 
     async getCatalog(): Promise<CharacterCatalog> {
         if (this.catalog)
@@ -253,6 +266,9 @@ export class CharacterCatalogService {
 
         if (isSpineSkin)
         {
+            if (Object.hasOwn(value, "staticPreview"))
+                throw new Error(`Spine character catalog entry ${index} contains static preview data.`);
+
             return Object.freeze({
                 ...common,
                 isSpineSkin: true,
@@ -266,6 +282,9 @@ export class CharacterCatalogService {
             throw new Error(`Non-Spine character catalog entry ${index} contains Spine preview data.`);
 
         if (isAnimatorSkin) {
+            if (Object.hasOwn(value, "staticPreview"))
+                throw new Error(`Animator character catalog entry ${index} contains static preview data.`);
+
             return Object.freeze({
                 ...common,
                 isSpineSkin: false,
@@ -278,7 +297,8 @@ export class CharacterCatalogService {
             ...common,
             isSpineSkin: false,
             isAnimatorSkin: false,
-            isStaticSkin: true
+            isStaticSkin: true,
+            staticPreview: this.parseStaticPreview(value.staticPreview, index, assets)
         });
     }
 
@@ -445,8 +465,8 @@ export class CharacterCatalogService {
 
         if (width <= 0 || height <= 0 || width > this.MAX_PREVIEW_DIMENSION || height > this.MAX_PREVIEW_DIMENSION)
             throw new Error(`${fieldName} has invalid dimensions.`);
-        if (pivotX < 0 || pivotX > 1 || pivotY < 0 || pivotY > 1)
-            throw new Error(`${fieldName} has an invalid pivot.`);
+        if (Math.abs(pivotX) > this.MAX_STATIC_PIVOT_DISTANCE || Math.abs(pivotY) > this.MAX_STATIC_PIVOT_DISTANCE)
+            throw new Error(`${fieldName} has a pivot outside the supported range.`);
 
         return Object.freeze({
             width,
@@ -480,6 +500,308 @@ export class CharacterCatalogService {
             throw new Error(`${fieldName} is not invertible.`);
 
         return Object.freeze(transform);
+    }
+
+    private parseStaticPreview(value: unknown, index: number, assets: readonly string[]): StaticPreviewData {
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Static character catalog entry ${index} has no valid preview data.`);
+        if (!TypeCheck.isRecord(value.hitboxes))
+            throw new Error(`Static character catalog entry ${index} has invalid preview hitboxes.`);
+
+        if (!Array.isArray(value.layers) || value.layers.length === 0 || value.layers.length > this.MAX_STATIC_LAYERS)
+            throw new Error(`Static character catalog entry ${index} has an invalid number of layers.`);
+
+        if (!Array.isArray(value.mosaicMasks) || value.mosaicMasks.length > this.MAX_STATIC_MOSAIC_MASKS)
+            throw new Error(`Static character catalog entry ${index} has too many mosaic masks.`);
+
+        const specialTouchValue = value.hitboxes.specialTouch;
+
+        if (!Array.isArray(specialTouchValue) || specialTouchValue.length > this.MAX_SPECIAL_TOUCH_HITBOXES)
+            throw new Error(`Static character catalog entry ${index} has an invalid number of special-touch hitboxes.`);
+
+        const catalogAssets = new Set(assets.map(StringUtils.normalize));
+
+        const layers = Object.freeze(
+            value.layers.map((layer, layerIndex) => this.parseStaticPreviewLayer(
+                layer,
+                `entry ${index} static layer ${layerIndex}`,
+                catalogAssets
+            ))
+        );
+
+        const mosaicMasks = Object.freeze(
+            value.mosaicMasks.map((layer, layerIndex) => this.parseStaticPreviewLayer(
+                layer,
+                `entry ${index} static mosaic mask ${layerIndex}`,
+                catalogAssets
+            ))
+        );
+
+        const face = value.face === null
+            ? null
+            : this.parseStaticPreviewFace(value.face, `entry ${index} static face`);
+
+        return Object.freeze({
+            assetBundleName: this.readAssetBundleName(value.assetBundleName, `entry ${index} static asset bundle`),
+            defaultParts: this.readBoolean(value.defaultParts, `entry ${index} static defaultParts`),
+            defaultParts2: this.readBoolean(value.defaultParts2, `entry ${index} static defaultParts2`),
+            face,
+            layers,
+            mosaicMasks,
+            hitboxes: Object.freeze({
+                touch: this.parseStaticPreviewHitbox(value.hitboxes.touch, `entry ${index} static touch hitbox`),
+                specialTouch: Object.freeze(
+                    specialTouchValue.map((hitbox, hitboxIndex) =>
+                        this.parseStaticPreviewHitbox(hitbox, `entry ${index} static special-touch hitbox ${hitboxIndex}`)
+                    )
+                )
+            })
+        });
+    }
+
+    private parseStaticPreviewLayer(value: unknown, fieldName: string, catalogAssets: ReadonlySet<string>): StaticPreviewLayer {
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Invalid ${fieldName}.`);
+        if (!TypeCheck.isRecord(value.sources))
+            throw new Error(`${fieldName} has invalid sprite sources.`);
+
+        const unedited = value.sources.unedited === null
+            ? null
+            : this.parseStaticPreviewSpriteSource(value.sources.unedited, `${fieldName} unedited source`, catalogAssets);
+
+        const rplus = value.sources.rplus === null
+            ? null
+            : this.parseStaticPreviewSpriteSource(value.sources.rplus, `${fieldName} R+ source`, catalogAssets);
+
+        if (!unedited && !rplus)
+            throw new Error(`${fieldName} has no usable sprite source.`);
+
+        return Object.freeze({
+            ...this.parseStaticPreviewRenderer(value, fieldName),
+            name: this.readString(value.name, `${fieldName} name`, this.MAX_STATIC_NAME_LENGTH),
+            sources: Object.freeze({
+                unedited,
+                rplus
+            })
+        });
+    }
+
+    private parseStaticPreviewFace(value: unknown, fieldName: string): StaticPreviewFace {
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Invalid ${fieldName}.`);
+
+        if (!TypeCheck.isValidArray(value.expressions, this.MAX_STATIC_FACE_EXPRESSIONS))
+            throw new Error(`${fieldName} has no valid expressions.`);
+
+        const identities = new Set<string>();
+
+        const expressions = Object.freeze(
+            value.expressions.map((expression, expressionIndex) => {
+                if (!TypeCheck.isRecord(expression))
+                    throw new Error(`Invalid ${fieldName} expression ${expressionIndex}.`);
+
+                const assetName = this.readUnityAssetName(expression.assetName, `${fieldName} expression ${expressionIndex} asset`);
+                const bundleName = this.readAssetBundleName(expression.bundleName, `${fieldName} expression ${expressionIndex} bundle`);
+
+                const identity = JSON.stringify([
+                    StringUtils.normalize(bundleName),
+                    StringUtils.normalize(assetName)
+                ]);
+
+                if (identities.has(identity))
+                    throw new Error(`${fieldName} contains a duplicate expression: ${assetName}.`);
+
+                identities.add(identity);
+
+                return Object.freeze({
+                    assetName,
+                    bundleName
+                });
+            })
+        );
+
+        return Object.freeze({
+            ...this.parseStaticPreviewRenderer(value, fieldName),
+            expressions
+        });
+    }
+
+    private parseStaticPreviewRenderer(value: unknown, fieldName: string): StaticPreviewRenderer {
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Invalid ${fieldName}.`);
+        if (!TypeCheck.isRecord(value.color))
+            throw new Error(`${fieldName} has an invalid color.`);
+        if (!TypeCheck.isRecord(value.visibility))
+            throw new Error(`${fieldName} has invalid visibility data.`);
+
+        const sortingOrder = this.readFiniteNumber(value.sortingOrder, `${fieldName} sorting order`);
+        if (!Number.isSafeInteger(sortingOrder))
+            throw new Error(`${fieldName} has an invalid sorting order.`);
+
+        const color = {
+            r: this.readFiniteNumber(value.color.r, `${fieldName} color r`),
+            g: this.readFiniteNumber(value.color.g, `${fieldName} color g`),
+            b: this.readFiniteNumber(value.color.b, `${fieldName} color b`),
+            a: this.readFiniteNumber(value.color.a, `${fieldName} color a`)
+        };
+
+        if (Object.values(color).some((component) => component < 0 || component > 1))
+            throw new Error(`${fieldName} has a color component outside the supported range.`);
+
+        const part1 = value.visibility.part1;
+        const part2 = value.visibility.part2;
+
+        if (part1 !== null && part1 !== "on" && part1 !== "off")
+            throw new Error(`${fieldName} has an invalid part-1 visibility state.`);
+        if (part2 !== null && part2 !== "on")
+            throw new Error(`${fieldName} has an invalid part-2 visibility state.`);
+
+        return Object.freeze({
+            sortingOrder,
+            color: Object.freeze(color),
+            transform: this.parsePreviewTransform(value.transform, `${fieldName} transform`),
+            flipX: this.readBoolean(value.flipX, `${fieldName} flipX`),
+            flipY: this.readBoolean(value.flipY, `${fieldName} flipY`),
+            visibility: Object.freeze({
+                defaultVisible: this.readBoolean(value.visibility.defaultVisible, `${fieldName} default visibility`),
+                part1,
+                part2
+            })
+        });
+    }
+
+    private parseStaticPreviewSpriteSource(value: unknown, fieldName: string, catalogAssets: ReadonlySet<string>): StaticPreviewSpriteSource {
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Invalid ${fieldName}.`);
+        if (!TypeCheck.isRecord(value.crop))
+            throw new Error(`${fieldName} has an invalid crop rectangle.`);
+        if (!TypeCheck.isRecord(value.pivot))
+            throw new Error(`${fieldName} has an invalid pivot.`);
+
+        const asset = this.readFileName(value.asset, `${fieldName} asset`);
+
+        if (!asset.toLocaleLowerCase("en-US").endsWith(".png"))
+            throw new Error(`${fieldName} does not reference a PNG texture.`);
+        if (!catalogAssets.has(StringUtils.normalize(asset)))
+            throw new Error(`${fieldName} references an asset outside its catalog entry.`);
+
+        const crop = {
+            x: this.readFiniteNumber(value.crop.x, `${fieldName} crop x`),
+            y: this.readFiniteNumber(value.crop.y, `${fieldName} crop y`),
+            width: this.readFiniteNumber(value.crop.width, `${fieldName} crop width`),
+            height: this.readFiniteNumber(value.crop.height, `${fieldName} crop height`)
+        };
+
+        if (
+            crop.x < 0 ||
+            crop.y < 0 ||
+            crop.width <= 0 ||
+            crop.height <= 0 ||
+            Object.values(crop).some((component) => component > this.MAX_PREVIEW_DIMENSION)
+        )
+        {
+            throw new Error(`${fieldName} has an invalid crop rectangle.`);
+        }
+
+        const width = this.readFiniteNumber(value.width, `${fieldName} width`);
+        const height = this.readFiniteNumber(value.height, `${fieldName} height`);
+        const pivotX = this.readFiniteNumber(value.pivot.x, `${fieldName} pivot x`);
+        const pivotY = this.readFiniteNumber(value.pivot.y, `${fieldName} pivot y`);
+
+        if (width <= 0 || height <= 0 || width > this.MAX_PREVIEW_DIMENSION || height > this.MAX_PREVIEW_DIMENSION)
+            throw new Error(`${fieldName} has invalid dimensions.`);
+        if (Math.abs(pivotX) > this.MAX_STATIC_PIVOT_DISTANCE || Math.abs(pivotY) > this.MAX_STATIC_PIVOT_DISTANCE)
+            throw new Error(`${fieldName} has a pivot outside the supported range.`);
+
+        let mesh: StaticPreviewSpriteSource["mesh"] = null;
+
+        if (value.mesh !== null)
+        {
+            if (!TypeCheck.isRecord(value.mesh))
+                throw new Error(`${fieldName} has invalid Sprite mesh data.`);
+
+            const vertexBytes = this.decodeCatalogBase64(value.mesh.vertices, `${fieldName} mesh vertices`, this.MAX_STATIC_MESH_VERTICES * 8);
+            const indexBytes = this.decodeCatalogBase64(value.mesh.triangles, `${fieldName} mesh triangles`, this.MAX_STATIC_MESH_INDICES * 2);
+
+            if (vertexBytes.length < 24 || vertexBytes.length % 8 !== 0)
+                throw new Error(`${fieldName} has invalid Sprite mesh vertices.`);
+            if (indexBytes.length < 6 || indexBytes.length % 6 !== 0)
+                throw new Error(`${fieldName} has invalid Sprite mesh triangles.`);
+
+            const vertices: number[] = [];
+
+            for (let offset = 0; offset < vertexBytes.length; offset += 4)
+            {
+                const component = vertexBytes.readFloatLE(offset);
+
+                if (!Number.isFinite(component) || Math.abs(component) > this.MAX_PREVIEW_DIMENSION)
+                    throw new Error(`${fieldName} has an invalid Sprite mesh vertex.`);
+
+                vertices.push(component);
+            }
+
+            const vertexCount = vertices.length / 2;
+            const triangles: number[] = [];
+
+            for (let offset = 0; offset < indexBytes.length; offset += 2)
+            {
+                const vertexIndex = indexBytes.readUInt16LE(offset);
+
+                if (vertexIndex >= vertexCount)
+                    throw new Error(`${fieldName} has an invalid Sprite mesh index.`);
+
+                triangles.push(vertexIndex);
+            }
+
+            mesh = Object.freeze({
+                vertices: Object.freeze(vertices),
+                triangles: Object.freeze(triangles)
+            });
+        }
+
+        return Object.freeze({
+            asset,
+            crop: Object.freeze(crop),
+            width,
+            height,
+            pivot: Object.freeze({
+                x: pivotX,
+                y: pivotY
+            }),
+            mesh
+        });
+    }
+
+    private parseStaticPreviewHitbox(value: unknown, fieldName: string): StaticPreviewHitbox {
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Invalid ${fieldName}.`);
+
+        const width = this.readFiniteNumber(value.width, `${fieldName} width`);
+        const height = this.readFiniteNumber(value.height, `${fieldName} height`);
+
+        if (width <= 0 || height <= 0 || width > this.MAX_HITBOX_SIZE || height > this.MAX_HITBOX_SIZE)
+            throw new Error(`${fieldName} has an invalid size.`);
+
+        return Object.freeze({
+            width,
+            height,
+            transform: this.parsePreviewTransform(value.transform, `${fieldName} transform`)
+        });
+    }
+
+    private readAssetBundleName(value: unknown, fieldName: string): string {
+        if (!Paths.isSafeGameAssetBundleName(value))
+            throw new Error(`Invalid ${fieldName}.`);
+
+        return value;
+    }
+
+    private readUnityAssetName(value: unknown, fieldName: string): string {
+        const assetName = this.readString(value, fieldName, this.MAX_STATIC_NAME_LENGTH);
+        if (/[\u0000-\u001f\u007f]/.test(assetName))
+            throw new Error(`Invalid ${fieldName}.`);
+
+        return assetName;
     }
 
     private buildIndexes(catalog: CharacterCatalog) {
@@ -544,6 +866,17 @@ export class CharacterCatalogService {
             if (entries.length > 1 && entries.some(({ variantId }) => variantId === null))
                 throw new Error(`Catalog entries sharing ${entries[0].skin2dId} require variant IDs.`);
         }
+    }
+
+    private decodeCatalogBase64(value: unknown, fieldName: string, maximumDecodedBytes: number): Buffer {
+        if (typeof value !== "string" || value.length === 0 || value.length > Math.ceil(maximumDecodedBytes / 3) * 4)
+            throw new Error(`${fieldName} has invalid encoded data.`);
+
+        const decoded = Buffer.from(value, "base64");
+        if (decoded.length === 0 || decoded.length > maximumDecodedBytes || decoded.toString("base64") !== value)
+            throw new Error(`${fieldName} has invalid encoded data.`);
+
+        return decoded;
     }
 
     private readString(value: unknown, fieldName: string, maxLength = 512): string {

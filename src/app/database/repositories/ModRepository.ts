@@ -33,6 +33,12 @@ export type ModAssetLocation = Readonly<{
     assetName: string;
 }>;
 
+type StoredModDetailsRow = Omit<StoredModRow, "assetName">;
+
+type StoredModAssetRow = {
+    assetName: string;
+};
+
 export class ModRepository {
     addImportedMods(mods: readonly ImportedModRecord[]) {
         if (mods.length === 0)
@@ -126,6 +132,42 @@ export class ModRepository {
         }
 
         return [...mods.values()];
+    }
+
+    getById(id: string): PersistedMod | null {
+        const row = AppDatabase.connection.prepare<[string], StoredModDetailsRow>(`
+            SELECT
+                id,
+                directory_name AS directoryName,
+                source_name AS sourceName,
+                source_kind AS sourceKind,
+                skin2d_id AS skin2dId,
+                variant_id AS variantId,
+                enabled,
+                imported_at AS importedAt
+            FROM mods
+            WHERE id = ?
+            LIMIT 1
+        `).get(id);
+
+        if (!row)
+            return null;
+
+        const assets = AppDatabase.connection.prepare<[string], StoredModAssetRow>(`
+            SELECT file_name AS assetName FROM mod_assets WHERE mod_id = ? ORDER BY file_name COLLATE NOCASE`
+        ).all(id);
+
+        return Object.freeze({
+            id: row.id,
+            directoryName: row.directoryName,
+            sourceName: row.sourceName,
+            sourceKind: row.sourceKind,
+            skin2dId: row.skin2dId,
+            variantId: row.variantId,
+            enabled: row.enabled === 1,
+            importedAt: row.importedAt,
+            assetNames: Object.freeze(assets.map((asset) => asset.assetName))
+        });
     }
 
     getAssetLocation(modId: string, assetName: string): ModAssetLocation | null {

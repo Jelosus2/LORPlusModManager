@@ -10,16 +10,19 @@ import type {
     ModSyncRequest,
     ModSyncResult
 } from "../../../shared/mod.js";
+import type { StaticModPreviewPreparation } from "../../../shared/characters.js";
 import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
 import { ModImporter, ModImportError, type ModImportSource } from "#mod/ModImporter.js";
 import { ModLibraryService, ModLibraryError } from "#mod/ModLibraryService.js";
+import { staticModPreviewService } from "#mod/StaticModPreviewService.js";
 import { ModRecoveryCoordinator } from "#mod/ModRecoveryCoordinator.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { ApplicationLogSource } from "../../../shared/application.js";
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ModSynchronizer } from "#mod/ModSynchronizer.js";
+import { UserFacingError } from "#utils/ErrorUtils.js";
 import { ModVerifier } from "#mod/ModVerifier.js";
 import { BrowserWindow, dialog } from "electron";
 import { TypeCheck } from "#utils/TypeCheck.js";
@@ -292,6 +295,33 @@ export class ModController {
         {
             await ModRecoveryCoordinator.waitUntilReady();
             operation.complete();
+        }
+        catch (error)
+        {
+            operation.fail(error);
+            throw error;
+        }
+    }
+
+    @IpcHelper.IpcHandle("mod:prepare-static-preview")
+    async prepareStaticPreview(_event: IpcMainInvokeEvent, value: unknown): Promise<StaticModPreviewPreparation> {
+        if (!TypeCheck.isUuid(value))
+            throw new UserFacingError("The selected mod identifier is invalid.");
+
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.modLibrary, "Static mod preview preparation", {
+            modId: value
+        });
+
+        try
+        {
+            const result = await staticModPreviewService.prepare(value);
+
+            operation.complete({
+                modId: value,
+                preparedAssets: result.assets.length
+            });
+
+            return result;
         }
         catch (error)
         {

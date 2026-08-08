@@ -63,6 +63,85 @@ export type SpinePreviewData = Readonly<{
     }>;
 }>;
 
+export type PreviewColor = Readonly<{
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+}>;
+
+export type PreviewRectangle = Readonly<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}>;
+
+export type StaticPreviewVisibility = Readonly<{
+    defaultVisible: boolean;
+    part1: "on" | "off" | null;
+    part2: "on" | null;
+}>;
+
+export type StaticPreviewSpriteMesh = Readonly<{
+    vertices: readonly number[];
+    triangles: readonly number[];
+}>;
+
+export type StaticPreviewSpriteSource = Readonly<{
+    asset: string;
+    crop: PreviewRectangle;
+    width: number;
+    height: number;
+    pivot: PreviewVector;
+    mesh: StaticPreviewSpriteMesh | null;
+}>;
+
+export type StaticPreviewRenderer = Readonly<{
+    sortingOrder: number;
+    color: PreviewColor;
+    transform: PreviewTransform;
+    flipX: boolean;
+    flipY: boolean;
+    visibility: StaticPreviewVisibility;
+}>;
+
+export type StaticPreviewLayer = StaticPreviewRenderer & Readonly<{
+    name: string;
+    sources: Readonly<{
+        unedited: StaticPreviewSpriteSource | null;
+        rplus: StaticPreviewSpriteSource | null;
+    }>;
+}>;
+
+export type StaticPreviewFaceExpression = Readonly<{
+    assetName: string;
+    bundleName: string;
+}>;
+
+export type StaticPreviewFace = StaticPreviewRenderer & Readonly<{
+    expressions: readonly StaticPreviewFaceExpression[];
+}>;
+
+export type StaticPreviewHitbox = Readonly<{
+    width: number;
+    height: number;
+    transform: PreviewTransform;
+}>;
+
+export type StaticPreviewData = Readonly<{
+    assetBundleName: string;
+    defaultParts: boolean;
+    defaultParts2: boolean;
+    face: StaticPreviewFace | null;
+    layers: readonly StaticPreviewLayer[];
+    mosaicMasks: readonly StaticPreviewLayer[];
+    hitboxes: Readonly<{
+        touch: StaticPreviewHitbox;
+        specialTouch: readonly StaticPreviewHitbox[];
+    }>;
+}>;
+
 type CharacterSkinBase = Readonly<{
     skin2dId: string;
     variantId: string | null;
@@ -79,6 +158,7 @@ export type SpineCharacterSkin = CharacterSkinBase & Readonly<{
     isAnimatorSkin: false;
     isStaticSkin: false;
     spinePreview: SpinePreviewData;
+    staticPreview?: never;
 }>;
 
 export type AnimatorCharacterSkin = CharacterSkinBase & Readonly<{
@@ -86,6 +166,7 @@ export type AnimatorCharacterSkin = CharacterSkinBase & Readonly<{
     isAnimatorSkin: true;
     isStaticSkin: false;
     spinePreview?: never;
+    staticPreview?: never;
 }>;
 
 export type StaticCharacterSkin = CharacterSkinBase & Readonly<{
@@ -93,6 +174,7 @@ export type StaticCharacterSkin = CharacterSkinBase & Readonly<{
     isAnimatorSkin: false;
     isStaticSkin: true;
     spinePreview?: never;
+    staticPreview: StaticPreviewData;
 }>;
 
 export type CharacterSkin =
@@ -131,4 +213,28 @@ export type CatalogBackgroundRepairResult = Readonly<{
     bundled: number;
     cached: number;
     downloaded: number;
+}>;
+
+export type PreparedPreviewSpriteGeometry = Readonly<{
+    pixelWidth: number;
+    pixelHeight: number;
+    pixelsPerUnit: number;
+    pivot: PreviewVector;
+}>;
+
+export type PreparedStaticPreviewAsset = Readonly<{
+    type: "Texture2D" | "Sprite";
+    name: string;
+    bundleName: string;
+    source: "mod" | "game";
+    cacheKey: string | null;
+    versionHash: string | null;
+    sprite: PreparedPreviewSpriteGeometry | null;
+}>;
+
+export type StaticModPreviewPreparation = Readonly<{
+    modId: string;
+    skin2dId: string;
+    variantId: string | null;
+    assets: readonly PreparedStaticPreviewAsset[];
 }>;

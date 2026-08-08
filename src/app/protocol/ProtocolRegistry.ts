@@ -1,4 +1,5 @@
 import { CatalogBackgroundProtocol } from "./CatalogBackgroundProtocol.js";
+import { UnityPreviewAssetProtocol } from "./UnityPreviewAssetProtocol.js";
 import { CatalogIconProtocol } from "./CatalogIconProtocol.js";
 import { ModAssetProtocol } from "./ModAssetProtocol.js";
 import { protocol } from "electron";
@@ -37,6 +38,15 @@ export class ProtocolRegistry {
                     supportFetchAPI: true,
                     corsEnabled: true
                 }
+            },
+            {
+                scheme: UnityPreviewAssetProtocol.SCHEME,
+                privileges: {
+                    standard: true,
+                    secure: true,
+                    supportFetchAPI: true,
+                    corsEnabled: true
+                }
             }
         ]);
 
@@ -47,5 +57,6 @@ export class ProtocolRegistry {
         CatalogIconProtocol.registerHandler();
         ModAssetProtocol.registerHandler();
         CatalogBackgroundProtocol.registerHandler();
+        UnityPreviewAssetProtocol.registerHandler();
     }
 }

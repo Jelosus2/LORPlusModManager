@@ -3,6 +3,7 @@ import type { InstalledMod, ModSyncLogEntry, ModSyncMethod, ModSyncRequest } fro
 import type { CharacterSkin } from "../../shared/characters";
 
 import ModSyncProgressDialog from "./ModSyncProgressDialog.vue";
+import StaticModPreview from "./StaticModPreview.vue";
 import SpineModPreview from "./SpineModPreview.vue";
 import RefreshIcon from "./icons/RefreshIcon.vue";
 import SearchIcon from "./icons/SearchIcon.vue";
@@ -1623,12 +1624,18 @@ function closeModPreview() {
                     :skin="modPendingPreview.catalogSkin"
                 />
 
+                <StaticModPreview
+                    v-else-if="modPendingPreview.catalogSkin?.isStaticSkin"
+                    :mod="modPendingPreview.mod"
+                    :skin="modPendingPreview.catalogSkin"
+                />
+
                 <div v-else class="mod-preview-placeholder">
                     <span aria-hidden="true">
                         <EyeIcon />
                     </span>
                     <strong>Preview not available yet</strong>
-                    <p>Animator and static previews will be added later.</p>
+                    <p>Animator previews will be added later.</p>
                 </div>
             </main>
         </div>
@@ -3022,7 +3029,9 @@ h1 {
 }
 
 .mod-preview-layout.is-preview-controls-hidden :deep(.spine-preview-controls),
-.mod-preview-layout.is-preview-controls-hidden :deep(.spine-preview-navigation) {
+.mod-preview-layout.is-preview-controls-hidden :deep(.static-preview-controls),
+.mod-preview-layout.is-preview-controls-hidden :deep(.spine-preview-navigation),
+.mod-preview-layout.is-preview-controls-hidden :deep(.static-preview-navigation) {
     display: none;
 }
 

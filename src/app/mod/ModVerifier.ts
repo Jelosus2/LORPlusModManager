@@ -33,7 +33,7 @@ export class ModVerifier {
         return results;
     }
 
-    private async verify(mod: PersistedMod): Promise<InstalledMod> {
+    async verify(mod: PersistedMod): Promise<InstalledMod> {
         const modsRoot = Paths.getModsPath();
         const modDirectory = path.join(modsRoot, mod.directoryName);
 
