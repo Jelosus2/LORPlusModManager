@@ -70,6 +70,18 @@ export class AnimatorRuntimeUtils {
         return result;
     }
 
+    static createTextureCoordinates(source: Float32Array<ArrayBufferLike>): Float32Array {
+        const result = new Float32Array(source.length);
+
+        for (let offset = 0; offset < source.length; offset += 2)
+        {
+            result[offset] = source[offset];
+            result[offset + 1] = 1 - source[offset + 1];
+        }
+
+        return result;
+    }
+
     static requireMaterialSlot(renderer: Readonly<{ materialIds: readonly unknown[] }>, materialSlot: number) {
         if (!Number.isInteger(materialSlot) || materialSlot < 0 || materialSlot >= renderer.materialIds.length)
             throw new Error("An animation targets an invalid material slot.");

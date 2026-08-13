@@ -42,6 +42,10 @@ export type AnimatorPixiBounds = Readonly<{
     height: number;
 }>;
 
+export type AnimatorPixiSceneOptions = Readonly<{
+    includeParticles?: boolean;
+}>;
+
 export class AnimatorPixiScene {
     private readonly materialsById: ReadonlyMap<string, AnimatorRuntimeMaterial>;;
     private readonly meshViews: AnimatorPixiMeshView[] = [];
@@ -52,7 +56,11 @@ export class AnimatorPixiScene {
     private destroyed = false;
     readonly root = new Container();
 
-    constructor(readonly runtime: AnimatorRuntimePackage, private readonly texturesById: ReadonlyMap<string, Texture>) {
+    constructor(
+        readonly runtime: AnimatorRuntimePackage,
+        private readonly texturesById: ReadonlyMap<string, Texture>,
+        options: AnimatorPixiSceneOptions = {}
+    ) {
         this.root.sortableChildren = true;
         this.root.scale.set(1, -1);
 
@@ -62,7 +70,10 @@ export class AnimatorPixiScene {
 
         this.createSkinnedMeshViews();
         this.createSpriteViews();
-        this.createParticleViews();
+
+        if (options.includeParticles !== false)
+            this.createParticleViews();
+
         this.updateViews();
     }
 
@@ -73,6 +84,12 @@ export class AnimatorPixiScene {
         this.updateViews();
 
         return result;
+    }
+
+    refreshViews() {
+        AnimatorRuntimeUtils.requireNotDestroyed(this.destroyed, "The Animator Pixi scene");
+
+        this.updateViews();
     }
 
     reset(): AnimatorRuntimeFrameResult {
@@ -185,7 +202,7 @@ export class AnimatorPixiScene {
             if (!deformer)
                 throw new Error(`Renderer "${renderer.id}" has no prepared mesh deformer.`);
 
-            const textureCoordinates = this.createTextureCoordinates(mesh.uv0);
+            const textureCoordinates = AnimatorRuntimeUtils.createTextureCoordinates(mesh.uv0);
 
             for (const [submeshOrder, submesh] of mesh.submeshes.entries())
             {
@@ -343,7 +360,7 @@ export class AnimatorPixiScene {
 
         const geometry = new MeshGeometry({
             positions: new Float32Array(view.projector.positions2d),
-            uvs: this.createTextureCoordinates(uv0),
+            uvs: AnimatorRuntimeUtils.createTextureCoordinates(uv0),
             indices: new Uint32Array(view.projector.indices),
             shrinkBuffersToFit: false
         });
@@ -442,18 +459,6 @@ export class AnimatorPixiScene {
         return typeof value === "number" && Number.isFinite(value)
             ? value
             : null;
-    }
-
-    private createTextureCoordinates(source: Float32Array): Float32Array {
-        const result = new Float32Array(source.length);
-
-        for (let offset = 0; offset < source.length; offset += 2)
-        {
-            result[offset] = source[offset];
-            result[offset + 1] = 1 - source[offset + 1];
-        }
-
-        return result;
     }
 
     private getMaximumSubmeshCount(): number {

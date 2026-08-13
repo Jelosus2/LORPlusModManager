@@ -10,6 +10,7 @@ import PauseIcon from "./icons/PauseIcon.vue";
 import PlayIcon from "./icons/PlayIcon.vue";
 
 import { AnimatorPreviewInteractionLayer } from "@/animator/AnimatorPreviewInteractionLayer";
+import { AnimatorPreviewMosaicLayer } from "@/animator/AnimatorPreviewMosaicLayer";
 import { AnimatorRuntimePackage } from "@/animator/AnimatorRuntimePackage";
 import { usePreviewViewport } from "@/composables/usePreviewViewport";
 import { AnimatorPixiScene } from "@/animator/AnimatorPixiScene";
@@ -36,7 +37,8 @@ type RuntimeSummary = Readonly<{
 
 type CensorshipType =
     | "rplus"
-    | "unedited";
+    | "unedited"
+    | "pixelated";
 
 const props = defineProps<{
     mod: InstalledMod;
@@ -61,6 +63,7 @@ let application: Application | null = null;
 let pixiScene: AnimatorPixiScene | null = null;
 let resizeObserver: ResizeObserver | null = null;
 let interactionLayer: AnimatorPreviewInteractionLayer | null = null;
+let mosaicLayer: AnimatorPreviewMosaicLayer | null = null;
 let resizeFrame: number | null = null;
 let loadController: AbortController | null = null;
 let loadGeneration = 0;
@@ -159,12 +162,15 @@ async function loadPreview() {
 
         application = createdApplication;
         pixiScene = new AnimatorPixiScene(loadedPackage, texturesById);
+        mosaicLayer = new AnimatorPreviewMosaicLayer(loadedPackage, texturesById);
         interactionLayer = new AnimatorPreviewInteractionLayer(loadedPackage, {
             wasDragged: () => didDragPreview.value,
             onTriggered: () => {
                 isAnimationPaused.value = false;
             }
         });
+
+        pixiScene.root.addChild(mosaicLayer.root);
 
         initializeCensorshipTypes(loadedPackage);
         applySelectedCensorship();
@@ -179,6 +185,7 @@ async function loadPreview() {
 
         const initialFrame = pixiScene.reset();
 
+        mosaicLayer.update();
         interactionLayer.update();
         updateDiagnostics(initialFrame.diagnostics);
 
@@ -254,6 +261,12 @@ async function destroyRenderer() {
     }
 
     hasInteractionHitboxes.value = false;
+
+    if (mosaicLayer)
+    {
+        mosaicLayer.destroy();
+        mosaicLayer = null;
+    }
 
     if (pixiScene)
     {
@@ -335,6 +348,7 @@ function updateAnimatorFrame(ticker: Ticker) {
         const deltaSeconds = Math.min(Math.max(ticker.deltaMS / 1000, 0), 0.05);
         const frame = pixiScene.advance(deltaSeconds);
 
+        mosaicLayer?.update();
         interactionLayer?.update();
         updateDiagnostics(frame.diagnostics);
     }
@@ -349,6 +363,8 @@ function initializeCensorshipTypes(runtimePackage: AnimatorRuntimePackage) {
 
     if (runtimePackage.hasRPlusPresentation)
         available.add("rplus");
+    if (mosaicLayer?.hasPresentation)
+        available.add("pixelated");
 
     availableCensorshipTypes.value = available;
     selectedCensorshipType.value = props.skin.isRPlusSkin && available.has("rplus")
@@ -362,9 +378,12 @@ function applySelectedCensorship() {
 
     try
     {
-        const frame = pixiScene.setRPlusEnabled(selectedCensorshipType.value === "rplus");
+        const usesRPlusPresentation = selectedCensorshipType.value === "rplus" || selectedCensorshipType.value === "pixelated";
+        const frame = pixiScene.setRPlusEnabled(usesRPlusPresentation);
 
+        mosaicLayer?.setVisible(selectedCensorshipType.value === "pixelated");
         interactionLayer?.update();
+
         updateDiagnostics(frame.diagnostics);
     }
     catch (error)
@@ -407,6 +426,7 @@ function resetCharacterState() {
     try {
         const frame = pixiScene.reset();
 
+        mosaicLayer?.update();
         interactionLayer?.update();
 
         isAnimationPaused.value = false;
@@ -495,6 +515,13 @@ onBeforeUnmount(() => {
 
                         <option value="unedited">
                             Unedited
+                        </option>
+
+                        <option
+                            value="pixelated"
+                            :disabled="!availableCensorshipTypes.has('pixelated')"
+                        >
+                            Pixelated{{ availableCensorshipTypes.has("pixelated") ? "" : " (not available)" }}
                         </option>
                     </select>
 

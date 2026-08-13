@@ -30,32 +30,28 @@ export class AnimatorProjectedSpriteRenderer {
     update() {
         const rendererState = this.state.requireSpriteRenderer(this.renderer.id);
 
-        if (rendererState.spriteId !== this.currentSpriteId)
-            this.setSprite(rendererState.spriteId);
+        this.synchronizeSprite(rendererState.spriteId);
 
         this.visible =
             rendererState.enabled &&
             this.hierarchy.isGameObjectActiveInHierarchy(this.renderer.gameObjectId) &&
-            this.sprite !== null &&
-            this.textureId !== null &&
-            this.positions2d.length > 0;
+            this.hasRenderableGeometry();
 
-        if (!this.visible)
-            return;
+        if (this.visible)
+            this.updateProjectedPositions(rendererState.flipX, rendererState.flipY);
+    }
 
-        const mesh = this.requireSpriteMesh();
-        const worldMatrix = this.hierarchy.requireWorldMatrix(this.renderer.transformId);
-        const flipX = rendererState.flipX ? -1 : 1;
-        const flipY = rendererState.flipY ? -1 : 1;
+    projectGeometryIgnoringHierarchy(): boolean {
+        const rendererState = this.state.requireSpriteRenderer(this.renderer.id);
 
-        for (let vertexOffset = 0; vertexOffset < mesh.positions.length; vertexOffset += 2)
-        {
-            const x = mesh.positions[vertexOffset] * flipX;
-            const y = mesh.positions[vertexOffset + 1] * flipY;
+        this.synchronizeSprite(rendererState.spriteId);
 
-            this.positions2d[vertexOffset] = worldMatrix[0] * x + worldMatrix[1] * y + worldMatrix[3];
-            this.positions2d[vertexOffset + 1] = worldMatrix[4] * x + worldMatrix[5] * y + worldMatrix[7];
-        }
+        if (!rendererState.enabled || !this.hasRenderableGeometry())
+            return false;
+
+        this.updateProjectedPositions(rendererState.flipX, rendererState.flipY);
+
+        return true;
     }
 
     private setSprite(spriteId: string | null) {
@@ -89,6 +85,22 @@ export class AnimatorProjectedSpriteRenderer {
         this.indices = mesh.indices;
     }
 
+    private updateProjectedPositions(flipXEnabled: boolean, flipYEnabled: boolean) {
+        const mesh = this.requireSpriteMesh();
+        const worldMatrix = this.hierarchy.requireWorldMatrix(this.renderer.transformId);
+        const flipX = flipXEnabled ? -1 : 1;
+        const flipY = flipYEnabled ? -1 : 1;
+
+        for (let vertexOffset = 0; vertexOffset < mesh.positions.length; vertexOffset += 2)
+        {
+            const x = mesh.positions[vertexOffset] * flipX;
+            const y = mesh.positions[vertexOffset + 1] * flipY;
+
+            this.positions2d[vertexOffset] = worldMatrix[0] * x + worldMatrix[1] * y + worldMatrix[3];
+            this.positions2d[vertexOffset + 1] = worldMatrix[4] * x + worldMatrix[5] * y + worldMatrix[7];
+        }
+    }
+
     private clearSprite() {
         this.sprite = null;
         this.textureId = null;
@@ -103,6 +115,20 @@ export class AnimatorProjectedSpriteRenderer {
             throw new Error(`SpriteRenderer "${this.renderer.id}" has no prepared Sprite mesh.`);
 
         return mesh;
+    }
+
+    private hasRenderableGeometry(): boolean {
+        return (
+            this.sprite !== null &&
+            this.textureId !== null &&
+            this.positions2d.length > 0 &&
+            this.indices.length > 0
+        );
+    }
+
+    private synchronizeSprite(spriteId: string | null) {
+        if (spriteId !== this.currentSpriteId)
+            this.setSprite(spriteId);
     }
 }
 
