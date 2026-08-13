@@ -333,8 +333,36 @@ export type AnimatorRuntimeMosaic = Readonly<{
     maxMultiplier: number;
 }>;
 
+export type AnimatorRuntimePartGroup = Readonly<{
+    defaultEnabled: boolean;
+    enableObjectIds: readonly string[];
+    disableObjectIds: readonly string[];
+}>;
+
+export type AnimatorRuntimePartTransformChange = Readonly<{
+    transformId: string;
+    onPosition: readonly number[];
+    onScale: readonly number[];
+    offPosition: readonly number[];
+    offScale: readonly number[];
+}>;
+
+export type AnimatorRuntimeBackgroundPartGroup =
+    AnimatorRuntimePartGroup & Readonly<{
+        transformChanges: readonly AnimatorRuntimePartTransformChange[];
+    }>;
+
+export type AnimatorRuntimePartsView = Readonly<{
+    componentId: string;
+    part1: AnimatorRuntimePartGroup;
+    part2: AnimatorRuntimePartGroup;
+    background: AnimatorRuntimeBackgroundPartGroup;
+    dialogDeactivatedObjectIds: readonly string[];
+}>;
+
 export type AnimatorRuntimeInteractions = Readonly<{
     actor: AnimatorRuntimeActorInteractions;
+    partsViews: readonly AnimatorRuntimePartsView[];
     rplus: Readonly<{
         materialSwitchers: readonly AnimatorRuntimeMaterialRPlusSwitcher[];
         spriteSwitchers: readonly AnimatorRuntimeSpriteRPlusSwitcher[];

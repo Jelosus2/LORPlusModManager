@@ -152,7 +152,15 @@ export class AnimatorPixiScene {
         AnimatorRuntimeUtils.requireNotDestroyed(this.destroyed, "The Animator Pixi scene");
 
         const result = this.runtime.setRPlusEnabled(enabled);
+        this.updateViews();
 
+        return result;
+    }
+
+    setDecorationEnabled(group: 1 | 2, enabled: boolean): AnimatorRuntimeFrameResult {
+        AnimatorRuntimeUtils.requireNotDestroyed(this.destroyed, "The Animator Pixi scene");
+
+        const result = this.runtime.setDecorationEnabled(group, enabled);
         this.updateViews();
 
         return result;

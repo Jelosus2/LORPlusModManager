@@ -55,6 +55,10 @@ const areHitboxesVisible = ref(false);
 const hasInteractionHitboxes = ref(false);
 const selectedCensorshipType = ref<CensorshipType>("unedited");
 const availableCensorshipTypes = ref<ReadonlySet<CensorshipType>>(new Set<CensorshipType>());
+const hasDecoration1 = ref(false);
+const hasDecoration2 = ref(false);
+const isDecoration1Enabled = ref(false);
+const isDecoration2Enabled = ref(false);
 
 const instanceId = crypto.randomUUID();
 const registeredAliases: string[] = [];
@@ -112,6 +116,11 @@ async function loadPreview() {
     selectedCensorshipType.value = "unedited";
     availableCensorshipTypes.value = new Set<CensorshipType>();
     frameFailed = false;
+
+    hasDecoration1.value = false;
+    hasDecoration2.value = false;
+    isDecoration1Enabled.value = false;
+    isDecoration2Enabled.value = false;
 
     areHitboxesVisible.value = false;
     hasInteractionHitboxes.value = false;
@@ -172,6 +181,7 @@ async function loadPreview() {
 
         pixiScene.root.addChild(mosaicLayer.root);
 
+        initializeDecorationOptions(loadedPackage);
         initializeCensorshipTypes(loadedPackage);
         applySelectedCensorship();
 
@@ -392,6 +402,40 @@ function applySelectedCensorship() {
     }
 }
 
+function initializeDecorationOptions(runtimePackage: AnimatorRuntimePackage) {
+    hasDecoration1.value = runtimePackage.hasDecoration1;
+    hasDecoration2.value = runtimePackage.hasDecoration2;
+    isDecoration1Enabled.value = runtimePackage.isDecoration1Enabled;
+    isDecoration2Enabled.value = runtimePackage.isDecoration2Enabled;
+}
+
+function toggleDecoration(group: 1 | 2) {
+    if (!pixiScene || frameFailed)
+        return;
+
+    const enabled = group === 1
+        ? !isDecoration1Enabled.value
+        : !isDecoration2Enabled.value;
+
+    try
+    {
+        const frame = pixiScene.setDecorationEnabled(group, enabled);
+
+        if (group === 1)
+            isDecoration1Enabled.value = enabled;
+        else
+            isDecoration2Enabled.value = enabled;
+
+        mosaicLayer?.update();
+        interactionLayer?.update();
+        updateDiagnostics(frame.diagnostics);
+    }
+    catch (error)
+    {
+        failAnimatorPreview(error);
+    }
+}
+
 function updateDiagnostics(nextDiagnostics: readonly string[]) {
     const current = diagnostics.value;
 
@@ -531,6 +575,39 @@ onBeforeUnmount(() => {
                     ></span>
                 </span>
             </label>
+
+            <div
+                v-if="hasDecoration1 || hasDecoration2"
+                class="animator-preview-control-group"
+            >
+                <span>Decorations</span>
+
+                <div class="animator-preview-control-buttons">
+                    <button
+                        v-if="hasDecoration1"
+                        class="animator-preview-tool-button animator-preview-decoration-button"
+                        :class="{ 'is-active': isDecoration1Enabled }"
+                        type="button"
+                        :aria-pressed="isDecoration1Enabled"
+                        title="Toggle decoration set 1"
+                        @click="toggleDecoration(1)"
+                    >
+                        1
+                    </button>
+
+                    <button
+                        v-if="hasDecoration2"
+                        class="animator-preview-tool-button animator-preview-decoration-button"
+                        :class="{ 'is-active': isDecoration2Enabled }"
+                        type="button"
+                        :aria-pressed="isDecoration2Enabled"
+                        title="Toggle decoration set 2"
+                        @click="toggleDecoration(2)"
+                    >
+                        2
+                    </button>
+                </div>
+            </div>
 
             <div class="animator-preview-control-group">
                 <span>Animation</span>
@@ -785,6 +862,11 @@ onBeforeUnmount(() => {
     color: #b9ddf2;
     border-color: #50758a;
     background: rgba(20, 39, 49, 0.96);
+}
+
+.animator-preview-decoration-button {
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .animator-preview-tool-button:focus-visible,

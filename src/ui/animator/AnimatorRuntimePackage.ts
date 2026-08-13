@@ -56,6 +56,8 @@ export class AnimatorRuntimePackage {
     private readonly puppet2dIkSolver: AnimatorPuppet2DIkSolver;
     private readonly particleSimulatorsById = new Map<string, AnimatorParticleSimulator>();
     private readonly particleInitializationDiagnostics: string[] = [];
+    private readonly decoration1States = new Map<string, boolean>();
+    private readonly decoration2States = new Map<string, boolean>();
     private rPlusEnabled = false;
     readonly state: AnimatorSceneState;
     readonly hierarchy: AnimatorTransformHierarchy;
@@ -78,6 +80,9 @@ export class AnimatorRuntimePackage {
         this.animationSampler.validateAllClips();
 
         this.state = new AnimatorSceneState(manifest.scene);
+
+        this.initializeDecorationStates();
+
         this.hierarchy = new AnimatorTransformHierarchy(manifest.scene);
         this.preparedGeometry = new AnimatorPreparedGeometry(manifest.scene, this.geometryReader);
         this.renderers = new AnimatorRendererModel(manifest.scene, this.preparedGeometry, this.hierarchy);
@@ -112,6 +117,32 @@ export class AnimatorRuntimePackage {
 
     get isRPlusEnabled(): boolean {
         return this.rPlusEnabled;
+    }
+
+    get hasDecoration1(): boolean {
+        return this.manifest.scene.interactions.partsViews.some((view) => this.hasPartGroupObjects(view.part1));
+    }
+
+    get hasDecoration2(): boolean {
+        return this.manifest.scene.interactions.partsViews.some((view) => this.hasPartGroupObjects(view.part2));
+    }
+
+    get isDecoration1Enabled(): boolean {
+        const views = this.manifest.scene.interactions.partsViews.filter((view) => this.hasPartGroupObjects(view.part1));
+
+        return (
+            views.length > 0 &&
+            views.every((view) => this.decoration1States.get(view.componentId) ?? view.part1.defaultEnabled)
+        );
+    }
+
+    get isDecoration2Enabled(): boolean {
+        const views = this.manifest.scene.interactions.partsViews.filter((view) => this.hasPartGroupObjects(view.part2));
+
+        return (
+            views.length > 0 &&
+            views.every((view) => this.decoration2States.get(view.componentId) ?? view.part2.defaultEnabled)
+        );
     }
 
     static async load(preparation: AnimatorModPreviewPreparation, signal?: AbortSignal): Promise<AnimatorRuntimePackage> {
@@ -177,6 +208,7 @@ export class AnimatorRuntimePackage {
 
         const applicationResult = this.poseApplier.apply(poses);
         this.applyRPlusPresentation();
+        this.applyDecorationPresentation();
 
         for (const diagnostic of applicationResult.diagnostics)
             AnimatorRuntimeUtils.appendUniqueString(diagnostics, diagnosticKeys, diagnostic);
@@ -258,6 +290,28 @@ export class AnimatorRuntimePackage {
             throw new Error("This Animator skin does not contain an R+ presentation.");
 
         this.rPlusEnabled = enabled;
+
+        return this.advance(0);
+    }
+
+    setDecorationEnabled(group: 1 | 2, enabled: boolean): AnimatorRuntimeFrameResult {
+        const partsViews = this.manifest.scene.interactions.partsViews;
+        const matchingViews = partsViews.filter((view) =>
+            this.hasPartGroupObjects(group === 1
+                    ? view.part1
+                    : view.part2
+            )
+        );
+
+        if (matchingViews.length === 0)
+            throw new Error(`This Animator skin has no decoration set ${group}.`);
+
+        const states = group === 1
+            ? this.decoration1States
+            : this.decoration2States;
+
+        for (const view of matchingViews)
+            states.set(view.componentId, enabled);
 
         return this.advance(0);
     }
@@ -353,6 +407,74 @@ export class AnimatorRuntimePackage {
                 this.particleInitializationDiagnostics.push(`ParticleSystem "${definition.id}" could not be previewed. ${reason}`);
             }
         }
+    }
+
+    private initializeDecorationStates() {
+        const componentIds = new Set<string>();
+
+        for (const view of this.manifest.scene.interactions.partsViews)
+        {
+            if (componentIds.has(view.componentId))
+                throw new Error(`ActorPartsView "${view.componentId}" is duplicated.`);
+
+            componentIds.add(view.componentId);
+
+            this.validatePartGroup(view.componentId, "part 1", view.part1);
+            this.validatePartGroup(view.componentId, "part 2", view.part2);
+
+            this.decoration1States.set(view.componentId, view.part1.defaultEnabled);
+            this.decoration2States.set(view.componentId, view.part2.defaultEnabled);
+        }
+    }
+
+    private validatePartGroup(
+        componentId: string,
+        groupName: string,
+        group: Readonly<{
+            enableObjectIds: readonly string[];
+            disableObjectIds: readonly string[];
+        }>
+    ) {
+        const objectIds = new Set<string>();
+
+        for (const objectId of [...group.enableObjectIds, ...group.disableObjectIds]) {
+            if (objectIds.has(objectId))
+                throw new Error(`ActorPartsView "${componentId}" ${groupName} references GameObject "${objectId}" more than once.`);
+
+            objectIds.add(objectId);
+            this.state.requireGameObject(objectId);
+        }
+    }
+
+    private applyDecorationPresentation() {
+        for (const view of this.manifest.scene.interactions.partsViews)
+        {
+            this.applyPartGroup(view.part1, this.decoration1States.get(view.componentId) ?? view.part1.defaultEnabled);
+            this.applyPartGroup(view.part2, this.decoration2States.get(view.componentId) ?? view.part2.defaultEnabled);
+        }
+    }
+
+    private applyPartGroup(
+        group: Readonly<{
+            enableObjectIds: readonly string[];
+            disableObjectIds: readonly string[];
+        }>,
+        enabled: boolean
+    ) {
+        for (const objectId of group.enableObjectIds)
+            this.state.requireGameObject(objectId).active = enabled;
+
+        for (const objectId of group.disableObjectIds)
+            this.state.requireGameObject(objectId).active = !enabled;
+    }
+
+    private hasPartGroupObjects(
+        group: Readonly<{
+            enableObjectIds: readonly string[];
+            disableObjectIds: readonly string[];
+        }>
+    ): boolean {
+        return group.enableObjectIds.length > 0 || group.disableObjectIds.length > 0;
     }
 
     private indexTextures() {
