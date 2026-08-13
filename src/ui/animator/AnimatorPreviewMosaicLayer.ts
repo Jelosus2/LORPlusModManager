@@ -2,9 +2,9 @@ import type { AnimatorProjectedSpriteRenderer } from "./AnimatorSpriteProjector"
 import type { AnimatorRuntimeMosaic } from "./AnimatorBindingResolver";
 import type { AnimatorRuntimePackage } from "./AnimatorRuntimePackage";
 
+import { AnimatorPixiScene, type AnimatorPixiFaceAsset } from "./AnimatorPixiScene";
 import { Container, Mesh, MeshGeometry, Texture } from "pixi.js";
 import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
-import { AnimatorPixiScene } from "./AnimatorPixiScene";
 import { PixelateFilter } from "pixi-filters/pixelate";
 
 type AnimatorMosaicMaskView = {
@@ -26,13 +26,21 @@ export class AnimatorPreviewMosaicLayer {
     readonly root = new Container();
     readonly hasPresentation: boolean;
 
-    constructor(private readonly runtime: AnimatorRuntimePackage, private readonly texturesById: ReadonlyMap<string, Texture>) {
+    constructor(
+        private readonly runtime: AnimatorRuntimePackage,
+        private readonly texturesById: ReadonlyMap<string, Texture>,
+        faceAssets: readonly AnimatorPixiFaceAsset[] = []
+    ) {
         this.root.sortableChildren = true;
         this.root.eventMode = "none";
         this.root.zIndex = this.Z_INDEX;
         this.root.visible = false;
 
-        this.pixelatedScene = new AnimatorPixiScene(runtime, texturesById, { includeParticles: false });
+        this.pixelatedScene = new AnimatorPixiScene(runtime, texturesById, {
+            includeParticles: false,
+            faceAssets
+        });
+
         this.pixelatedScene.root.scale.set(1, 1);
         this.pixelatedScene.root.eventMode = "none";
         this.pixelatedScene.root.zIndex = 0;
@@ -69,6 +77,11 @@ export class AnimatorPreviewMosaicLayer {
 
         if (this.root.visible)
             this.update();
+    }
+
+    setFace(assetName: string | null) {
+        AnimatorRuntimeUtils.requireNotDestroyed(this.destroyed, "The Animator mosaic layer");
+        this.pixelatedScene.setFace(assetName);
     }
 
     destroy() {

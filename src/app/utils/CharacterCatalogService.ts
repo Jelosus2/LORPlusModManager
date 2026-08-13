@@ -12,7 +12,9 @@ import type {
     StaticPreviewLayer,
     StaticPreviewRenderer,
     StaticPreviewSpriteSource,
-    SpineMosaicMask
+    SpineMosaicMask,
+    AnimatorPreviewData,
+    PreviewFaceExpression
 } from "../../shared/characters.js";
 
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
@@ -51,7 +53,7 @@ export class CharacterCatalogService {
     private readonly MAX_BACKGROUND_ZOOM = 10;
     private readonly MAX_STATIC_LAYERS = 128;
     private readonly MAX_STATIC_MOSAIC_MASKS = 8;
-    private readonly MAX_STATIC_FACE_EXPRESSIONS = 32;
+    private readonly MAX_PREVIEW_FACE_EXPRESSIONS = 32;
     private readonly MAX_STATIC_NAME_LENGTH = 128;
     private readonly MAX_STATIC_PIVOT_DISTANCE = 100;
     private readonly MAX_STATIC_MESH_VERTICES = 4096;
@@ -287,6 +289,8 @@ export class CharacterCatalogService {
         {
             if (Object.hasOwn(value, "staticPreview"))
                 throw new Error(`Spine character catalog entry ${index} contains static preview data.`);
+            if (Object.hasOwn(value, "animatorPreview"))
+                throw new Error(`Spine character catalog entry ${index} contains Animator preview data.`);
 
             return Object.freeze({
                 ...common,
@@ -308,9 +312,13 @@ export class CharacterCatalogService {
                 ...common,
                 isSpineSkin: false,
                 isAnimatorSkin: true,
-                isStaticSkin: false
+                isStaticSkin: false,
+                animatorPreview: this.parseAnimatorPreview(value.animatorPreview, index)
             });
         }
+
+        if (Object.hasOwn(value, "animatorPreview"))
+            throw new Error(`Static character catalog entry ${index} contains Animator preview data.`);
 
         return Object.freeze({
             ...common,
@@ -639,35 +647,7 @@ export class CharacterCatalogService {
         if (!TypeCheck.isRecord(value))
             throw new Error(`Invalid ${fieldName}.`);
 
-        if (!TypeCheck.isValidArray(value.expressions, this.MAX_STATIC_FACE_EXPRESSIONS))
-            throw new Error(`${fieldName} has no valid expressions.`);
-
-        const identities = new Set<string>();
-
-        const expressions = Object.freeze(
-            value.expressions.map((expression, expressionIndex) => {
-                if (!TypeCheck.isRecord(expression))
-                    throw new Error(`Invalid ${fieldName} expression ${expressionIndex}.`);
-
-                const assetName = this.readUnityAssetName(expression.assetName, `${fieldName} expression ${expressionIndex} asset`);
-                const bundleName = this.readAssetBundleName(expression.bundleName, `${fieldName} expression ${expressionIndex} bundle`);
-
-                const identity = JSON.stringify([
-                    StringUtils.normalize(bundleName),
-                    StringUtils.normalize(assetName)
-                ]);
-
-                if (identities.has(identity))
-                    throw new Error(`${fieldName} contains a duplicate expression: ${assetName}.`);
-
-                identities.add(identity);
-
-                return Object.freeze({
-                    assetName,
-                    bundleName
-                });
-            })
-        );
+        const expressions = this.parsePreviewFaceExpressions(value.expressions, `${fieldName} expressions`, false);
 
         return Object.freeze({
             ...this.parseStaticPreviewRenderer(value, fieldName),
@@ -836,6 +816,45 @@ export class CharacterCatalogService {
             height,
             transform: this.parsePreviewTransform(value.transform, `${fieldName} transform`)
         });
+    }
+
+    private parseAnimatorPreview(value: unknown, index: number): AnimatorPreviewData {
+        if (!TypeCheck.isRecord(value))
+            throw new Error(`Animator character catalog entry ${index} has no valid preview data.`);
+
+        return Object.freeze({
+            faces: this.parsePreviewFaceExpressions(value.faces, `entry ${index} Animator faces`, true)
+        });
+    }
+
+    private parsePreviewFaceExpressions(value: unknown, fieldName: string, allowEmpty: boolean): readonly PreviewFaceExpression[] {
+        if (!Array.isArray(value) || value.length > this.MAX_PREVIEW_FACE_EXPRESSIONS || (!allowEmpty && value.length === 0))
+            throw new Error(`${fieldName} has no valid expressions.`);
+
+        const identities = new Set<string>();
+
+        return Object.freeze(value.map((expression, expressionIndex) => {
+            if (!TypeCheck.isRecord(expression))
+                throw new Error(`Invalid ${fieldName} expression ${expressionIndex}.`);
+
+            const assetName = this.readUnityAssetName(expression.assetName, `${fieldName} expression ${expressionIndex} asset`);
+            const bundleName = this.readAssetBundleName(expression.bundleName, `${fieldName} expression ${expressionIndex} bundle`);
+
+            const identity = JSON.stringify([
+                StringUtils.normalize(bundleName),
+                StringUtils.normalize(assetName)
+            ]);
+
+            if (identities.has(identity))
+                throw new Error(`${fieldName} contains a duplicate expression: ${assetName}.`);
+
+            identities.add(identity);
+
+            return Object.freeze({
+                assetName,
+                bundleName
+            });
+        }));
     }
 
     private readAssetBundleName(value: unknown, fieldName: string): string {

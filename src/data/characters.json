@@ -14,7 +14,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_BloodyPanther_Nparts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_BloodyPanther_N_Anger",
+            "bundleName": "face_br_bloodypanther_n"
+          },
+          {
+            "assetName": "BR_BloodyPanther_N_chewinggum",
+            "bundleName": "face_br_bloodypanther_n"
+          },
+          {
+            "assetName": "BR_BloodyPanther_N_chewinggum2",
+            "bundleName": "face_br_bloodypanther_n"
+          },
+          {
+            "assetName": "BR_BloodyPanther_N_Shy",
+            "bundleName": "face_br_bloodypanther_n"
+          },
+          {
+            "assetName": "BR_BloodyPanther_N_Surprised",
+            "bundleName": "face_br_bloodypanther_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_BloodyPanther_NS1",
@@ -31,7 +55,31 @@
         "BR_BloodyPanther_NS1_parts_01_R+.png",
         "BR_BloodyPanther_NS1_parts_01.png",
         "BR_BloodyPanther_NS1_parts_02.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_BloodyPanther_NS1_BigSmile",
+            "bundleName": "face_br_bloodypanther_ns1"
+          },
+          {
+            "assetName": "BR_BloodyPanther_NS1_CloseEye",
+            "bundleName": "face_br_bloodypanther_ns1"
+          },
+          {
+            "assetName": "BR_BloodyPanther_NS1_Sad",
+            "bundleName": "face_br_bloodypanther_ns1"
+          },
+          {
+            "assetName": "BR_BloodyPanther_NS1_Smile",
+            "bundleName": "face_br_bloodypanther_ns1"
+          },
+          {
+            "assetName": "BR_BloodyPanther_NS1_Surprised",
+            "bundleName": "face_br_bloodypanther_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_BloodyPanther_NS1_Dam",
@@ -374,7 +422,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Spriggan_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Spriggan_NS1_CloseEye",
+            "bundleName": "face_br_spriggan_ns1"
+          },
+          {
+            "assetName": "BR_Spriggan_NS1_Shy",
+            "bundleName": "face_br_spriggan_ns1"
+          },
+          {
+            "assetName": "BR_Spriggan_NS1_BigSmile",
+            "bundleName": "face_br_spriggan_ns1"
+          },
+          {
+            "assetName": "BR_Spriggan_NS1_BigSmile2",
+            "bundleName": "face_br_spriggan_ns1"
+          },
+          {
+            "assetName": "BR_Spriggan_NS1_Anger",
+            "bundleName": "face_br_spriggan_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Spriggan_NS2",
@@ -2161,7 +2233,10 @@
       "assets": [
         "FullbodyIMG_AGS_Aeda_work.png",
         "FX_trail_GD2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Nereid_N",
@@ -2176,7 +2251,39 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Nereid_N_Parts1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Nereid_N_Anger",
+            "bundleName": "face_br_nereid_n"
+          },
+          {
+            "assetName": "BR_Nereid_N_BigSmile",
+            "bundleName": "face_br_nereid_n"
+          },
+          {
+            "assetName": "BR_Nereid_N_Exiting",
+            "bundleName": "face_br_nereid_n"
+          },
+          {
+            "assetName": "BR_Nereid_N_Shy",
+            "bundleName": "face_br_nereid_n"
+          },
+          {
+            "assetName": "BR_Nereid_N_Shy1",
+            "bundleName": "face_br_nereid_n"
+          },
+          {
+            "assetName": "BR_Nereid_N_Surprised",
+            "bundleName": "face_br_nereid_n"
+          },
+          {
+            "assetName": "BR_Nereid_N_Worry",
+            "bundleName": "face_br_nereid_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Nereid_NS1",
@@ -2191,7 +2298,27 @@
       "isStaticSkin": false,
       "assets": [
         "2DModel_BR_Nereid_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Nereid_NS1_BigSmile",
+            "bundleName": "face_br_nereid_ns1"
+          },
+          {
+            "assetName": "BR_Nereid_NS1_Exiting",
+            "bundleName": "face_br_nereid_ns1"
+          },
+          {
+            "assetName": "BR_Nereid_NS1_Shy",
+            "bundleName": "face_br_nereid_ns1"
+          },
+          {
+            "assetName": "BR_Nereid_NS1_Worry",
+            "bundleName": "face_br_nereid_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Nereid_NS2",
@@ -4793,7 +4920,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Alexandra_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Alexandra_N_Smile",
+            "bundleName": "face_3p_alexandra_n"
+          },
+          {
+            "assetName": "3P_Alexandra_N_Shy",
+            "bundleName": "face_3p_alexandra_n"
+          },
+          {
+            "assetName": "3P_Alexandra_N_CloseEye",
+            "bundleName": "face_3p_alexandra_n"
+          },
+          {
+            "assetName": "3P_Alexandra_N_BigSmile",
+            "bundleName": "face_3p_alexandra_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Alexandra_N_Dam",
@@ -4905,7 +5052,19 @@
       "assets": [
         "FullbodyIMG_3P_Alexandra_NS1_parts.png",
         "FullbodyIMG_3P_Alexandra_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Alexandra_NS1_Shy",
+            "bundleName": "face_3p_alexandra_ns1"
+          },
+          {
+            "assetName": "3P_Alexandra_NS1_BigSmile",
+            "bundleName": "face_3p_alexandra_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Alexandra_NS2",
@@ -5821,7 +5980,23 @@
       "assets": [
         "Texture_BR_Amy_N_2DModel_01.png",
         "Texture_BR_Amy_N_2DModel.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Amy_N_Serious",
+            "bundleName": "face_br_amy_n"
+          },
+          {
+            "assetName": "BR_Amy_N_Surprised",
+            "bundleName": "face_br_amy_n"
+          },
+          {
+            "assetName": "BR_Amy_N_Temptation",
+            "bundleName": "face_br_amy_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Amy_N_Dam",
@@ -5932,7 +6107,23 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Amy_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Amy_NS1_CloseEye",
+            "bundleName": "face_br_amy_ns1"
+          },
+          {
+            "assetName": "BR_Amy_NS1_Serious",
+            "bundleName": "face_br_amy_ns1"
+          },
+          {
+            "assetName": "BR_Amy_NS1_Surprised",
+            "bundleName": "face_br_amy_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Amy_NS2",
@@ -6652,7 +6843,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Raven_N_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Raven_N_BigSmile",
+            "bundleName": "face_br_raven_n"
+          },
+          {
+            "assetName": "BR_Raven_N_CloseEye",
+            "bundleName": "face_br_raven_n"
+          },
+          {
+            "assetName": "BR_Raven_N_Shy",
+            "bundleName": "face_br_raven_n"
+          },
+          {
+            "assetName": "BR_Raven_N_Smile",
+            "bundleName": "face_br_raven_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Raven_NS1",
@@ -7610,7 +7821,15 @@
       "assets": [
         "FullbodyIMG_BR_BeastHunter_NS1_parts_2.png",
         "FullbodyIMG_BR_BeastHunter_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_BeastHunter_NS1_BigSmile",
+            "bundleName": "face_br_beasthunter_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_BeastHunter_NS2",
@@ -8346,7 +8565,10 @@
       "assets": [
         "AGS_RheinRitter_NS1_part1.png",
         "AGS_RheinRitter_NS1_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_DS_Atalanta_N",
@@ -8362,7 +8584,27 @@
       "assets": [
         "FullbodyIMG_DS_Atalanta_N_parts.png",
         "FullbodyIMG_DS_Atalanta_N.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "DS_Atalanta_N_Anger",
+            "bundleName": "face_ds_atalanta_n"
+          },
+          {
+            "assetName": "DS_Atalanta_N_CloseEye",
+            "bundleName": "face_ds_atalanta_n"
+          },
+          {
+            "assetName": "DS_Atalanta_N_Smile",
+            "bundleName": "face_ds_atalanta_n"
+          },
+          {
+            "assetName": "DS_Atalanta_N_Surprised",
+            "bundleName": "face_ds_atalanta_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_DS_Atalanta_NS1",
@@ -8377,7 +8619,23 @@
       "isStaticSkin": false,
       "assets": [
         "DS_Atalanta_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "DS_Atalanta_NS1_CloseEye",
+            "bundleName": "face_ds_atalanta_ns1"
+          },
+          {
+            "assetName": "DS_Atalanta_NS1_Serious",
+            "bundleName": "face_ds_atalanta_ns1"
+          },
+          {
+            "assetName": "DS_Atalanta_NS1_CloseEye2",
+            "bundleName": "face_ds_atalanta_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Audrey_N",
@@ -8393,7 +8651,23 @@
       "assets": [
         "FullbodyIMG_PECS_Audrey_N_Parts.png",
         "FullbodyIMG_PECS_Audrey_N.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Audrey_N_Anger",
+            "bundleName": "face_pecs_audrey_n"
+          },
+          {
+            "assetName": "PECS_Audrey_N_Anger2",
+            "bundleName": "face_pecs_audrey_n"
+          },
+          {
+            "assetName": "PECS_Audrey_N_Anger3",
+            "bundleName": "face_pecs_audrey_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Audrey_NS1",
@@ -8408,7 +8682,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_Audrey_NS1_Part.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Audrey_NS1_CloseEye",
+            "bundleName": "face_pecs_audrey_ns1"
+          },
+          {
+            "assetName": "PECS_Audrey_NS1_BigSmile",
+            "bundleName": "face_pecs_audrey_ns1"
+          },
+          {
+            "assetName": "PECS_Audrey_NS1_Smile",
+            "bundleName": "face_pecs_audrey_ns1"
+          },
+          {
+            "assetName": "PECS_Audrey_NS1_Surprised",
+            "bundleName": "face_pecs_audrey_ns1"
+          },
+          {
+            "assetName": "PECS_Audrey_NS1_Anger",
+            "bundleName": "face_pecs_audrey_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Audrey_NS2",
@@ -9471,7 +9769,39 @@
       "assets": [
         "Model_PECS_Azaz_NS1_R+.png",
         "Model_PECS_Azaz_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Azaz_NS1_Anger",
+            "bundleName": "face_pecs_azaz_ns1"
+          },
+          {
+            "assetName": "PECS_Azaz_NS1_CloseEye",
+            "bundleName": "face_pecs_azaz_ns1"
+          },
+          {
+            "assetName": "PECS_Azaz_NS1_Shy",
+            "bundleName": "face_pecs_azaz_ns1"
+          },
+          {
+            "assetName": "PECS_Azaz_NS1_Expressionless",
+            "bundleName": "face_pecs_azaz_ns1"
+          },
+          {
+            "assetName": "PECS_Azaz_NS1_Smile",
+            "bundleName": "face_pecs_azaz_ns1"
+          },
+          {
+            "assetName": "PECS_Azaz_NS1_Surprised",
+            "bundleName": "face_pecs_azaz_ns1"
+          },
+          {
+            "assetName": "PECS_Azaz_NS1_Sad",
+            "bundleName": "face_pecs_azaz_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Azaz_NS1_Dam",
@@ -10526,7 +10856,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_NightAngel_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_NightAngel_N_Anger",
+            "bundleName": "face_br_nightangel_n"
+          },
+          {
+            "assetName": "BR_NightAngel_N_CloseEye",
+            "bundleName": "face_br_nightangel_n"
+          },
+          {
+            "assetName": "BR_NightAngel_N_Smile",
+            "bundleName": "face_br_nightangel_n"
+          },
+          {
+            "assetName": "BR_NightAngel_N_BigSmile",
+            "bundleName": "face_br_nightangel_n"
+          },
+          {
+            "assetName": "BR_NightAngel_N_Shy",
+            "bundleName": "face_br_nightangel_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_NightAngel_NS1",
@@ -10637,7 +10991,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_NightAngel_NS2_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_NightAngel_NS2_CloseEye",
+            "bundleName": "face_br_nightangel_ns2"
+          },
+          {
+            "assetName": "BR_NightAngel_NS2_Smile",
+            "bundleName": "face_br_nightangel_ns2"
+          },
+          {
+            "assetName": "BR_NightAngel_NS2_Anger",
+            "bundleName": "face_br_nightangel_ns2"
+          },
+          {
+            "assetName": "BR_NightAngel_NS2_BigSmile",
+            "bundleName": "face_br_nightangel_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_NightAngel_NS3",
@@ -12082,7 +12456,27 @@
         "PECS_Babariana_NS1_part2_Bg_Only_01.png",
         "PECS_Babariana_NS1_part2_Bg_Only.png",
         "PECS_Babariana_NS1_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Babariana_NS1_Temptation",
+            "bundleName": "face_pecs_babariana_ns1"
+          },
+          {
+            "assetName": "PECS_Babariana_NS1_Proud",
+            "bundleName": "face_pecs_babariana_ns1"
+          },
+          {
+            "assetName": "PECS_Babariana_NS1_CloseEye",
+            "bundleName": "face_pecs_babariana_ns1"
+          },
+          {
+            "assetName": "PECS_Babariana_NS1_BigSmile",
+            "bundleName": "face_pecs_babariana_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Babariana_NS1_Dam",
@@ -12525,7 +12919,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Banshee_NS1_part.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Leanne_N",
@@ -13347,7 +13744,47 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_3P_BlackLilith_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_BlackLilith_N_CloseEye",
+            "bundleName": "face_3p_blacklilith_n"
+          },
+          {
+            "assetName": "3P_BlackLilith_N_Embarrass",
+            "bundleName": "face_3p_blacklilith_n"
+          },
+          {
+            "assetName": "3P_BlackLilith_N_Smile",
+            "bundleName": "face_3p_blacklilith_n"
+          },
+          {
+            "assetName": "3P_BlackLilith_N_Anger",
+            "bundleName": "face_3p_blacklilith_n"
+          },
+          {
+            "assetName": "3P_BlackLilith_N_Anger2",
+            "bundleName": "face_3p_blacklilith_n"
+          },
+          {
+            "assetName": "3P_BlackLilith_N_Anger3",
+            "bundleName": "face_3p_blacklilith_n"
+          },
+          {
+            "assetName": "3P_BlackLilith_N_Expressionless",
+            "bundleName": "face_3p_blacklilith_n"
+          },
+          {
+            "assetName": "3P_BlackLilith_N_Surprised",
+            "bundleName": "face_3p_blacklilith_n"
+          },
+          {
+            "assetName": "3P_BlackLilith_N_Shy",
+            "bundleName": "face_3p_blacklilith_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_BlackLilith_NS1",
@@ -13364,7 +13801,15 @@
         "FullbodyIMG_3P_BlackLilith_NS1_2_parts.png",
         "FullbodyIMG_3P_BlackLilith_NS1_parts.png",
         "FullbodyIMG_3P_BlackLilith_NS1_parts2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_BlackLilith_NS1_BigSmile",
+            "bundleName": "face_3p_blacklilith_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_BlackLilith_NS2",
@@ -13381,7 +13826,10 @@
         "FullbodyIMG_3P_BlackLilith_NS2_part3_R+.png",
         "FullbodyIMG_3P_BlackLilith_NS2_part3.png",
         "FullbodyIMG_3P_BlackLilith_NS2_part4.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_3P_BlackLilith_NS2_Dam",
@@ -13562,45 +14010,7 @@
       "characterName": "Black Lilith",
       "skinName": "Miss Orca: Master Overdose",
       "iconFile": "InvenIcon_3P_BlackLilith_NS3.png",
-      "backgroundPreview": {
-        "layers": [
-          {
-            "file": "May_BLKbox_2.webp",
-            "width": 0.29,
-            "height": 1.55,
-            "pivot": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "transform": {
-              "a": 22.046813,
-              "b": 0,
-              "c": 0,
-              "d": 2.150002,
-              "tx": 0.753749,
-              "ty": -0.07223
-            },
-            "sortingOrder": 1
-          }
-        ],
-        "camera": {
-          "width": 40.96,
-          "height": 19.54,
-          "pivot": {
-            "x": 0.5,
-            "y": 0.5
-          },
-          "transform": {
-            "a": 0.111708,
-            "b": 0,
-            "c": 0,
-            "d": 0.111708,
-            "tx": 0.967111,
-            "ty": 0.129961
-          },
-          "zoom": 0.82
-        }
-      },
+      "backgroundPreview": null,
       "isRPlusSkin": false,
       "isSpineSkin": false,
       "isAnimatorSkin": false,
@@ -14119,7 +14529,27 @@
         "3P_BlackWyrm_NS1_part1.png",
         "3P_BlackWyrm_NS1_part2.png",
         "3P_BlackWyrm_NS1_part3.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_BlackWyrm_NS1_CloseEye",
+            "bundleName": "face_3p_blackwyrm_ns1"
+          },
+          {
+            "assetName": "3P_BlackWyrm_NS1_Sad",
+            "bundleName": "face_3p_blackwyrm_ns1"
+          },
+          {
+            "assetName": "3P_BlackWyrm_NS1_Smile",
+            "bundleName": "face_3p_blackwyrm_ns1"
+          },
+          {
+            "assetName": "3P_BlackWyrm_NS1_Surprised",
+            "bundleName": "face_3p_blackwyrm_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_BlackWyrm_NS1_Dam",
@@ -18563,7 +18993,31 @@
       "isStaticSkin": false,
       "assets": [
         "Texture_BR_Andvari_NS2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Andvari_NS2_Anger",
+            "bundleName": "face_br_andvari_ns2"
+          },
+          {
+            "assetName": "BR_Andvari_NS2_Sad",
+            "bundleName": "face_br_andvari_ns2"
+          },
+          {
+            "assetName": "BR_Andvari_NS2_Shy",
+            "bundleName": "face_br_andvari_ns2"
+          },
+          {
+            "assetName": "BR_Andvari_NS2_Smile",
+            "bundleName": "face_br_andvari_ns2"
+          },
+          {
+            "assetName": "BR_Andvari_NS2_CloseEye",
+            "bundleName": "face_br_andvari_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Andvari_NS3",
@@ -19776,7 +20230,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullBodyIMG_DS_Arman_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_DS_Arman_NS2",
@@ -20028,7 +20485,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_Carolina_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Carolina_NS1",
@@ -20306,7 +20766,10 @@
       "assets": [
         "FullbodyIMG_PECS_Cerberus_NS1_Parts_R+.png",
         "FullbodyIMG_PECS_Cerberus_NS1_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Cerberus_NS1_Dam",
@@ -20433,7 +20896,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_Cerberus_NS2_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Cerberus_NS3",
@@ -20449,7 +20915,10 @@
       "assets": [
         "2DModel_PECS_Cerberus_NS3.png",
         "FullbodyIMG_PROP_Heart_N.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Cerberus_NS3_Dam",
@@ -21393,7 +21862,35 @@
       "assets": [
         "FullbodyIMG_DS_Charlotte_NS1_part1.png",
         "FullbodyIMG_DS_Charlotte_NS1_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "DS_Charlotte_NS1_Surprised",
+            "bundleName": "face_ds_charlotte_ns1"
+          },
+          {
+            "assetName": "DS_Charlotte_NS1_CloseEye",
+            "bundleName": "face_ds_charlotte_ns1"
+          },
+          {
+            "assetName": "DS_Charlotte_NS1_Smile",
+            "bundleName": "face_ds_charlotte_ns1"
+          },
+          {
+            "assetName": "DS_Charlotte_NS1_Shy",
+            "bundleName": "face_ds_charlotte_ns1"
+          },
+          {
+            "assetName": "DS_Charlotte_NS1_Anger",
+            "bundleName": "face_ds_charlotte_ns1"
+          },
+          {
+            "assetName": "DS_Charlotte_NS1_Laugh",
+            "bundleName": "face_ds_charlotte_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_DS_Charlotte_NS2",
@@ -21409,7 +21906,10 @@
       "assets": [
         "DS_Charlotte_NS2_Parts_01.png",
         "DS_Charlotte_NS2_Parts_02.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_DS_Charlotte_NS3",
@@ -21957,7 +22457,35 @@
       "assets": [
         "Model_BR_Cheona_NS1_Part1_R+.png",
         "Model_BR_Cheona_NS1_part1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Cheona_NS1_Anger",
+            "bundleName": "face_br_cheona_ns1"
+          },
+          {
+            "assetName": "BR_Cheona_NS1_BigSmile",
+            "bundleName": "face_br_cheona_ns1"
+          },
+          {
+            "assetName": "BR_Cheona_NS1_CloseEye",
+            "bundleName": "face_br_cheona_ns1"
+          },
+          {
+            "assetName": "BR_Cheona_NS1_Sad",
+            "bundleName": "face_br_cheona_ns1"
+          },
+          {
+            "assetName": "BR_Cheona_NS1_Shy",
+            "bundleName": "face_br_cheona_ns1"
+          },
+          {
+            "assetName": "BR_Cheona_NS1_Surprised",
+            "bundleName": "face_br_cheona_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Cheona_NS1_Dam",
@@ -23332,7 +23860,10 @@
         "PECS_Circe_NS1_part1.png",
         "PECS_Circe_NS1_part2.png",
         "PECS_Circe_NS1_part3.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Circe_NS1_Dam",
@@ -24305,7 +24836,35 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_CoCoWhiteShell_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_CoCoWhiteShell_N_Relief",
+            "bundleName": "face_pecs_cocowhiteshell_n"
+          },
+          {
+            "assetName": "PECS_CoCoWhiteShell_N_Niceness",
+            "bundleName": "face_pecs_cocowhiteshell_n"
+          },
+          {
+            "assetName": "PECS_CoCoWhiteShell_N_Sad",
+            "bundleName": "face_pecs_cocowhiteshell_n"
+          },
+          {
+            "assetName": "PECS_CoCoWhiteShell_N_Smile",
+            "bundleName": "face_pecs_cocowhiteshell_n"
+          },
+          {
+            "assetName": "PECS_CoCoWhiteShell_N_Surprised",
+            "bundleName": "face_pecs_cocowhiteshell_n"
+          },
+          {
+            "assetName": "PECS_CoCoWhiteShell_N_Worry",
+            "bundleName": "face_pecs_cocowhiteshell_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_BS_N",
@@ -24639,7 +25198,43 @@
       "isStaticSkin": false,
       "assets": [
         "3P_BConstantiaS2_N_parts_0.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_ConstantiaS2_N_Expressionless",
+            "bundleName": "face_3p_constantias2_n"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_N_Resolve",
+            "bundleName": "face_3p_constantias2_n"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_N_CloseEye",
+            "bundleName": "face_3p_constantias2_n"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_N_Embarrass",
+            "bundleName": "face_3p_constantias2_n"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_N_Worry",
+            "bundleName": "face_3p_constantias2_n"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_N_BigSmile",
+            "bundleName": "face_3p_constantias2_n"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_N_Surprised",
+            "bundleName": "face_3p_constantias2_n"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_N_What",
+            "bundleName": "face_3p_constantias2_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_ConstantiaS2_N_Dam",
@@ -24750,7 +25345,43 @@
       "isStaticSkin": false,
       "assets": [
         "3P_BConstantiaS2_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_ConstantiaS2_SS1_Expressionless",
+            "bundleName": "face_3p_constantias2_ss1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_SS1_Resolve",
+            "bundleName": "face_3p_constantias2_ss1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_SS1_CloseEye",
+            "bundleName": "face_3p_constantias2_ss1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_SS1_Embarrass",
+            "bundleName": "face_3p_constantias2_ss1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_SS1_Worry",
+            "bundleName": "face_3p_constantias2_ss1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_SS1_BigSmile",
+            "bundleName": "face_3p_constantias2_ss1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_SS1_Surprised",
+            "bundleName": "face_3p_constantias2_ss1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_SS1_What",
+            "bundleName": "face_3p_constantias2_ss1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_ConstantiaS2_SS1_Dam",
@@ -24861,7 +25492,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_3P_ConstantiaS2_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_ConstantiaS2_NS1_CloseEye",
+            "bundleName": "face_3p_constantias2_ns1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_NS1_Embarrass",
+            "bundleName": "face_3p_constantias2_ns1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_NS1_Resolve",
+            "bundleName": "face_3p_constantias2_ns1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_NS1_Smile",
+            "bundleName": "face_3p_constantias2_ns1"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_NS1_Surprised",
+            "bundleName": "face_3p_constantias2_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_ConstantiaS2_NS2",
@@ -24877,7 +25532,19 @@
       "assets": [
         "FullbodyIMG_3P_ConstantiaS2_NS2_parts.png",
         "FullbodyIMG_3P_ConstantiaS2_NS2_parts2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_ConstantiaS2_NS2_CloseEye",
+            "bundleName": "face_3p_constantias2_ns2"
+          },
+          {
+            "assetName": "3P_ConstantiaS2_NS2_Smile",
+            "bundleName": "face_3p_constantias2_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_ConstantiaS2_NS3",
@@ -25648,7 +26315,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_3P_CSPerrault_NS1_parts_80per.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_3P_CSPerrault_NS2",
@@ -25664,7 +26334,27 @@
       "assets": [
         "FullbodyIMG_3P_CSPerrault_NS2_parts.png",
         "FullbodyIMG_3P_CSPerrault_NS2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_CSPerrault_NS2_CloseEye",
+            "bundleName": "face_3p_csperrault_ns2"
+          },
+          {
+            "assetName": "3P_CSPerrault_NS2_Shy",
+            "bundleName": "face_3p_csperrault_ns2"
+          },
+          {
+            "assetName": "3P_CSPerrault_NS2_Anger",
+            "bundleName": "face_3p_csperrault_ns2"
+          },
+          {
+            "assetName": "3P_CSPerrault_NS2_BigSmile",
+            "bundleName": "face_3p_csperrault_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_CSPerrault_NS3",
@@ -25914,7 +26604,10 @@
       "isStaticSkin": false,
       "assets": [
         "AGS_Fallen_N.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_AGS_Rampart_N",
@@ -26104,7 +26797,10 @@
         "FullbodyIMG_AGS_Rampart_NS1_fx.png",
         "Rampart_NS1_2D_Sprite_fire_4x42.png",
         "UI_Cha_particle_fix.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_CyclopsePrincess_N",
@@ -26869,7 +27565,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_3P_Daphne_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Daphne_NS1_CloseEye",
+            "bundleName": "face_3p_daphne_ns1"
+          },
+          {
+            "assetName": "3P_Daphne_NS1_Shy1",
+            "bundleName": "face_3p_daphne_ns1"
+          },
+          {
+            "assetName": "3P_Daphne_NS1_Shy2",
+            "bundleName": "face_3p_daphne_ns1"
+          },
+          {
+            "assetName": "3P_Daphne_NS1_Smile",
+            "bundleName": "face_3p_daphne_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Daphne_NS2",
@@ -26886,7 +27602,35 @@
         "FullbodyIMG_3P_Daphne_NS2_part1_2.png",
         "FullbodyIMG_3P_Daphne_NS2_part1.png",
         "FullbodyIMG_3P_Daphne_NS2_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Daphne_NS2_BigSmile",
+            "bundleName": "face_3p_daphne_ns2"
+          },
+          {
+            "assetName": "3P_Daphne_NS2_CloseEye",
+            "bundleName": "face_3p_daphne_ns2"
+          },
+          {
+            "assetName": "3P_Daphne_NS2_Shy",
+            "bundleName": "face_3p_daphne_ns2"
+          },
+          {
+            "assetName": "3P_Daphne_NS2_Shy1",
+            "bundleName": "face_3p_daphne_ns2"
+          },
+          {
+            "assetName": "3P_Daphne_NS2_Smile",
+            "bundleName": "face_3p_daphne_ns2"
+          },
+          {
+            "assetName": "3P_Daphne_NS2_Surprised",
+            "bundleName": "face_3p_daphne_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Daphne_NS3",
@@ -27558,7 +28302,55 @@
       "assets": [
         "FullbodyIMG_PECS_Darkelf_NS1_part01.png",
         "FullbodyIMG_PECS_Darkelf_NS1_part02.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_DarkElf_NS1_Worry",
+            "bundleName": "face_pecs_darkelf_ns1"
+          },
+          {
+            "assetName": "PECS_DarkElf_NS1_Surprised",
+            "bundleName": "face_pecs_darkelf_ns1"
+          },
+          {
+            "assetName": "PECS_DarkElf_NS1_Sorry2",
+            "bundleName": "face_pecs_darkelf_ns1"
+          },
+          {
+            "assetName": "PECS_DarkElf_NS1_Sorry",
+            "bundleName": "face_pecs_darkelf_ns1"
+          },
+          {
+            "assetName": "PECS_DarkElf_NS1_Smile2",
+            "bundleName": "face_pecs_darkelf_ns1"
+          },
+          {
+            "assetName": "PECS_DarkElf_NS1_Smile",
+            "bundleName": "face_pecs_darkelf_ns1"
+          },
+          {
+            "assetName": "PECS_DarkElf_NS1_Shy2",
+            "bundleName": "face_pecs_darkelf_ns1"
+          },
+          {
+            "assetName": "PECS_DarkElf_NS1_Shy",
+            "bundleName": "face_pecs_darkelf_ns1"
+          },
+          {
+            "assetName": "PECS_DarkElf_NS1_Embarrass3",
+            "bundleName": "face_pecs_darkelf_ns1"
+          },
+          {
+            "assetName": "PECS_DarkElf_NS1_Embarrass2",
+            "bundleName": "face_pecs_darkelf_ns1"
+          },
+          {
+            "assetName": "PECS_DarkElf_NS1_Embarrass",
+            "bundleName": "face_pecs_darkelf_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_DarkElf_NS2",
@@ -28616,7 +29408,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_DrM_N_size80_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_DrM_N_Surprised",
+            "bundleName": "face_br_drm_n"
+          },
+          {
+            "assetName": "BR_DrM_N_Sad",
+            "bundleName": "face_br_drm_n"
+          },
+          {
+            "assetName": "BR_DrM_N_CloseEye",
+            "bundleName": "face_br_drm_n"
+          },
+          {
+            "assetName": "BR_DrM_N_BigSmile",
+            "bundleName": "face_br_drm_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_DrM_NS1",
@@ -28631,7 +29443,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_DrM_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_DrM_NS1_CloseEye",
+            "bundleName": "face_br_drm_ns1"
+          },
+          {
+            "assetName": "BR_DrM_NS1_Sad",
+            "bundleName": "face_br_drm_ns1"
+          },
+          {
+            "assetName": "BR_DrM_NS1_Smile",
+            "bundleName": "face_br_drm_ns1"
+          },
+          {
+            "assetName": "BR_DrM_NS1_Surprised",
+            "bundleName": "face_br_drm_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Draculina_N",
@@ -28879,7 +29711,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_Draculina_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Draculina_NS1_Anger",
+            "bundleName": "face_pecs_draculina_ns1"
+          },
+          {
+            "assetName": "PECS_Draculina_NS1_CloseEye",
+            "bundleName": "face_pecs_draculina_ns1"
+          },
+          {
+            "assetName": "PECS_Draculina_NS1_Worry",
+            "bundleName": "face_pecs_draculina_ns1"
+          },
+          {
+            "assetName": "PECS_Draculina_NS1_Smile",
+            "bundleName": "face_pecs_draculina_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Draculina_NS2",
@@ -29715,7 +30567,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_DutchGirl_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_DutchGirl_NS1_CloseEye",
+            "bundleName": "face_pecs_dutchgirl_ns1"
+          },
+          {
+            "assetName": "PECS_DutchGirl_NS1_Shy",
+            "bundleName": "face_pecs_dutchgirl_ns1"
+          },
+          {
+            "assetName": "PECS_DutchGirl_NS1_BigSmile",
+            "bundleName": "face_pecs_dutchgirl_ns1"
+          },
+          {
+            "assetName": "PECS_DutchGirl_NS1_Scare",
+            "bundleName": "face_pecs_dutchgirl_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_DutchGirl_NS2",
@@ -31335,7 +32207,10 @@
         "FullbodyIMG_BR_Echidna_NS1_part1.png",
         "FullbodyIMG_BR_Echidna_NS1_part2.png",
         "FullbodyIMG_BR_Echidna_NS1_part3.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Echidna_NS2",
@@ -33351,7 +34226,23 @@
         "FullbodyIMG_PECS_ElvenForestmaker_NS1_partbody_R+.png",
         "FullbodyIMG_PECS_ElvenForestmaker_NS1_partbody.png",
         "Milk.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_ElvenForestmaker_NS1_Embarrass",
+            "bundleName": "face_pecs_elvenforestmaker_ns1"
+          },
+          {
+            "assetName": "PECS_ElvenForestmaker_NS1_Anger",
+            "bundleName": "face_pecs_elvenforestmaker_ns1"
+          },
+          {
+            "assetName": "PECS_ElvenForestmaker_NS1_Smile",
+            "bundleName": "face_pecs_elvenforestmaker_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_ElvenForestmaker_NS1_Dam",
@@ -36136,7 +37027,10 @@
       "assets": [
         "Model_3P_Eternity_NS1_part1.png",
         "Model_3P_Eternity_NS1_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_3P_Eternity_NS1_Dam",
@@ -36248,7 +37142,43 @@
       "assets": [
         "3P_Eternity_NS2_part1.png",
         "3P_Eternity_NS2_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Eternity_NS2_Anger",
+            "bundleName": "face_3p_eternity_ns2"
+          },
+          {
+            "assetName": "3P_Eternity_NS2_BigSmile",
+            "bundleName": "face_3p_eternity_ns2"
+          },
+          {
+            "assetName": "3P_Eternity_NS2_CloseEye",
+            "bundleName": "face_3p_eternity_ns2"
+          },
+          {
+            "assetName": "3P_Eternity_NS2_Sad",
+            "bundleName": "face_3p_eternity_ns2"
+          },
+          {
+            "assetName": "3P_Eternity_NS2_Shy",
+            "bundleName": "face_3p_eternity_ns2"
+          },
+          {
+            "assetName": "3P_Eternity_NS2_Smile",
+            "bundleName": "face_3p_eternity_ns2"
+          },
+          {
+            "assetName": "3P_Eternity_NS2_Surprised",
+            "bundleName": "face_3p_eternity_ns2"
+          },
+          {
+            "assetName": "3P_Eternity_NS2_Temptation",
+            "bundleName": "face_3p_eternity_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Eternity_NS2_Dam",
@@ -36441,45 +37371,7 @@
       "characterName": "Eternity",
       "skinName": "Miss Orca: Polaris",
       "iconFile": "InvenIcon_3P_Eternity_NS3.png",
-      "backgroundPreview": {
-        "layers": [
-          {
-            "file": "May_BLKbox_1.webp",
-            "width": 0.29,
-            "height": 1.55,
-            "pivot": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "transform": {
-              "a": 18.989642,
-              "b": 0,
-              "c": 0,
-              "d": 1.998476,
-              "tx": 0.4,
-              "ty": 0.15
-            },
-            "sortingOrder": 0
-          }
-        ],
-        "camera": {
-          "width": 36.408889,
-          "height": 20.48,
-          "pivot": {
-            "x": 0.5,
-            "y": 0.5
-          },
-          "transform": {
-            "a": 0.12,
-            "b": 0,
-            "c": 0,
-            "d": 0.12,
-            "tx": 0.4,
-            "ty": 0.15
-          },
-          "zoom": 0.82
-        }
-      },
+      "backgroundPreview": null,
       "isRPlusSkin": false,
       "isSpineSkin": false,
       "isAnimatorSkin": false,
@@ -37460,7 +38352,10 @@
       "assets": [
         "FullbodyIMG_PECS_Express76_NS1_part.png",
         "FullbodyIMG_PECS_Express76_NS1_parts80per.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Fafnir_N",
@@ -38067,7 +38962,10 @@
       "assets": [
         "FullbodyIMG_3P_Fenrir_NS1_Parts1.png",
         "FullbodyIMG_3P_Fenrir_NS1_Parts2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_3P_Fenrir_NS2",
@@ -38810,7 +39708,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_Fortune_NS1_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Fortune_NS1_Smile",
+            "bundleName": "face_pecs_fortune_ns1"
+          },
+          {
+            "assetName": "PECS_Fortune_NS1_CloseEye",
+            "bundleName": "face_pecs_fortune_ns1"
+          },
+          {
+            "assetName": "PECS_Fortune_NS1_Temptation",
+            "bundleName": "face_pecs_fortune_ns1"
+          },
+          {
+            "assetName": "PECS_Fortune_NS1_Shame",
+            "bundleName": "face_pecs_fortune_ns1"
+          },
+          {
+            "assetName": "PECS_Fortune_NS1_Surprised",
+            "bundleName": "face_pecs_fortune_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Fortune_NS2",
@@ -39108,7 +40030,27 @@
       "assets": [
         "3P_Fotia_NS1_parts1.png",
         "3P_Fotia_NS1_parts2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Fotia_NS1_CloseEye",
+            "bundleName": "face_3p_fotia_ns1"
+          },
+          {
+            "assetName": "3P_Fotia_NS1_Shy",
+            "bundleName": "face_3p_fotia_ns1"
+          },
+          {
+            "assetName": "3P_Fotia_NS1_Smile",
+            "bundleName": "face_3p_fotia_ns1"
+          },
+          {
+            "assetName": "3P_Fotia_NS1_BigSmile",
+            "bundleName": "face_3p_fotia_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Fotia_NS2",
@@ -40352,7 +41294,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_Serpent_NS1_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Serpent_NS1_CloseEye",
+            "bundleName": "face_pecs_serpent_ns1"
+          },
+          {
+            "assetName": "PECS_Serpent_NS1_Shy",
+            "bundleName": "face_pecs_serpent_ns1"
+          },
+          {
+            "assetName": "PECS_Serpent_NS1_Anger",
+            "bundleName": "face_pecs_serpent_ns1"
+          },
+          {
+            "assetName": "PECS_Serpent_NS1_BigSmile",
+            "bundleName": "face_pecs_serpent_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Serpent_NS2",
@@ -43473,7 +44435,27 @@
       "assets": [
         "FullbodyIMG_DS_Faucre_NS1_Part1.png",
         "FullbodyIMG_DS_Faucre_NS1_Part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "DS_Faucre_NS1_BigSmile",
+            "bundleName": "face_ds_faucre_ns1"
+          },
+          {
+            "assetName": "DS_Faucre_NS1_Smile",
+            "bundleName": "face_ds_faucre_ns1"
+          },
+          {
+            "assetName": "DS_Faucre_NS1_Surprised",
+            "bundleName": "face_ds_faucre_ns1"
+          },
+          {
+            "assetName": "DS_Faucre_NS1_Shy",
+            "bundleName": "face_ds_faucre_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_DS_Faucre_NS2",
@@ -44038,7 +45020,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_SandMan_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_SandMan_NS1_Smile",
+            "bundleName": "face_br_sandman_ns1"
+          },
+          {
+            "assetName": "BR_SandMan_NS1_BigSmile",
+            "bundleName": "face_br_sandman_ns1"
+          },
+          {
+            "assetName": "BR_SandMan_NS1_CloseEye",
+            "bundleName": "face_br_sandman_ns1"
+          },
+          {
+            "assetName": "BR_SandMan_NS1_Embarrass",
+            "bundleName": "face_br_sandman_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_SandMan_NS2",
@@ -44528,7 +45530,39 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Phoenix_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Phoenix_N_Anger",
+            "bundleName": "face_br_phoenix_n"
+          },
+          {
+            "assetName": "BR_Phoenix_N_BigSmile",
+            "bundleName": "face_br_phoenix_n"
+          },
+          {
+            "assetName": "BR_Phoenix_N_CloseEye",
+            "bundleName": "face_br_phoenix_n"
+          },
+          {
+            "assetName": "BR_Phoenix_N_Pride",
+            "bundleName": "face_br_phoenix_n"
+          },
+          {
+            "assetName": "BR_Phoenix_N_Sad",
+            "bundleName": "face_br_phoenix_n"
+          },
+          {
+            "assetName": "BR_Phoenix_N_Shy",
+            "bundleName": "face_br_phoenix_n"
+          },
+          {
+            "assetName": "BR_Phoenix_N_Smile",
+            "bundleName": "face_br_phoenix_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Phoenix_N_Dam",
@@ -44641,7 +45675,59 @@
         "BoneJoint_7.png",
         "FullbodyIMG_BR_Phoenix_NS1_part1.png",
         "FullbodyIMG_BR_Phoenix_NS1_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Phoenix_NS1_Anger",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_CloseEye",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_Embarrass",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_Proud",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_Shy",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_Shy1",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_Shy2",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_Smile",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_Smile2",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_Surprised",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_Tsun",
+            "bundleName": "face_br_phoenix_ns1"
+          },
+          {
+            "assetName": "BR_Phoenix_NS1_Tsun2",
+            "bundleName": "face_br_phoenix_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Phoenix_NS1_Dam",
@@ -45358,7 +46444,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_3P_Hachiko_NS1_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_3P_Hachiko_NS3",
@@ -49392,7 +50481,15 @@
         "BR_HongRyun_NS1_Part3.png",
         "flower_particle_0.png",
         "flower_particle_Blur_0.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_HongRyun_NS1_Surprised",
+            "bundleName": "face_br_hongryun_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_HongRyun_NS1_Dam",
@@ -50385,7 +51482,10 @@
       "assets": [
         "2Dmodel_AGS_Albatros_N.png",
         "FullbodyIMG_AGS_Albatross_N.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_AGS_Albatross_NS1",
@@ -51468,7 +52568,23 @@
         "Ignis_skill2_BG_fire_sqns2.png",
         "particle_texture_00034.png",
         "Smoke_Text_029344_8x8_sqns.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Ignis_NS1_CloseEye",
+            "bundleName": "face_pecs_ignis_ns1"
+          },
+          {
+            "assetName": "PECS_Ignis_NS1_Shy",
+            "bundleName": "face_pecs_ignis_ns1"
+          },
+          {
+            "assetName": "PECS_Ignis_NS1_Embarrass",
+            "bundleName": "face_pecs_ignis_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Ignis_NS2",
@@ -51765,7 +52881,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Marie_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Marie_N_Pride",
+            "bundleName": "face_br_marie_n"
+          },
+          {
+            "assetName": "BR_Marie_N_Smile",
+            "bundleName": "face_br_marie_n"
+          },
+          {
+            "assetName": "BR_Marie_N_EdgeSmile",
+            "bundleName": "face_br_marie_n"
+          },
+          {
+            "assetName": "BR_Marie_N_WrySmile",
+            "bundleName": "face_br_marie_n"
+          },
+          {
+            "assetName": "BR_Marie_N_BigSmile",
+            "bundleName": "face_br_marie_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Marie_NS1",
@@ -51780,7 +52920,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Marie_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Marie_NS1_CloseEye",
+            "bundleName": "face_br_marie_ns1"
+          },
+          {
+            "assetName": "BR_Marie_NS1_Pride",
+            "bundleName": "face_br_marie_ns1"
+          },
+          {
+            "assetName": "BR_Marie_NS1_Shy",
+            "bundleName": "face_br_marie_ns1"
+          },
+          {
+            "assetName": "BR_Marie_NS1_Smile",
+            "bundleName": "face_br_marie_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Marie_NS2",
@@ -51796,7 +52956,10 @@
       "assets": [
         "FullbodyIMG_BR_Marie_NS2_Part1.png",
         "FullbodyIMG_BR_Marie_NS2_Part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Marie_NS3",
@@ -52376,7 +53539,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_InvDragon_NS2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_InvDragon_NS3",
@@ -58389,7 +59555,10 @@
         "FullbodyIMG_3P_Ran_NS1_Part1.png",
         "FullbodyIMG_3P_Ran_NS1_Part2.png",
         "fx_gas_hit_1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_3P_Ran_NS2",
@@ -58595,7 +59764,47 @@
       "assets": [
         "FullbodyIMG_BR_Khan_N_Parts.png",
         "Texture_BR_Khan_N_03.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Khan_N_CloseEye",
+            "bundleName": "face_br_khan_n"
+          },
+          {
+            "assetName": "BR_Khan_N_Shy",
+            "bundleName": "face_br_khan_n"
+          },
+          {
+            "assetName": "BR_Khan_N_Smile",
+            "bundleName": "face_br_khan_n"
+          },
+          {
+            "assetName": "BR_Khan_N_Anger",
+            "bundleName": "face_br_khan_n"
+          },
+          {
+            "assetName": "BR_Khan_N_Idle_nopaint",
+            "bundleName": "face_br_khan_n_idle"
+          },
+          {
+            "assetName": "BR_Khan_N_Idle2_nopaint",
+            "bundleName": "face_br_khan_n_idle2"
+          },
+          {
+            "assetName": "BR_Khan_N_Shy_nopaint",
+            "bundleName": "face_br_khan_n_shy"
+          },
+          {
+            "assetName": "BR_Khan_N_Smile_nopaint",
+            "bundleName": "face_br_khan_n_smile"
+          },
+          {
+            "assetName": "BR_Khan_N_CloseEye_nopaint",
+            "bundleName": "face_br_khan_n_closeeye"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Khan_NS1",
@@ -58610,7 +59819,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Khan_NS1_Part1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Khan_NS1_Dam",
@@ -58721,7 +59933,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Khan_NS2_part1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Khan_NS2_CloseEye",
+            "bundleName": "face_br_khan_ns2"
+          },
+          {
+            "assetName": "BR_Khan_NS2_Shy",
+            "bundleName": "face_br_khan_ns2"
+          },
+          {
+            "assetName": "BR_Khan_NS2_Smile",
+            "bundleName": "face_br_khan_ns2"
+          },
+          {
+            "assetName": "BR_Khan_NS2_Smile2",
+            "bundleName": "face_br_khan_ns2"
+          },
+          {
+            "assetName": "BR_Khan_NS2_BigSmile",
+            "bundleName": "face_br_khan_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Khan_NS3",
@@ -60598,7 +61834,27 @@
         "FullbodyIMG_DS_Kaen_NS1_Parts2_R+.png",
         "FullbodyIMG_DS_Kaen_NS1_Parts2.png",
         "FullbodyIMG_DS_KunoichiKaen_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "DS_KunoichiKaen_NS1_Smile",
+            "bundleName": "face_ds_kunoichikaen_ns1"
+          },
+          {
+            "assetName": "DS_KunoichiKaen_NS1_Sulk",
+            "bundleName": "face_ds_kunoichikaen_ns1"
+          },
+          {
+            "assetName": "DS_KunoichiKaen_NS1_CloseEye",
+            "bundleName": "face_ds_kunoichikaen_ns1"
+          },
+          {
+            "assetName": "DS_KunoichiKaen_NS1_Expressionless",
+            "bundleName": "face_ds_kunoichikaen_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_DS_KunoichiKaen_NS1_Dam",
@@ -62049,7 +63305,31 @@
         "Texture_DS_KunoichiZero_NS1_Part1_R+.png",
         "Texture_DS_KunoichiZero_NS1_Part1.png",
         "Texture_DS_KunoichiZero_NS1_Part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "DS_KunoichiZero_NS1_Smile",
+            "bundleName": "face_ds_kunoichizero_ns1"
+          },
+          {
+            "assetName": "DS_KunoichiZero_NS1_BigSmile",
+            "bundleName": "face_ds_kunoichizero_ns1"
+          },
+          {
+            "assetName": "DS_KunoichiZero_NS1_Shy",
+            "bundleName": "face_ds_kunoichizero_ns1"
+          },
+          {
+            "assetName": "DS_KunoichiZero_NS1_CloseEye",
+            "bundleName": "face_ds_kunoichizero_ns1"
+          },
+          {
+            "assetName": "DS_KunoichiZero_NS1_Embarrass",
+            "bundleName": "face_ds_kunoichizero_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_DS_KunoichiZero_NS1_Dam",
@@ -63829,7 +65109,10 @@
       "isStaticSkin": false,
       "assets": [
         "PECS_LemonadeAlpha_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_LemonadeAlpha_NS2",
@@ -67047,7 +68330,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Leona_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Leona_N_CloseEye",
+            "bundleName": "face_br_leona_n"
+          },
+          {
+            "assetName": "BR_Leona_N_Shy",
+            "bundleName": "face_br_leona_n"
+          },
+          {
+            "assetName": "BR_Leona_N_Smile",
+            "bundleName": "face_br_leona_n"
+          },
+          {
+            "assetName": "BR_Leona_N_Surprised",
+            "bundleName": "face_br_leona_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Leona_NS1",
@@ -67064,7 +68367,27 @@
         "FullbodyIMG_BR_Leona_NS1_parts_2.png",
         "FullbodyIMG_BR_Leona_NS1_parts_R+.png",
         "FullbodyIMG_BR_Leona_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Leona_NS1_Surprised",
+            "bundleName": "face_br_leona_ns1"
+          },
+          {
+            "assetName": "BR_Leona_NS1_Smile",
+            "bundleName": "face_br_leona_ns1"
+          },
+          {
+            "assetName": "BR_Leona_NS1_Shy",
+            "bundleName": "face_br_leona_ns1"
+          },
+          {
+            "assetName": "BR_Leona_NS1_Anger",
+            "bundleName": "face_br_leona_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Leona_NS1_Dam",
@@ -68123,7 +69446,47 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_LRL_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_LRL_N_Anger",
+            "bundleName": "face_pecs_lrl_n"
+          },
+          {
+            "assetName": "PECS_LRL_N_CloseEye",
+            "bundleName": "face_pecs_lrl_n"
+          },
+          {
+            "assetName": "PECS_LRL_N_Embarrass",
+            "bundleName": "face_pecs_lrl_n"
+          },
+          {
+            "assetName": "PECS_LRL_N_Laugh",
+            "bundleName": "face_pecs_lrl_n"
+          },
+          {
+            "assetName": "PECS_LRL_N_M2",
+            "bundleName": "face_pecs_lrl_n"
+          },
+          {
+            "assetName": "PECS_LRL_N_Scare",
+            "bundleName": "face_pecs_lrl_n"
+          },
+          {
+            "assetName": "PECS_LRL_N_Smile",
+            "bundleName": "face_pecs_lrl_n"
+          },
+          {
+            "assetName": "PECS_LRL_N_Sulk",
+            "bundleName": "face_pecs_lrl_n"
+          },
+          {
+            "assetName": "PECS_LRL_N_Worry",
+            "bundleName": "face_pecs_lrl_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_LRL_NS1",
@@ -68138,7 +69501,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_LRL_N_parts_90%.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_LRL_NS1_Surprised",
+            "bundleName": "face_pecs_lrl_ns1"
+          },
+          {
+            "assetName": "PECS_LRL_NS1_CloseEye",
+            "bundleName": "face_pecs_lrl_ns1"
+          },
+          {
+            "assetName": "PECS_LRL_NS1_M2",
+            "bundleName": "face_pecs_lrl_ns1"
+          },
+          {
+            "assetName": "PECS_LRL_NS1_Worry",
+            "bundleName": "face_pecs_lrl_ns1"
+          },
+          {
+            "assetName": "PECS_LRL_NS1_Sad",
+            "bundleName": "face_pecs_lrl_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_LRL_NS3",
@@ -69216,7 +70603,47 @@
       "isStaticSkin": false,
       "assets": [
         "Model_BR_Efreeti_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Efreeti_NS1_CloseEye",
+            "bundleName": "face_br_efreeti_ns1"
+          },
+          {
+            "assetName": "BR_Efreeti_NS1_Embarrass1",
+            "bundleName": "face_br_efreeti_ns1"
+          },
+          {
+            "assetName": "BR_Efreeti_NS1_Embarrass2",
+            "bundleName": "face_br_efreeti_ns1"
+          },
+          {
+            "assetName": "BR_Efreeti_NS1_Anger",
+            "bundleName": "face_br_efreeti_ns1"
+          },
+          {
+            "assetName": "BR_Efreeti_NS1_IdleGL",
+            "bundleName": "face_br_efreeti_ns1"
+          },
+          {
+            "assetName": "BR_Efreeti_NS1_ExpressionlessGL",
+            "bundleName": "face_br_efreeti_ns1"
+          },
+          {
+            "assetName": "BR_Efreeti_NS1_SadGL1",
+            "bundleName": "face_br_efreeti_ns1"
+          },
+          {
+            "assetName": "BR_Efreeti_NS1_SadGL2",
+            "bundleName": "face_br_efreeti_ns1"
+          },
+          {
+            "assetName": "BR_Efreeti_NS1_HappyGL",
+            "bundleName": "face_br_efreeti_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Efreeti_NS1_Dam",
@@ -69898,7 +71325,27 @@
         "FullbodyIMG_DS_Baekto_NS1_Parts_2.png",
         "FullbodyIMG_DS_Baekto_NS1_Parts_R+.png",
         "FullbodyIMG_DS_Baekto_NS1_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "DS_Baekto_NS1_BigSmile",
+            "bundleName": "face_ds_baekto_ns1"
+          },
+          {
+            "assetName": "DS_Baekto_NS1_CloseEye",
+            "bundleName": "face_ds_baekto_ns1"
+          },
+          {
+            "assetName": "DS_Baekto_NS1_Shy",
+            "bundleName": "face_ds_baekto_ns1"
+          },
+          {
+            "assetName": "DS_Baekto_NS1_Anger",
+            "bundleName": "face_ds_baekto_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_DS_Baekto_NS1_Dam",
@@ -70925,7 +72372,35 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_DS_Momo_NS1_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "DS_MoMo_NS1_CloseEye",
+            "bundleName": "face_ds_momo_ns1"
+          },
+          {
+            "assetName": "DS_MoMo_NS1_Shy",
+            "bundleName": "face_ds_momo_ns1"
+          },
+          {
+            "assetName": "DS_MoMo_NS1_BigSmile",
+            "bundleName": "face_ds_momo_ns1"
+          },
+          {
+            "assetName": "DS_MoMo_NS1_Anger",
+            "bundleName": "face_ds_momo_ns1"
+          },
+          {
+            "assetName": "DS_MoMo_NS1_Surprised",
+            "bundleName": "face_ds_momo_ns1"
+          },
+          {
+            "assetName": "DS_MoMo_NS1_Smile",
+            "bundleName": "face_ds_momo_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_DS_MoMo_NS2",
@@ -71844,7 +73319,39 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_May_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_May_N_Anger",
+            "bundleName": "face_br_may_n"
+          },
+          {
+            "assetName": "BR_May_N_CloseEye",
+            "bundleName": "face_br_may_n"
+          },
+          {
+            "assetName": "BR_May_N_BigSmile",
+            "bundleName": "face_br_may_n"
+          },
+          {
+            "assetName": "BR_May_N_Shy",
+            "bundleName": "face_br_may_n"
+          },
+          {
+            "assetName": "BR_May_N_bawl",
+            "bundleName": "face_br_may_n"
+          },
+          {
+            "assetName": "BR_May_N_Shy1",
+            "bundleName": "face_br_may_n"
+          },
+          {
+            "assetName": "BR_May_N_CloseEye2",
+            "bundleName": "face_br_may_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_May_NS1",
@@ -71860,7 +73367,27 @@
       "assets": [
         "FullbodyIMG_BR_May_NS1_parts_R+.png",
         "FullbodyIMG_BR_May_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_May_NS1_BigSmile",
+            "bundleName": "face_br_may_ns1"
+          },
+          {
+            "assetName": "BR_May_NS1_CloseEye",
+            "bundleName": "face_br_may_ns1"
+          },
+          {
+            "assetName": "BR_May_NS1_Shy",
+            "bundleName": "face_br_may_ns1"
+          },
+          {
+            "assetName": "BR_May_NS1_Tsun",
+            "bundleName": "face_br_may_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_May_NS1_Dam",
@@ -71987,7 +73514,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_May_NS2_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_May_NS2_Anger",
+            "bundleName": "face_br_may_ns2"
+          },
+          {
+            "assetName": "BR_May_NS2_BigSmile",
+            "bundleName": "face_br_may_ns2"
+          },
+          {
+            "assetName": "BR_May_NS2_CloseEye",
+            "bundleName": "face_br_may_ns2"
+          },
+          {
+            "assetName": "BR_May_NS2_Shy",
+            "bundleName": "face_br_may_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_May_NS3",
@@ -72003,7 +73550,27 @@
       "assets": [
         "FullbodyIMG_BR_May_NS3_Parts1.png",
         "FullbodyIMG_BR_May_NS3_Parts2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_May_NS3_Anger",
+            "bundleName": "face_br_may_ns3"
+          },
+          {
+            "assetName": "BR_May_NS3_BigSmile",
+            "bundleName": "face_br_may_ns3"
+          },
+          {
+            "assetName": "BR_May_NS3_CloseEye",
+            "bundleName": "face_br_may_ns3"
+          },
+          {
+            "assetName": "BR_May_NS3_Shy",
+            "bundleName": "face_br_may_ns3"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_May_NS3_Dam",
@@ -72107,207 +73674,7 @@
       "characterName": "May of Doom",
       "skinName": "Miss Orca: My Love",
       "iconFile": "InvenIcon_BR_May_NS4.png",
-      "backgroundPreview": {
-        "layers": [
-          {
-            "file": "May_BG_Light1.webp",
-            "width": 3.618762,
-            "height": 0.868971,
-            "pivot": {
-              "x": 0.495894,
-              "y": 0.71318
-            },
-            "transform": {
-              "a": 0.42,
-              "b": 0,
-              "c": 0,
-              "d": 0.42,
-              "tx": 1.792,
-              "ty": 0.6638
-            },
-            "sortingOrder": 0
-          },
-          {
-            "file": "May_BG_Light2.webp",
-            "width": 6.478697,
-            "height": 2.379871,
-            "pivot": {
-              "x": 0.56253,
-              "y": 0.600873
-            },
-            "transform": {
-              "a": 0.42,
-              "b": 0,
-              "c": 0,
-              "d": 0.42,
-              "tx": 1.792,
-              "ty": 0.48488
-            },
-            "sortingOrder": 0
-          },
-          {
-            "file": "May_OutGlow.webp",
-            "width": 4.568851,
-            "height": 3.978876,
-            "pivot": {
-              "x": 0.267953,
-              "y": 0.616817
-            },
-            "transform": {
-              "a": 0.623,
-              "b": 0,
-              "c": 0,
-              "d": 0.623,
-              "tx": -0.552468,
-              "ty": 0.22189
-            },
-            "sortingOrder": 0
-          },
-          {
-            "file": "May_BLKbox_0.webp",
-            "width": 0.29,
-            "height": 1.55,
-            "pivot": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "transform": {
-              "a": 0.862006,
-              "b": 0,
-              "c": 0,
-              "d": 1.682051,
-              "tx": -1.904378,
-              "ty": 0.0786
-            },
-            "sortingOrder": 2
-          },
-          {
-            "file": "May_BLKbox_0.webp",
-            "width": 0.29,
-            "height": 1.55,
-            "pivot": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "transform": {
-              "a": 1.094611,
-              "b": 0,
-              "c": 0,
-              "d": 1.682051,
-              "tx": 3.723803,
-              "ty": 0.0786
-            },
-            "sortingOrder": 2
-          },
-          {
-            "file": "May_FX_Eye.webp",
-            "width": 1.098726,
-            "height": 0.948478,
-            "pivot": {
-              "x": 0.481684,
-              "y": 0.494729
-            },
-            "transform": {
-              "a": 0.14,
-              "b": 0,
-              "c": 0,
-              "d": 0.14,
-              "tx": -0.2492,
-              "ty": 0.507
-            },
-            "sortingOrder": 2
-          },
-          {
-            "file": "BlackGra.webp",
-            "width": 1.78,
-            "height": 1.55,
-            "pivot": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "transform": {
-              "a": 0.051002,
-              "b": 0,
-              "c": 0,
-              "d": 1.658504,
-              "tx": -1.772302,
-              "ty": 0.0786
-            },
-            "sortingOrder": 3
-          },
-          {
-            "file": "BlackGra.webp",
-            "width": 1.78,
-            "height": 1.55,
-            "pivot": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "transform": {
-              "a": 0.050629,
-              "b": 0,
-              "c": 0,
-              "d": 1.658504,
-              "tx": 3.55061,
-              "ty": 0.0786
-            },
-            "sortingOrder": 3
-          },
-          {
-            "file": "May_Beer.webp",
-            "width": 2.918971,
-            "height": 3.358478,
-            "pivot": {
-              "x": 0.500085,
-              "y": 0.441938
-            },
-            "transform": {
-              "a": 0.139552,
-              "b": 0,
-              "c": 0,
-              "d": 0.139552,
-              "tx": 1.007275,
-              "ty": -0.914911
-            },
-            "sortingOrder": 3
-          },
-          {
-            "file": "May_Lantern.webp",
-            "width": 3.539303,
-            "height": 3.458726,
-            "pivot": {
-              "x": 0.474594,
-              "y": 0.461004
-            },
-            "transform": {
-              "a": 0.139552,
-              "b": 0,
-              "c": 0,
-              "d": 0.139552,
-              "tx": 0.602574,
-              "ty": -0.9805
-            },
-            "sortingOrder": 3
-          }
-        ],
-        "camera": {
-          "width": 42.939999,
-          "height": 20.48456,
-          "pivot": {
-            "x": 0.5,
-            "y": 0.5
-          },
-          "transform": {
-            "a": 0.1246,
-            "b": 0,
-            "c": 0,
-            "d": 0.1246,
-            "tx": 0.8904,
-            "ty": 0.0786
-          },
-          "zoom": 0.82
-        }
-      },
+      "backgroundPreview": null,
       "isRPlusSkin": false,
       "isSpineSkin": false,
       "isAnimatorSkin": false,
@@ -79669,7 +81036,39 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Neodym_N_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Neodym_N_Embarrass",
+            "bundleName": "face_br_neodym_n"
+          },
+          {
+            "assetName": "BR_Neodym_N_CloseEye",
+            "bundleName": "face_br_neodym_n"
+          },
+          {
+            "assetName": "BR_Neodym_N_Shy",
+            "bundleName": "face_br_neodym_n"
+          },
+          {
+            "assetName": "BR_Neodym_N_Anger",
+            "bundleName": "face_br_neodym_n"
+          },
+          {
+            "assetName": "BR_Neodym_N_Smile",
+            "bundleName": "face_br_neodym_n"
+          },
+          {
+            "assetName": "BR_Neodym_N_Sad",
+            "bundleName": "face_br_neodym_n"
+          },
+          {
+            "assetName": "BR_Neodym_N_Surprised",
+            "bundleName": "face_br_neodym_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Neodym_NS1",
@@ -79685,7 +81084,10 @@
       "assets": [
         "FullbodyIMG_BR_Neodym_NS1_part1.png",
         "FullbodyIMG_BR_Neodym_NS1_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Neodym_NS2",
@@ -81454,7 +82856,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_3P_Rhea_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Rhea_NS1_CloseEye",
+            "bundleName": "face_3p_rhea_ns1"
+          },
+          {
+            "assetName": "3P_Rhea_NS1_Anger",
+            "bundleName": "face_3p_rhea_ns1"
+          },
+          {
+            "assetName": "3P_Rhea_NS1_Worry",
+            "bundleName": "face_3p_rhea_ns1"
+          },
+          {
+            "assetName": "3P_Rhea_NS1_Embarrass",
+            "bundleName": "face_3p_rhea_ns1"
+          },
+          {
+            "assetName": "3P_Rhea_NS1_Smile",
+            "bundleName": "face_3p_rhea_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Rhea_NS2",
@@ -82413,7 +83839,39 @@
       "isStaticSkin": false,
       "assets": [
         "PECS_Orangeade_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Orangeade_NS1_Doya",
+            "bundleName": "face_pecs_orangeade_ns1"
+          },
+          {
+            "assetName": "PECS_Orangeade_NS1_Sorry",
+            "bundleName": "face_pecs_orangeade_ns1"
+          },
+          {
+            "assetName": "PECS_Orangeade_NS1_Shy",
+            "bundleName": "face_pecs_orangeade_ns1"
+          },
+          {
+            "assetName": "PECS_Orangeade_NS1_Smile",
+            "bundleName": "face_pecs_orangeade_ns1"
+          },
+          {
+            "assetName": "PECS_Orangeade_NS1_CloseEye",
+            "bundleName": "face_pecs_orangeade_ns1"
+          },
+          {
+            "assetName": "PECS_Orangeade_NS1_Anger",
+            "bundleName": "face_pecs_orangeade_ns1"
+          },
+          {
+            "assetName": "PECS_Orangeade_NS1_Serious",
+            "bundleName": "face_pecs_orangeade_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Orangeade_NS2",
@@ -84329,7 +85787,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_PoniesAnger_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Lindwurm_N",
@@ -84482,7 +85943,31 @@
       "assets": [
         "FullbodyIMG_BR_Lindwurm_NS1_parts_Added.png",
         "FullbodyIMG_BR_Lindwurm_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Lindwurm_NS1_Anger",
+            "bundleName": "face_br_lindwurm_ns1"
+          },
+          {
+            "assetName": "BR_Lindwurm_NS1_BigSmile",
+            "bundleName": "face_br_lindwurm_ns1"
+          },
+          {
+            "assetName": "BR_Lindwurm_NS1_CloseEye",
+            "bundleName": "face_br_lindwurm_ns1"
+          },
+          {
+            "assetName": "BR_Lindwurm_NS1_Shy",
+            "bundleName": "face_br_lindwurm_ns1"
+          },
+          {
+            "assetName": "BR_Lindwurm_NS1_Smile",
+            "bundleName": "face_br_lindwurm_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Lindwurm_NS2",
@@ -84936,7 +86421,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Undine_N_parts_2048_80per.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Undine_N_CloseEye",
+            "bundleName": "face_br_undine_n"
+          },
+          {
+            "assetName": "BR_Undine_N_BigSmile",
+            "bundleName": "face_br_undine_n"
+          },
+          {
+            "assetName": "BR_Undine_N_Proud",
+            "bundleName": "face_br_undine_n"
+          },
+          {
+            "assetName": "BR_Undine_N_Surprised",
+            "bundleName": "face_br_undine_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Undine_NS1",
@@ -84953,7 +86458,31 @@
         "FullbodyIMG_BR_Undine_NS1_parts1.png",
         "FullbodyIMG_BR_Undine_NS1_parts2.png",
         "UI_C_particle_Fix6.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Undine_NS1_CloseEye",
+            "bundleName": "face_br_undine_ns1"
+          },
+          {
+            "assetName": "BR_Undine_NS1_Shy",
+            "bundleName": "face_br_undine_ns1"
+          },
+          {
+            "assetName": "BR_Undine_NS1_Anger",
+            "bundleName": "face_br_undine_ns1"
+          },
+          {
+            "assetName": "BR_Undine_NS1_Serious",
+            "bundleName": "face_br_undine_ns1"
+          },
+          {
+            "assetName": "BR_Undine_NS1_BigSmile",
+            "bundleName": "face_br_undine_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Undine_NS2",
@@ -85233,7 +86762,23 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Sleipnir_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Sleipnir_N_Shy",
+            "bundleName": "face_br_sleipnir_n"
+          },
+          {
+            "assetName": "BR_Sleipnir_N_Serious",
+            "bundleName": "face_br_sleipnir_n"
+          },
+          {
+            "assetName": "BR_Sleipnir_N_BigSmile",
+            "bundleName": "face_br_sleipnir_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Sleipnir_NS1",
@@ -85254,7 +86799,31 @@
         "Char_BR_Sleipnir_NS1_parts_02.png",
         "Char_BR_Sleipnir_NS1_parts_03.png",
         "Char_BR_Sleipnir_NS1_parts_04.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Sleipnir_NS1_Anger",
+            "bundleName": "face_br_sleipnir_ns1"
+          },
+          {
+            "assetName": "BR_Sleipnir_NS1_Embarrass",
+            "bundleName": "face_br_sleipnir_ns1"
+          },
+          {
+            "assetName": "BR_Sleipnir_NS1_Shy",
+            "bundleName": "face_br_sleipnir_ns1"
+          },
+          {
+            "assetName": "BR_Sleipnir_NS1_Surprised",
+            "bundleName": "face_br_sleipnir_ns1"
+          },
+          {
+            "assetName": "BR_Sleipnir_NS1_Smile",
+            "bundleName": "face_br_sleipnir_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Sleipnir_NS2",
@@ -85269,7 +86838,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Sleipnir_NS2_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Sleipnir_NS2_Shy",
+            "bundleName": "face_br_sleipnir_ns2"
+          },
+          {
+            "assetName": "BR_Sleipnir_NS2_Smile",
+            "bundleName": "face_br_sleipnir_ns2"
+          },
+          {
+            "assetName": "BR_Sleipnir_NS2_Surprised",
+            "bundleName": "face_br_sleipnir_ns2"
+          },
+          {
+            "assetName": "BR_Sleipnir_NS2_CloseEye",
+            "bundleName": "face_br_sleipnir_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Sleipnir_NS3",
@@ -85433,7 +87022,55 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_PA00EL_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_PA00EL_N_Anger",
+            "bundleName": "face_br_pa00el_n"
+          },
+          {
+            "assetName": "BR_PA00EL_N_CloseEye",
+            "bundleName": "face_br_pa00el_n"
+          },
+          {
+            "assetName": "BR_PA00EL_N_Embarrass",
+            "bundleName": "face_br_pa00el_n"
+          },
+          {
+            "assetName": "BR_PA00EL_N_Disappoint",
+            "bundleName": "face_br_pa00el_n"
+          },
+          {
+            "assetName": "BR_PA00EL_N_Proud",
+            "bundleName": "face_br_pa00el_n"
+          },
+          {
+            "assetName": "BR_PA00EL_N_Question",
+            "bundleName": "face_br_pa00el_n"
+          },
+          {
+            "assetName": "BR_PA00EL_N_Smile",
+            "bundleName": "face_br_pa00el_n"
+          },
+          {
+            "assetName": "BR_PA00EL_N_Resolve",
+            "bundleName": "face_br_pa00el_n"
+          },
+          {
+            "assetName": "BR_PA00EL_N_Shy",
+            "bundleName": "face_br_pa00el_n"
+          },
+          {
+            "assetName": "BR_PA00EL_N_Sorry",
+            "bundleName": "face_br_pa00el_n"
+          },
+          {
+            "assetName": "BR_PA00EL_N_Tsun",
+            "bundleName": "face_br_pa00el_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_PA00EL_N_Dam",
@@ -85544,7 +87181,55 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_PA00EL_SS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_PA00EL_SS1_Anger",
+            "bundleName": "face_br_pa00el_ss1"
+          },
+          {
+            "assetName": "BR_PA00EL_SS1_CloseEye",
+            "bundleName": "face_br_pa00el_ss1"
+          },
+          {
+            "assetName": "BR_PA00EL_SS1_Embarrass",
+            "bundleName": "face_br_pa00el_ss1"
+          },
+          {
+            "assetName": "BR_PA00EL_SS1_Disappoint",
+            "bundleName": "face_br_pa00el_ss1"
+          },
+          {
+            "assetName": "BR_PA00EL_SS1_Proud",
+            "bundleName": "face_br_pa00el_ss1"
+          },
+          {
+            "assetName": "BR_PA00EL_SS1_Question",
+            "bundleName": "face_br_pa00el_ss1"
+          },
+          {
+            "assetName": "BR_PA00EL_SS1_Smile",
+            "bundleName": "face_br_pa00el_ss1"
+          },
+          {
+            "assetName": "BR_PA00EL_SS1_Resolve",
+            "bundleName": "face_br_pa00el_ss1"
+          },
+          {
+            "assetName": "BR_PA00EL_SS1_Shy",
+            "bundleName": "face_br_pa00el_ss1"
+          },
+          {
+            "assetName": "BR_PA00EL_SS1_Sorry",
+            "bundleName": "face_br_pa00el_ss1"
+          },
+          {
+            "assetName": "BR_PA00EL_SS1_Tsun",
+            "bundleName": "face_br_pa00el_ss1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_PA00EL_SS1_Dam",
@@ -85655,7 +87340,59 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_PA00EL_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_PA00EL_NS1_Anger",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_Blunt",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_CloseEye",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_Disappoint",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_Embarrass",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_Proud",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_Question",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_Resolve",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_Shy",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_Smile",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_Sorry",
+            "bundleName": "face_br_pa00el_ns1"
+          },
+          {
+            "assetName": "BR_PA00EL_NS1_Tsun",
+            "bundleName": "face_br_pa00el_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_PA00EL_NS2",
@@ -86694,7 +88431,27 @@
       "assets": [
         "Model_3P_Poi_NS1_Part1.png",
         "Model_3P_Poi_NS1_Part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Poi_NS1_Anger",
+            "bundleName": "face_3p_poi_ns1"
+          },
+          {
+            "assetName": "3P_Poi_NS1_CloseEye",
+            "bundleName": "face_3p_poi_ns1"
+          },
+          {
+            "assetName": "3P_Poi_NS1_Sad",
+            "bundleName": "face_3p_poi_ns1"
+          },
+          {
+            "assetName": "3P_Poi_NS1_Smile",
+            "bundleName": "face_3p_poi_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Poi_NS1_Dam",
@@ -87092,7 +88849,39 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_DS_Johanna_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "DS_Johanna_N_Serious",
+            "bundleName": "face_ds_johanna_n"
+          },
+          {
+            "assetName": "DS_Johanna_N_Gravity",
+            "bundleName": "face_ds_johanna_n"
+          },
+          {
+            "assetName": "DS_Johanna_N_CloseEye",
+            "bundleName": "face_ds_johanna_n"
+          },
+          {
+            "assetName": "DS_Johanna_N_Question",
+            "bundleName": "face_ds_johanna_n"
+          },
+          {
+            "assetName": "DS_Johanna_N_Smile",
+            "bundleName": "face_ds_johanna_n"
+          },
+          {
+            "assetName": "DS_Johanna_N_BigSmile",
+            "bundleName": "face_ds_johanna_n"
+          },
+          {
+            "assetName": "DS_Johanna_N_Shy",
+            "bundleName": "face_ds_johanna_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_DS_Johanna_N_Dam",
@@ -87533,7 +89322,39 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_3P_Labiata_N_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Labiata_N_BigSmile",
+            "bundleName": "face_3p_labiata_n"
+          },
+          {
+            "assetName": "3P_Labiata_N_CloseEye",
+            "bundleName": "face_3p_labiata_n"
+          },
+          {
+            "assetName": "3P_Labiata_N_Sad",
+            "bundleName": "face_3p_labiata_n"
+          },
+          {
+            "assetName": "3P_Labiata_N_Embarrass",
+            "bundleName": "face_3p_labiata_n"
+          },
+          {
+            "assetName": "3P_Labiata_N_What",
+            "bundleName": "face_3p_labiata_n"
+          },
+          {
+            "assetName": "3P_Labiata_N_Expressionless",
+            "bundleName": "face_3p_labiata_n"
+          },
+          {
+            "assetName": "3P_Labiata_N_Anger",
+            "bundleName": "face_3p_labiata_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Labiata_SS1",
@@ -87755,7 +89576,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_3P_Labiata_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Labiata_NS1_CloseEye",
+            "bundleName": "face_3p_labiata_ns1"
+          },
+          {
+            "assetName": "3P_Labiata_NS1_What",
+            "bundleName": "face_3p_labiata_ns1"
+          },
+          {
+            "assetName": "3P_Labiata_NS1_Smile",
+            "bundleName": "face_3p_labiata_ns1"
+          },
+          {
+            "assetName": "3P_Labiata_NS1_Embarrass",
+            "bundleName": "face_3p_labiata_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Labiata_NS3",
@@ -87771,7 +89612,27 @@
       "assets": [
         "FullbodyIMG_3P_Labiata_NS3_parts1.png",
         "FullbodyIMG_3P_Labiata_NS3_parts2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Labiata_NS3_CloseEye",
+            "bundleName": "face_3p_labiata_ns3"
+          },
+          {
+            "assetName": "3P_Labiata_NS3_Sad",
+            "bundleName": "face_3p_labiata_ns3"
+          },
+          {
+            "assetName": "3P_Labiata_NS3_Smile",
+            "bundleName": "face_3p_labiata_ns3"
+          },
+          {
+            "assetName": "3P_Labiata_NS3_Surprised",
+            "bundleName": "face_3p_labiata_ns3"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Labiata_NS3_Dam",
@@ -87928,7 +89789,27 @@
       "assets": [
         "FullbodyIMG_3P_Labiata_NS4_parts1.png",
         "FullbodyIMG_3P_Labiata_NS4_parts2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Labiata_NS4_CloseEye",
+            "bundleName": "face_3p_labiata_ns4"
+          },
+          {
+            "assetName": "3P_Labiata_NS4_Sad",
+            "bundleName": "face_3p_labiata_ns4"
+          },
+          {
+            "assetName": "3P_Labiata_NS4_Smile",
+            "bundleName": "face_3p_labiata_ns4"
+          },
+          {
+            "assetName": "3P_Labiata_NS4_Surprised",
+            "bundleName": "face_3p_labiata_ns4"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Labiata_NS4_Dam",
@@ -90655,7 +92536,10 @@
         "Line_glow_9149.png",
         "particle_texture_00034_1.png",
         "Roc_skill1_lighting_text.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_AGS_Roc_NS1",
@@ -91530,7 +93414,10 @@
         "Line_Glow_0194.png",
         "Spriggan_Victory_Lens_flare2.png",
         "wind_texture_0949.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_RoyalArsenal_NS2",
@@ -94678,7 +96565,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_PECS_Saetti_NS1_part1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Saetti_NS2",
@@ -97324,7 +99214,31 @@
         "FullbodyIMG_BR_Scathy_lobby_parts2.png",
         "FullbodyIMG_BR_Scathy_lobby_parts3.png",
         "FullbodyIMG_BR_Scathy_parts1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Scathy_N_Shy",
+            "bundleName": "face_br_scathy_n"
+          },
+          {
+            "assetName": "BR_Scathy_N_Shame",
+            "bundleName": "face_br_scathy_n"
+          },
+          {
+            "assetName": "BR_Scathy_N_Nervous",
+            "bundleName": "face_br_scathy_n"
+          },
+          {
+            "assetName": "BR_Scathy_N_CloseEye",
+            "bundleName": "face_br_scathy_n"
+          },
+          {
+            "assetName": "BR_Scathy_N_Expressionless",
+            "bundleName": "face_br_scathy_n"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Scathy_NS1",
@@ -97793,7 +99707,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_3P_ScissorsLise_NS1_Part1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_3P_ScissorsLise_NS2",
@@ -97809,7 +99726,10 @@
       "assets": [
         "3P_ScissorsLise_NS2_Parts_01.png",
         "3P_ScissorsLise_NS2_Parts_02.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_3P_ScissorsLise_NS3",
@@ -98428,7 +100348,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_AGS_PuppHead_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Sekhmet_N",
@@ -98972,7 +100895,39 @@
         "FullBodyIMG_3P_Alice_NS1_bg2.png",
         "FullBodyIMG_3P_Alice_NS1_part1.png",
         "FullBodyIMG_3P_Alice_NS1_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Alice_NS1_Anger",
+            "bundleName": "face_3p_alice_ns1"
+          },
+          {
+            "assetName": "3P_Alice_NS1_BigSmile",
+            "bundleName": "face_3p_alice_ns1"
+          },
+          {
+            "assetName": "3P_Alice_NS1_CloseEye",
+            "bundleName": "face_3p_alice_ns1"
+          },
+          {
+            "assetName": "3P_Alice_NS1_Proud",
+            "bundleName": "face_3p_alice_ns1"
+          },
+          {
+            "assetName": "3P_Alice_NS1_Shy",
+            "bundleName": "face_3p_alice_ns1"
+          },
+          {
+            "assetName": "3P_Alice_NS1_Smile",
+            "bundleName": "face_3p_alice_ns1"
+          },
+          {
+            "assetName": "3P_Alice_NS1_Worry",
+            "bundleName": "face_3p_alice_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Alice_NS1_Dam",
@@ -99128,7 +101083,31 @@
       "isStaticSkin": false,
       "assets": [
         "3P_Alice_NS2_part1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Alice_NS2_CloseEye",
+            "bundleName": "face_3p_alice_ns2"
+          },
+          {
+            "assetName": "3P_Alice_NS2_Shy",
+            "bundleName": "face_3p_alice_ns2"
+          },
+          {
+            "assetName": "3P_Alice_NS2_Anger",
+            "bundleName": "face_3p_alice_ns2"
+          },
+          {
+            "assetName": "3P_Alice_NS2_Smile",
+            "bundleName": "face_3p_alice_ns2"
+          },
+          {
+            "assetName": "3P_Alice_NS2_Temptation",
+            "bundleName": "face_3p_alice_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Alice_NS3",
@@ -99798,7 +101777,10 @@
       "assets": [
         "L2D_BR_Shirayuri_NS1_part1.png",
         "L2D_BR_Shirayuri_NS1_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Shirayuri_NS2",
@@ -101250,7 +103232,27 @@
       "assets": [
         "FullbodyIMG_3P_Sowan_NS1_Parts_R+.png",
         "FullbodyIMG_3P_Sowan_NS1_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Sowan_NS1_CloseEye",
+            "bundleName": "face_3p_sowan_ns1"
+          },
+          {
+            "assetName": "3P_Sowan_NS1_Shy",
+            "bundleName": "face_3p_sowan_ns1"
+          },
+          {
+            "assetName": "3P_Sowan_NS1_BigSmile",
+            "bundleName": "face_3p_sowan_ns1"
+          },
+          {
+            "assetName": "3P_Sowan_NS1_Anger",
+            "bundleName": "face_3p_sowan_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Sowan_NS1_Dam",
@@ -101378,7 +103380,27 @@
       "assets": [
         "3P_Sowan_NS2_parts01.png",
         "3P_Sowan_NS2_parts02.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "3P_Sowan_NS2_BigSmile",
+            "bundleName": "face_3p_sowan_ns2"
+          },
+          {
+            "assetName": "3P_Sowan_NS2_CloseEye",
+            "bundleName": "face_3p_sowan_ns2"
+          },
+          {
+            "assetName": "3P_Sowan_NS2_Shy",
+            "bundleName": "face_3p_sowan_ns2"
+          },
+          {
+            "assetName": "3P_Sowan_NS2_Smile",
+            "bundleName": "face_3p_sowan_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_3P_Sowan_NS3",
@@ -103607,7 +105629,10 @@
       "assets": [
         "FullbodyIMG_BR_Nymph_NS1_part.png",
         "FullbodyIMG_BR_Nymph_NS1_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Nymph_NS2",
@@ -104096,7 +106121,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Bheur_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Bheur_NS2",
@@ -104588,7 +106616,43 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Alvis_NS1_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Alvis_NS1_Embarrass",
+            "bundleName": "face_br_alvis_ns1"
+          },
+          {
+            "assetName": "BR_Alvis_NS1_Anger",
+            "bundleName": "face_br_alvis_ns1"
+          },
+          {
+            "assetName": "BR_Alvis_NS1_BigSmile",
+            "bundleName": "face_br_alvis_ns1"
+          },
+          {
+            "assetName": "BR_Alvis_NS1_CloseEye",
+            "bundleName": "face_br_alvis_ns1"
+          },
+          {
+            "assetName": "BR_Alvis_NS1_Shy",
+            "bundleName": "face_br_alvis_ns1"
+          },
+          {
+            "assetName": "BR_Alvis_NS1_Surprised",
+            "bundleName": "face_br_alvis_ns1"
+          },
+          {
+            "assetName": "BR_Alvis_NS1_Smile",
+            "bundleName": "face_br_alvis_ns1"
+          },
+          {
+            "assetName": "BR_Alvis_NS1_CloseEye2",
+            "bundleName": "face_br_alvis_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Alvis_NS2",
@@ -104797,7 +106861,23 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Miho_NS1_parts1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Miho_NS1_Shy",
+            "bundleName": "face_br_miho_ns1"
+          },
+          {
+            "assetName": "BR_Miho_NS1_Smile",
+            "bundleName": "face_br_miho_ns1"
+          },
+          {
+            "assetName": "BR_Miho_NS1_Worry",
+            "bundleName": "face_br_miho_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Miho_NS2",
@@ -104813,7 +106893,10 @@
       "assets": [
         "FullbodyIMG_BR_Miho_NS2_Part1.png",
         "FullbodyIMG_BR_Miho_NS2_Part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Miho_NS3",
@@ -105329,7 +107412,31 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Brownie_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Brownie_NS1_CloseEye",
+            "bundleName": "face_br_brownie_ns1"
+          },
+          {
+            "assetName": "BR_Brownie_NS1_BigSmile",
+            "bundleName": "face_br_brownie_ns1"
+          },
+          {
+            "assetName": "BR_Brownie_NS1_Embarrass",
+            "bundleName": "face_br_brownie_ns1"
+          },
+          {
+            "assetName": "BR_Brownie_NS1_Proud",
+            "bundleName": "face_br_brownie_ns1"
+          },
+          {
+            "assetName": "BR_Brownie_NS1_Sad",
+            "bundleName": "face_br_brownie_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Gnome_N",
@@ -105577,7 +107684,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Gnome_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Gnome_NS1_CloseEye",
+            "bundleName": "face_br_gnome_ns1"
+          },
+          {
+            "assetName": "BR_Gnome_NS1_Shy",
+            "bundleName": "face_br_gnome_ns1"
+          },
+          {
+            "assetName": "BR_Gnome_NS1_Shy1",
+            "bundleName": "face_br_gnome_ns1"
+          },
+          {
+            "assetName": "BR_Gnome_NS1_Shy2",
+            "bundleName": "face_br_gnome_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Gnome_NS1_Dam",
@@ -105689,7 +107816,27 @@
       "assets": [
         "Texture_BR_Gnome_NS2_Part1_R+.png",
         "Texture_BR_Gnome_NS2_Part1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Gnome_NS2_CloseEye",
+            "bundleName": "face_br_gnome_ns2"
+          },
+          {
+            "assetName": "BR_Gnome_NS2_Serious",
+            "bundleName": "face_br_gnome_ns2"
+          },
+          {
+            "assetName": "BR_Gnome_NS2_Smile",
+            "bundleName": "face_br_gnome_ns2"
+          },
+          {
+            "assetName": "BR_Gnome_NS2_Sad",
+            "bundleName": "face_br_gnome_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Gnome_NS2_Dam",
@@ -106006,7 +108153,23 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Leprechaun_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Leprechaun_NS1_CloseEye",
+            "bundleName": "face_br_leprechaun_ns1"
+          },
+          {
+            "assetName": "BR_Leprechaun_NS1_Embarrass",
+            "bundleName": "face_br_leprechaun_ns1"
+          },
+          {
+            "assetName": "BR_Leprechaun_NS1_Anger",
+            "bundleName": "face_br_leprechaun_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Leprechaun_NS1_Dam",
@@ -109307,7 +111470,31 @@
         "FullbodyIMG_BR_Warwolf_NS1_Part1.png",
         "FullbodyIMG_BR_Warwolf_NS1_Part2.png",
         "Warwolf_skin_L2D_smoke4_loop8_fix.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_WarWolf_NS1_Surprised",
+            "bundleName": "face_br_warwolf_ns1"
+          },
+          {
+            "assetName": "BR_WarWolf_NS1_Shy",
+            "bundleName": "face_br_warwolf_ns1"
+          },
+          {
+            "assetName": "BR_WarWolf_NS1_CloseEye",
+            "bundleName": "face_br_warwolf_ns1"
+          },
+          {
+            "assetName": "BR_WarWolf_NS1_Anger",
+            "bundleName": "face_br_warwolf_ns1"
+          },
+          {
+            "assetName": "BR_WarWolf_NS1_BigSmile",
+            "bundleName": "face_br_warwolf_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_WarWolf_NS2",
@@ -109931,7 +112118,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Valkyrie_NS1_Part.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Valkyrie_NS2",
@@ -109946,7 +112136,35 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Valkyrie_NS2_Part1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Valkyrie_NS2_Anger",
+            "bundleName": "face_br_valkyrie_ns2"
+          },
+          {
+            "assetName": "BR_Valkyrie_NS2_BigSmile",
+            "bundleName": "face_br_valkyrie_ns2"
+          },
+          {
+            "assetName": "BR_Valkyrie_NS2_CloseEye",
+            "bundleName": "face_br_valkyrie_ns2"
+          },
+          {
+            "assetName": "BR_Valkyrie_NS2_Embarrass",
+            "bundleName": "face_br_valkyrie_ns2"
+          },
+          {
+            "assetName": "BR_Valkyrie_NS2_Shy",
+            "bundleName": "face_br_valkyrie_ns2"
+          },
+          {
+            "assetName": "BR_Valkyrie_NS2_Surprised",
+            "bundleName": "face_br_valkyrie_ns2"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Valkyrie_NS3",
@@ -111449,7 +113667,10 @@
       "isStaticSkin": false,
       "assets": [
         "BR_Thetis_NS1_Part1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Thetis_NS2",
@@ -111838,7 +114059,31 @@
       "assets": [
         "FullbodyIMG_PECS_Tiequan_NS1_Parts_2.png",
         "FullbodyIMG_PECS_Tiequan_NS1_Parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Tiequan_NS1_BigSmile",
+            "bundleName": "face_pecs_tiequan_ns1"
+          },
+          {
+            "assetName": "PECS_Tiequan_NS1_Embarrass",
+            "bundleName": "face_pecs_tiequan_ns1"
+          },
+          {
+            "assetName": "PECS_Tiequan_NS1_Resolve",
+            "bundleName": "face_pecs_tiequan_ns1"
+          },
+          {
+            "assetName": "PECS_Tiequan_NS1_Smile",
+            "bundleName": "face_pecs_tiequan_ns1"
+          },
+          {
+            "assetName": "PECS_Tiequan_NS1_Surprised",
+            "bundleName": "face_pecs_tiequan_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Tiequan_NS2",
@@ -113304,7 +115549,27 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_Tomoe_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Tomoe_NS1_Embarrass",
+            "bundleName": "face_br_tomoe_ns1"
+          },
+          {
+            "assetName": "BR_Tomoe_NS1_Smile",
+            "bundleName": "face_br_tomoe_ns1"
+          },
+          {
+            "assetName": "BR_Tomoe_NS1_Thinking",
+            "bundleName": "face_br_tomoe_ns1"
+          },
+          {
+            "assetName": "BR_Tomoe_NS1_Worry",
+            "bundleName": "face_br_tomoe_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Tomoe_NS2",
@@ -114125,7 +116390,10 @@
       "isStaticSkin": false,
       "assets": [
         "FullbodyIMG_BR_PXSilky_NS1_Part.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_PXSilky_NS2",
@@ -114417,7 +116685,23 @@
       "assets": [
         "128_glow_texture.png",
         "FullbodyIMG_PECS_Triaina_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "PECS_Triaina_NS1_Shy",
+            "bundleName": "face_pecs_triaina_ns1"
+          },
+          {
+            "assetName": "PECS_Triaina_NS1_Anger",
+            "bundleName": "face_pecs_triaina_ns1"
+          },
+          {
+            "assetName": "PECS_Triaina_NS1_BigSmile",
+            "bundleName": "face_pecs_triaina_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Triaina_NS1_Dam",
@@ -114895,7 +117179,10 @@
         "FullbodyIMG_BR_Daika_NS1_parts_R+.png",
         "FullbodyIMG_BR_Daika_NS1_parts.png",
         "FullbodyIMG_BR_Daika_NS2_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Daika_NS1_Dam",
@@ -115820,7 +118107,10 @@
       "assets": [
         "3P_Vanilla_NS1_part1_R+.png",
         "3P_Vanilla_NS1_part1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_3P_Vanilla_NS1_Dam",
@@ -117608,7 +119898,10 @@
       "isStaticSkin": false,
       "assets": [
         "Texture_PECS_Veronica_NS1.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_PECS_Veronica_NS1_Dam",
@@ -119542,7 +121835,39 @@
       "assets": [
         "FullbodyIMG_ST_Tiamat_NS1_parts_hair.png",
         "FullbodyIMG_ST_Tiamat_NS1_parts.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "ST_Tiamat_NS1_Anger",
+            "bundleName": "face_st_tiamat_ns1"
+          },
+          {
+            "assetName": "ST_Tiamat_NS1_BigSmile",
+            "bundleName": "face_st_tiamat_ns1"
+          },
+          {
+            "assetName": "ST_Tiamat_NS1_CloseEye",
+            "bundleName": "face_st_tiamat_ns1"
+          },
+          {
+            "assetName": "ST_Tiamat_NS1_Serious",
+            "bundleName": "face_st_tiamat_ns1"
+          },
+          {
+            "assetName": "ST_Tiamat_NS1_Shy",
+            "bundleName": "face_st_tiamat_ns1"
+          },
+          {
+            "assetName": "ST_Tiamat_NS1_Smile",
+            "bundleName": "face_st_tiamat_ns1"
+          },
+          {
+            "assetName": "ST_Tiamat_NS1_Worry",
+            "bundleName": "face_st_tiamat_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_ST_Tiamat_NS2",
@@ -120274,7 +122599,10 @@
       "assets": [
         "FullbodyIMG_BR_Emily_N_Parts1.png",
         "FullbodyIMG_BR_Emily_N_Parts2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": []
+      }
     },
     {
       "skin2dId": "2DModel_BR_Emily_NS1",
@@ -120290,7 +122618,27 @@
       "assets": [
         "FullbodyIMG_BR_Emily_NS1_part1.png",
         "FullbodyIMG_BR_Emily_NS1_part2.png"
-      ]
+      ],
+      "animatorPreview": {
+        "faces": [
+          {
+            "assetName": "BR_Emily_NS1_CloseEye",
+            "bundleName": "face_br_emily_ns1"
+          },
+          {
+            "assetName": "BR_Emily_NS1_Shy",
+            "bundleName": "face_br_emily_ns1"
+          },
+          {
+            "assetName": "BR_Emily_NS1_Smile",
+            "bundleName": "face_br_emily_ns1"
+          },
+          {
+            "assetName": "BR_Emily_NS1_Worry",
+            "bundleName": "face_br_emily_ns1"
+          }
+        ]
+      }
     },
     {
       "skin2dId": "2DModel_BR_Emily_NS2",

@@ -122,10 +122,12 @@ export type StaticPreviewLayer = StaticPreviewRenderer & Readonly<{
     }>;
 }>;
 
-export type StaticPreviewFaceExpression = Readonly<{
+export type PreviewFaceExpression = Readonly<{
     assetName: string;
     bundleName: string;
 }>;
+
+export type StaticPreviewFaceExpression = PreviewFaceExpression;
 
 export type StaticPreviewFace = StaticPreviewRenderer & Readonly<{
     expressions: readonly StaticPreviewFaceExpression[];
@@ -166,6 +168,7 @@ export type SpineCharacterSkin = CharacterSkinBase & Readonly<{
     isAnimatorSkin: false;
     isStaticSkin: false;
     spinePreview: SpinePreviewData;
+    animatorPreview?: never;
     staticPreview?: never;
 }>;
 
@@ -173,6 +176,7 @@ export type AnimatorCharacterSkin = CharacterSkinBase & Readonly<{
     isSpineSkin: false;
     isAnimatorSkin: true;
     isStaticSkin: false;
+    animatorPreview: AnimatorPreviewData;
     spinePreview?: never;
     staticPreview?: never;
 }>;
@@ -181,8 +185,9 @@ export type StaticCharacterSkin = CharacterSkinBase & Readonly<{
     isSpineSkin: false;
     isAnimatorSkin: false;
     isStaticSkin: true;
-    spinePreview?: never;
     staticPreview: StaticPreviewData;
+    spinePreview?: never;
+    animatorPreview?: never;
 }>;
 
 export type CharacterSkin =
@@ -230,7 +235,7 @@ export type PreparedPreviewSpriteGeometry = Readonly<{
     pivot: PreviewVector;
 }>;
 
-export type PreparedStaticPreviewAsset = Readonly<{
+export type PreparedPreviewAsset = Readonly<{
     type: "Texture2D" | "Sprite";
     name: string;
     bundleName: string;
@@ -238,6 +243,12 @@ export type PreparedStaticPreviewAsset = Readonly<{
     cacheKey: string | null;
     versionHash: string | null;
     sprite: PreparedPreviewSpriteGeometry | null;
+}>;
+
+export type PreparedStaticPreviewAsset = PreparedPreviewAsset;
+
+export type AnimatorPreviewData = Readonly<{
+    faces: readonly PreviewFaceExpression[];
 }>;
 
 export type StaticModPreviewPreparation = Readonly<{
@@ -259,4 +270,5 @@ export type AnimatorModPreviewPreparation = Readonly<{
     skin2dId: string;
     variantId: string | null;
     runtime: AnimatorRuntimeReference;
+    faces: readonly PreparedPreviewAsset[];
 }>;

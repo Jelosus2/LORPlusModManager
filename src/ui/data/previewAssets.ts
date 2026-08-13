@@ -1,6 +1,6 @@
-import type { PreparedStaticPreviewAsset } from "../../shared/characters";
+import type { PreparedPreviewAsset } from "../../shared/characters";
 
-export function getCachedPreviewAssetUrl(asset: PreparedStaticPreviewAsset): string {
+export function getCachedPreviewAssetUrl(asset: PreparedPreviewAsset): string {
     if (asset.source !== "game" || !asset.cacheKey || !asset.versionHash)
         throw new Error("The preview asset is not a cached game asset.");
 

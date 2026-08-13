@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { AnimatorCharacterSkin } from "../../shared/characters.ts";
+import type { AnimatorCharacterSkin, PreparedPreviewAsset } from "../../shared/characters.ts";
+import type { AnimatorPixiFaceAsset } from "@/animator/AnimatorPixiScene";
 import type { InstalledMod } from "../../shared/mod";
 import type { Texture, Ticker } from "pixi.js";
 
@@ -14,6 +15,7 @@ import { AnimatorPreviewMosaicLayer } from "@/animator/AnimatorPreviewMosaicLaye
 import { AnimatorRuntimePackage } from "@/animator/AnimatorRuntimePackage";
 import { usePreviewViewport } from "@/composables/usePreviewViewport";
 import { AnimatorPixiScene } from "@/animator/AnimatorPixiScene";
+import { getCachedPreviewAssetUrl } from "@/data/previewAssets";
 import { ApplicationLogSource } from "../../shared/application";
 import { RendererLogger } from "@/utils/RendererLogger";
 import { Application, Assets, Cache } from "pixi.js";
@@ -40,6 +42,11 @@ type CensorshipType =
     | "unedited"
     | "pixelated";
 
+type FaceOption = Readonly<{
+    assetName: string;
+    label: string;
+}>;
+
 const props = defineProps<{
     mod: InstalledMod;
     skin: AnimatorCharacterSkin;
@@ -59,6 +66,8 @@ const hasDecoration1 = ref(false);
 const hasDecoration2 = ref(false);
 const isDecoration1Enabled = ref(false);
 const isDecoration2Enabled = ref(false);
+const faceOptions = ref<readonly FaceOption[]>([]);
+const selectedFaceAssetName = ref("");
 
 const instanceId = crypto.randomUUID();
 const registeredAliases: string[] = [];
@@ -115,6 +124,8 @@ async function loadPreview() {
     diagnostics.value = [];
     selectedCensorshipType.value = "unedited";
     availableCensorshipTypes.value = new Set<CensorshipType>();
+    faceOptions.value = [];
+    selectedFaceAssetName.value = "";
     frameFailed = false;
 
     hasDecoration1.value = false;
@@ -151,6 +162,10 @@ async function loadPreview() {
 
         requireCurrentLoad(generation, controller.signal);
 
+        const faceAssets = await loadFaceAssets(preparation.faces, generation, controller.signal);
+
+        requireCurrentLoad(generation, controller.signal);
+
         const createdApplication = new Application();
 
         await createdApplication.init({
@@ -170,8 +185,8 @@ async function loadPreview() {
         }
 
         application = createdApplication;
-        pixiScene = new AnimatorPixiScene(loadedPackage, texturesById);
-        mosaicLayer = new AnimatorPreviewMosaicLayer(loadedPackage, texturesById);
+        pixiScene = new AnimatorPixiScene(loadedPackage, texturesById, { faceAssets });
+        mosaicLayer = new AnimatorPreviewMosaicLayer(loadedPackage, texturesById, faceAssets);
         interactionLayer = new AnimatorPreviewInteractionLayer(loadedPackage, {
             wasDragged: () => didDragPreview.value,
             onTriggered: () => {
@@ -182,6 +197,7 @@ async function loadPreview() {
         pixiScene.root.addChild(mosaicLayer.root);
 
         initializeDecorationOptions(loadedPackage);
+        initializeFaceOptions(faceAssets);
         initializeCensorshipTypes(loadedPackage);
         applySelectedCensorship();
 
@@ -349,6 +365,47 @@ async function loadRuntimeTextures(loadedPackage: AnimatorRuntimePackage, genera
     return texturesById;
 }
 
+async function loadFaceAssets(assets: readonly PreparedPreviewAsset[], generation: number, signal: AbortSignal): Promise<readonly AnimatorPixiFaceAsset[]> {
+    const aliases: string[] = [];
+
+    for (const [index, asset] of assets.entries())
+    {
+        if (asset.type !== "Sprite" || !asset.sprite)
+            throw new Error(`Animator face "${asset.name}" has invalid Sprite geometry.`);
+
+        const alias = [
+            "animator-preview-face",
+            props.mod.id,
+            instanceId,
+            generation,
+            index
+        ].join(":");
+
+        Assets.add({ alias, src: getCachedPreviewAssetUrl(asset) });
+
+        aliases.push(alias);
+        registeredAliases.push(alias);
+    }
+
+    if (aliases.length > 0)
+        await Assets.load(aliases);
+
+    requireCurrentLoad(generation, signal);
+
+    return Object.freeze(assets.map((asset, index) => {
+        const texture = Assets.get<Texture>(aliases[index]);
+
+        if (!texture || !asset.sprite)
+            throw new Error(`Animator face "${asset.name}" could not be loaded.`);
+
+        return Object.freeze({
+            assetName: asset.name,
+            texture,
+            geometry: asset.sprite
+        });
+    }));
+}
+
 function updateAnimatorFrame(ticker: Ticker) {
     if (!pixiScene || frameFailed || isAnimationPaused.value)
         return;
@@ -436,6 +493,32 @@ function toggleDecoration(group: 1 | 2) {
     }
 }
 
+function initializeFaceOptions(assets: readonly AnimatorPixiFaceAsset[]) {
+    faceOptions.value = assets.map((asset) => ({
+        assetName: asset.assetName,
+        label: formatAnimatorFaceLabel(asset.assetName)
+    }));
+
+    selectedFaceAssetName.value = "";
+}
+
+function applySelectedFace() {
+    if (!pixiScene || frameFailed)
+        return;
+
+    try
+    {
+        const assetName = selectedFaceAssetName.value || null;
+
+        pixiScene.setFace(assetName);
+        mosaicLayer?.setFace(assetName);
+    }
+    catch (error)
+    {
+        failAnimatorPreview(error);
+    }
+}
+
 function updateDiagnostics(nextDiagnostics: readonly string[]) {
     const current = diagnostics.value;
 
@@ -479,6 +562,32 @@ function resetCharacterState() {
     catch (error) {
         failAnimatorPreview(error);
     }
+}
+
+function formatAnimatorFaceLabel(assetName: string): string {
+    const normalizedSkinId = props.skin.skin2dId.replace(/^2DModel_/i, "");
+    const prefixes = [props.skin.skin2dId, normalizedSkinId];
+
+    let expressionName = assetName;
+
+    for (const prefix of prefixes)
+    {
+        if (expressionName.toLocaleLowerCase("en-US").startsWith(`${prefix}_`.toLocaleLowerCase("en-US")))
+        {
+            expressionName = expressionName.slice(prefix.length + 1);
+            break;
+        }
+    }
+
+    if (expressionName === assetName)
+        expressionName = assetName.split("_").pop() ?? assetName;
+
+    return expressionName
+        .replace(/_(\d+)$/, (_, value: string) => ` ${Number(value) + 1}`)
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/([A-Za-z])(\d+)/g, "$1 $2")
+        .replaceAll("_", " ")
+        .trim();
 }
 
 function failAnimatorPreview(error: unknown) {
@@ -566,6 +675,39 @@ onBeforeUnmount(() => {
                             :disabled="!availableCensorshipTypes.has('pixelated')"
                         >
                             Pixelated{{ availableCensorshipTypes.has("pixelated") ? "" : " (not available)" }}
+                        </option>
+                    </select>
+
+                    <span
+                        class="animator-preview-select-caret"
+                        aria-hidden="true"
+                    ></span>
+                </span>
+            </label>
+
+            <label
+                v-if="faceOptions.length > 0"
+                class="animator-preview-control-group animator-preview-face-control"
+            >
+                <span>Face</span>
+
+                <span class="animator-preview-select-wrap">
+                    <select
+                        v-model="selectedFaceAssetName"
+                        aria-label="Face expression"
+                        @change="applySelectedFace"
+                    >
+                        <option value="">
+                            Default
+                        </option>
+
+                        <option
+                            v-for="face in faceOptions"
+                            :key="face.assetName"
+                            :value="face.assetName"
+                            :title="face.assetName"
+                        >
+                            {{ face.label }}
                         </option>
                     </select>
 
@@ -788,6 +930,10 @@ onBeforeUnmount(() => {
 
 .animator-preview-censorship-control {
     min-width: 158px;
+}
+
+.animator-preview-face-control {
+    min-width: 148px;
 }
 
 .animator-preview-select-wrap {

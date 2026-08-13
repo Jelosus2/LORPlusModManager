@@ -1,6 +1,7 @@
 import type { PreparedAnimatorSkinnedRenderer, PreparedAnimatorSpriteRenderer } from "./AnimatorRendererModel";
 import type { AnimatorRuntimeFrameResult, AnimatorRuntimePackage } from "./AnimatorRuntimePackage";
 import type { AnimatorProjectedSpriteRenderer } from "./AnimatorSpriteProjector";
+import type { PreparedPreviewSpriteGeometry } from "../../shared/characters";
 import type { AnimatorDeformedSkinnedMesh } from "./AnimatorMeshDeformer";
 import type { AnimatorRuntimeMaterial } from "./AnimatorBindingResolver";
 
@@ -42,8 +43,25 @@ export type AnimatorPixiBounds = Readonly<{
     height: number;
 }>;
 
+export type AnimatorPixiFaceAsset = Readonly<{
+    assetName: string;
+    texture: Texture;
+    geometry: PreparedPreviewSpriteGeometry;
+}>;
+
+type AnimatorPixiFaceView = {
+    display: Mesh<MeshGeometry>;
+    geometry: MeshGeometry;
+    renderer: PreparedAnimatorSpriteRenderer;
+    assetsByName: ReadonlyMap<string, AnimatorPixiFaceAsset>;
+    selectedAsset: AnimatorPixiFaceAsset | null;
+    localPositions: Float32Array;
+    projectedPositions: Float32Array;
+};
+
 export type AnimatorPixiSceneOptions = Readonly<{
     includeParticles?: boolean;
+    faceAssets?: readonly AnimatorPixiFaceAsset[];
 }>;
 
 export class AnimatorPixiScene {
@@ -53,6 +71,7 @@ export class AnimatorPixiScene {
     private readonly particleViews: AnimatorPixiParticleView[] = [];
     private readonly sortingStride: number;
     private readonly submeshStride: number;
+    private faceView: AnimatorPixiFaceView | null = null;
     private destroyed = false;
     readonly root = new Container();
 
@@ -70,6 +89,7 @@ export class AnimatorPixiScene {
 
         this.createSkinnedMeshViews();
         this.createSpriteViews();
+        this.createFaceView(options.faceAssets ?? []);
 
         if (options.includeParticles !== false)
             this.createParticleViews();
@@ -137,6 +157,9 @@ export class AnimatorPixiScene {
                 includePositions(view.projector.positions2d);
         }
 
+        if (this.faceView?.display.visible)
+            includePositions(this.faceView.projectedPositions);
+
         if (!Number.isFinite(minimumX) || !Number.isFinite(minimumY) || !Number.isFinite(maximumX) || !Number.isFinite(maximumY))
             return null;
 
@@ -166,6 +189,37 @@ export class AnimatorPixiScene {
         return result;
     }
 
+    setFace(assetName: string | null) {
+        AnimatorRuntimeUtils.requireNotDestroyed(this.destroyed, "The Animator Pixi scene");
+
+        const view = this.faceView;
+
+        if (!view)
+        {
+            if (assetName !== null)
+                throw new Error("The Animator scene has no prepared face renderer.");
+
+            return;
+        }
+
+        if (assetName === null)
+        {
+            view.selectedAsset = null;
+            this.updateFaceView();
+            return;
+        }
+
+        const asset = view.assetsByName.get(assetName);
+        if (!asset)
+            throw new Error(`Animator face "${assetName}" is not prepared.`);
+
+        view.selectedAsset = asset;
+        view.display.texture = asset.texture;
+
+        this.configureFaceGeometry(view, asset.geometry);
+        this.updateFaceView();
+    }
+
     destroy() {
         if (this.destroyed)
             return;
@@ -188,6 +242,14 @@ export class AnimatorPixiScene {
 
         for (const view of this.particleViews)
             view.destroy();
+
+        if (this.faceView)
+        {
+            this.faceView.display.parent?.removeChild(this.faceView.display);
+            this.faceView.display.destroy();
+            this.faceView.geometry.destroy(true);
+            this.faceView = null;
+        }
 
         this.meshViews.length = 0;
         this.spriteViews.length = 0;
@@ -282,9 +344,68 @@ export class AnimatorPixiScene {
         }
     }
 
+    private createFaceView(faceAssets: readonly AnimatorPixiFaceAsset[]) {
+        if (faceAssets.length === 0)
+            return;
+
+        const faceDefinition = this.runtime.manifest.scene.interactions.actor.face;
+        const renderer = this.runtime.renderers.spriteRenderers.find((candidate) => candidate.id === faceDefinition.rendererId);
+
+        if (!renderer)
+            throw new Error(`The Actor face renderer "${faceDefinition.rendererId}" does not exist.`);
+
+        const assetsByName = new Map<string, AnimatorPixiFaceAsset>();
+
+        for (const asset of faceAssets)
+        {
+            if (assetsByName.has(asset.assetName))
+                throw new Error(`Animator face "${asset.assetName}" is duplicated.`);
+
+            assetsByName.set(asset.assetName, asset);
+        }
+
+        const geometry = new MeshGeometry({
+            positions: new Float32Array(8),
+            uvs: new Float32Array([
+                0, 1,
+                1, 1,
+                1, 0,
+                0, 0
+            ]),
+            indices: new Uint32Array([
+                0, 1, 2,
+                0, 2, 3
+            ]),
+            shrinkBuffersToFit: false
+        });
+
+        geometry.batchMode = "no-batch";
+
+        const display = new Mesh({
+            geometry,
+            texture: Texture.EMPTY
+        });
+
+        display.visible = false;
+        display.eventMode = "none";
+
+        this.faceView = {
+            display,
+            geometry,
+            renderer,
+            assetsByName,
+            selectedAsset: null,
+            localPositions: new Float32Array(8),
+            projectedPositions: new Float32Array(8)
+        };
+
+        this.root.addChild(display);
+    }
+
     private updateViews() {
         this.updateSkinnedMeshViews();
         this.updateSpriteViews();
+        this.updateFaceView();
         this.updateParticleViews();
     }
 
@@ -351,6 +472,45 @@ export class AnimatorPixiScene {
         }
     }
 
+    private updateFaceView() {
+        const view = this.faceView;
+        if (!view)
+            return;
+
+        const state = this.runtime.state.requireSpriteRenderer(view.renderer.id);
+        const color = state.materialIds.length > 0
+            ? this.resolveRendererColor(view.renderer.id, "SpriteRenderer", 0, state.color)
+            : this.createDisplayColor(state.color);
+
+        const visible =
+            view.selectedAsset !== null && state.enabled &&
+            this.runtime.hierarchy.isGameObjectActiveInHierarchy(view.renderer.gameObjectId) && color.alpha > 0;
+
+        view.display.visible = visible;
+        view.display.zIndex = state.sortingOrder * this.sortingStride + view.renderer.sourceOrder * this.submeshStride;
+        view.display.tint = color.tint;
+        view.display.alpha = color.alpha;
+
+        if (!visible)
+            return;
+
+        const worldMatrix = this.runtime.hierarchy.requireWorldMatrix(view.renderer.transformId);
+        const flipX = state.flipX ? -1 : 1;
+        const flipY = state.flipY ? -1 : 1;
+
+        for (let offset = 0; offset < view.localPositions.length; offset += 2)
+        {
+            const x = view.localPositions[offset] * flipX;
+            const y = view.localPositions[offset + 1] * flipY;
+
+            view.projectedPositions[offset] = worldMatrix[0] * x + worldMatrix[1] * y + worldMatrix[3];
+            view.projectedPositions[offset + 1] = worldMatrix[4] * x + worldMatrix[5] * y + worldMatrix[7];
+        }
+
+        view.geometry.positions.set(view.projectedPositions);
+        view.geometry.getBuffer("aPosition").update();
+    }
+
     private rebuildSpriteGeometry(view: AnimatorPixiSpriteView) {
         this.destroySpriteGeometry(view);
 
@@ -401,6 +561,25 @@ export class AnimatorPixiScene {
             view.geometry.destroy(true);
             view.geometry = null;
         }
+    }
+
+    private configureFaceGeometry(view: AnimatorPixiFaceView, geometry: PreparedPreviewSpriteGeometry) {
+        if (geometry.pixelWidth <= 0 || geometry.pixelHeight <= 0 || geometry.pixelsPerUnit <= 0)
+            throw new Error("The selected Animator face has invalid Sprite geometry.");
+
+        const width = geometry.pixelWidth / geometry.pixelsPerUnit;
+        const height = geometry.pixelHeight / geometry.pixelsPerUnit;
+        const left = -geometry.pivot.x * width;
+        const right = left + width;
+        const bottom = -geometry.pivot.y * height;
+        const top = bottom + height;
+
+        view.localPositions.set([
+            left, bottom,
+            right, bottom,
+            right, top,
+            left, top
+        ]);
     }
 
     private resolveMaterialTexture(rendererId: string, rendererType: AnimatorRendererType, materialSlot: number, materialId: string | null): Texture | null {
