@@ -25,6 +25,7 @@ export type AnimatorSkinnedMeshRendererState = {
     blendShapeWeights: number[];
     sortingOrder: number;
     materialPropertyOverrides: AnimatorMaterialPropertyOverrides;
+    texturePropertyOverrides: Map<number, Map<string, string | null>>;
 };
 
 export type AnimatorSpriteRendererState = {
@@ -37,6 +38,7 @@ export type AnimatorSpriteRendererState = {
     size: number[];
     sortingOrder: number;
     materialPropertyOverrides: AnimatorMaterialPropertyOverrides;
+    texturePropertyOverrides: Map<number, Map<string, string | null>>;
 };
 
 export type AnimatorRendererState =
@@ -95,6 +97,7 @@ export class AnimatorSceneState {
             );
 
             state.materialPropertyOverrides.clear();
+            state.texturePropertyOverrides.clear();
         }
 
         for (const renderer of this.scene.spriteRenderers)
@@ -112,6 +115,7 @@ export class AnimatorSceneState {
             AnimatorRuntimeUtils.copyFiniteVector(state.size, renderer.size, 2, `SpriteRenderer "${renderer.id}" size`);
 
             state.materialPropertyOverrides.clear();
+            state.texturePropertyOverrides.clear();
         }
     }
 
@@ -240,6 +244,41 @@ export class AnimatorSceneState {
         properties.set(propertyName, this.cloneMaterialValue(value));
     }
 
+    getMaterialTextureId(rendererId: string, rendererType: "SkinnedMeshRenderer" | "SpriteRenderer", materialSlot: number, propertyName: string): string | null {
+        const renderer = this.requireRenderer(rendererId, rendererType);
+        AnimatorRuntimeUtils.requireMaterialSlot(renderer, materialSlot);
+
+        const slotOverrides = renderer.texturePropertyOverrides.get(materialSlot);
+        if (slotOverrides?.has(propertyName))
+            return slotOverrides.get(propertyName) ?? null;
+
+        const materialId = renderer.materialIds[materialSlot];
+        if (!materialId)
+            return null;
+
+        const material = this.materialsById.get(materialId);
+        if (!material)
+            return null;
+
+        return material.textureProperties.find((property) => property.name === propertyName)?.textureId ?? null;
+    }
+
+    setMaterialTextureOverride(rendererId: string, rendererType: "SkinnedMeshRenderer" | "SpriteRenderer", materialSlot: number, propertyName: string, textureId: string | null) {
+        const renderer = this.requireRenderer(rendererId, rendererType);
+
+        AnimatorRuntimeUtils.requireMaterialSlot(renderer, materialSlot);
+
+        let properties = renderer.texturePropertyOverrides.get(materialSlot);
+
+        if (!properties)
+        {
+            properties = new Map();
+            renderer.texturePropertyOverrides.set(materialSlot, properties);
+        }
+
+        properties.set(propertyName, textureId);
+    }
+
     private initialize() {
         for (const transform of this.scene.transforms)
         {
@@ -273,7 +312,8 @@ export class AnimatorSceneState {
                 materialIds: [...renderer.materialIds],
                 blendShapeWeights: this.createBlendShapeWeights(renderer),
                 sortingOrder: renderer.sortingOrder,
-                materialPropertyOverrides: new Map()
+                materialPropertyOverrides: new Map(),
+                texturePropertyOverrides: new Map()
             });
         }
 
@@ -291,7 +331,8 @@ export class AnimatorSceneState {
                 flipY: renderer.flipY,
                 size: [...AnimatorRuntimeUtils.requireFiniteVector(renderer.size, 2, `SpriteRenderer "${renderer.id}" size`)],
                 sortingOrder: renderer.sortingOrder,
-                materialPropertyOverrides: new Map()
+                materialPropertyOverrides: new Map(),
+                texturePropertyOverrides: new Map()
             });
         }
     }

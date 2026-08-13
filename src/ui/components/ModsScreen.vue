@@ -1634,6 +1634,7 @@ function closeModPreview() {
                 <AnimatorModPreview
                     v-else-if="modPendingPreview.catalogSkin?.isAnimatorSkin"
                     :mod="modPendingPreview.mod"
+                    :skin="modPendingPreview.catalogSkin"
                 />
 
                 <div v-else class="mod-preview-placeholder">

@@ -131,6 +131,16 @@ export class AnimatorPixiScene {
         };
     }
 
+    setRPlusEnabled(enabled: boolean): AnimatorRuntimeFrameResult {
+        AnimatorRuntimeUtils.requireNotDestroyed(this.destroyed, "The Animator Pixi scene");
+
+        const result = this.runtime.setRPlusEnabled(enabled);
+
+        this.updateViews();
+
+        return result;
+    }
+
     destroy() {
         if (this.destroyed)
             return;
@@ -257,7 +267,7 @@ export class AnimatorPixiScene {
         for (const view of this.meshViews)
         {
             const state = this.runtime.state.requireSkinnedMeshRenderer(view.renderer.id);
-            const texture = this.resolveMaterialTexture(state.materialIds[view.materialSlot] ?? null);
+            const texture = this.resolveMaterialTexture(view.renderer.id, "SkinnedMeshRenderer", view.materialSlot, state.materialIds[view.materialSlot] ?? null);
             const color = this.resolveRendererColor(view.renderer.id, "SkinnedMeshRenderer", view.materialSlot);
 
             view.display.visible = view.deformer.visible && texture !== null && color.alpha > 0;
@@ -368,7 +378,7 @@ export class AnimatorPixiScene {
         }
     }
 
-    private resolveMaterialTexture(materialId: string | null): Texture | null {
+    private resolveMaterialTexture(rendererId: string, rendererType: AnimatorRendererType, materialSlot: number, materialId: string | null): Texture | null {
         if (!materialId)
             return null;
 
@@ -377,13 +387,17 @@ export class AnimatorPixiScene {
             return null;
 
         const textureProperty =
-            material.textureProperties.find((property) => property.name === "_MainTex" && property.textureId !== null) ??
+            material.textureProperties.find((property) => property.name === "_MainTex") ??
             material.textureProperties.find((property) => property.textureId !== null);
 
-        if (!textureProperty?.textureId)
+        if (!textureProperty)
             return null;
 
-        return this.texturesById.get(textureProperty.textureId) ?? null;
+        const textureId = this.runtime.state.getMaterialTextureId(rendererId, rendererType, materialSlot, textureProperty.name);
+
+        return textureId
+            ? this.texturesById.get(textureId) ?? null
+            : null;
     }
 
     private resolveRendererColor(rendererId: string, rendererType: AnimatorRendererType, materialSlot: number, multiplier: readonly number[] = [1, 1, 1, 1]): AnimatorDisplayColor {

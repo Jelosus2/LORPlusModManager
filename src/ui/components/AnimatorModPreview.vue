@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { InstalledMod } from '../../shared/mod';
-import type { Texture, Ticker } from 'pixi.js';
+import type { AnimatorCharacterSkin } from "../../shared/characters.ts";
+import type { InstalledMod } from "../../shared/mod";
+import type { Texture, Ticker } from "pixi.js";
 
 import ResetStateIcon from "./icons/ResetStateIcon.vue";
 import ResetViewIcon from "./icons/ResetViewIcon.vue";
@@ -10,12 +11,12 @@ import PlayIcon from "./icons/PlayIcon.vue";
 
 import { AnimatorPreviewInteractionLayer } from "@/animator/AnimatorPreviewInteractionLayer";
 import { AnimatorRuntimePackage } from "@/animator/AnimatorRuntimePackage";
-import { usePreviewViewport } from '@/composables/usePreviewViewport';
-import { AnimatorPixiScene } from '@/animator/AnimatorPixiScene';
+import { usePreviewViewport } from "@/composables/usePreviewViewport";
+import { AnimatorPixiScene } from "@/animator/AnimatorPixiScene";
 import { ApplicationLogSource } from "../../shared/application";
 import { RendererLogger } from "@/utils/RendererLogger";
-import { Application, Assets, Cache } from 'pixi.js';
-import { getModAssetUrl } from '@/data/modAssets';
+import { Application, Assets, Cache } from "pixi.js";
+import { getModAssetUrl } from "@/data/modAssets";
 import { ref, watch, onBeforeUnmount } from "vue";
 import { ErrorUtils } from "@/utils/ErrorUtils";
 
@@ -33,8 +34,13 @@ type RuntimeSummary = Readonly<{
     visibleDeformers: number;
 }>;
 
+type CensorshipType =
+    | "rplus"
+    | "unedited";
+
 const props = defineProps<{
     mod: InstalledMod;
+    skin: AnimatorCharacterSkin;
 }>();
 
 const stageHost = ref<HTMLElement | null>(null);
@@ -45,6 +51,8 @@ const diagnostics = ref<readonly string[]>([]);
 const isAnimationPaused = ref(false);
 const areHitboxesVisible = ref(false);
 const hasInteractionHitboxes = ref(false);
+const selectedCensorshipType = ref<CensorshipType>("unedited");
+const availableCensorshipTypes = ref<ReadonlySet<CensorshipType>>(new Set<CensorshipType>());
 
 const instanceId = crypto.randomUUID();
 const registeredAliases: string[] = [];
@@ -98,6 +106,8 @@ async function loadPreview() {
     errorMessage.value = "";
     runtimeSummary.value = null;
     diagnostics.value = [];
+    selectedCensorshipType.value = "unedited";
+    availableCensorshipTypes.value = new Set<CensorshipType>();
     frameFailed = false;
 
     areHitboxesVisible.value = false;
@@ -155,6 +165,9 @@ async function loadPreview() {
                 isAnimationPaused.value = false;
             }
         });
+
+        initializeCensorshipTypes(loadedPackage);
+        applySelectedCensorship();
 
         hasInteractionHitboxes.value = interactionLayer.hasHitboxes;
         interactionLayer.setOutlinesVisible(areHitboxesVisible.value);
@@ -331,6 +344,35 @@ function updateAnimatorFrame(ticker: Ticker) {
     }
 }
 
+function initializeCensorshipTypes(runtimePackage: AnimatorRuntimePackage) {
+    const available = new Set<CensorshipType>(["unedited"]);
+
+    if (runtimePackage.hasRPlusPresentation)
+        available.add("rplus");
+
+    availableCensorshipTypes.value = available;
+    selectedCensorshipType.value = props.skin.isRPlusSkin && available.has("rplus")
+        ? "rplus"
+        : "unedited";
+}
+
+function applySelectedCensorship() {
+    if (!pixiScene || frameFailed || !availableCensorshipTypes.value.has(selectedCensorshipType.value))
+        return;
+
+    try
+    {
+        const frame = pixiScene.setRPlusEnabled(selectedCensorshipType.value === "rplus");
+
+        interactionLayer?.update();
+        updateDiagnostics(frame.diagnostics);
+    }
+    catch (error)
+    {
+        failAnimatorPreview(error);
+    }
+}
+
 function updateDiagnostics(nextDiagnostics: readonly string[]) {
     const current = diagnostics.value;
 
@@ -435,6 +477,34 @@ onBeforeUnmount(() => {
             v-if="!isLoading && !errorMessage"
             class="animator-preview-controls"
         >
+            <label class="animator-preview-control-group animator-preview-censorship-control">
+                <span>Censorship</span>
+
+                <span class="animator-preview-select-wrap">
+                    <select
+                        v-model="selectedCensorshipType"
+                        aria-label="Censorship type"
+                        @change="applySelectedCensorship"
+                    >
+                        <option
+                            value="rplus"
+                            :disabled="!availableCensorshipTypes.has('rplus')"
+                        >
+                            R+{{ availableCensorshipTypes.has("rplus") ? "" : " (not available)" }}
+                        </option>
+
+                        <option value="unedited">
+                            Unedited
+                        </option>
+                    </select>
+
+                    <span
+                        class="animator-preview-select-caret"
+                        aria-hidden="true"
+                    ></span>
+                </span>
+            </label>
+
             <div class="animator-preview-control-group">
                 <span>Animation</span>
 
@@ -610,6 +680,57 @@ onBeforeUnmount(() => {
 .animator-preview-control-buttons {
     display: flex;
     gap: 5px;
+}
+
+.animator-preview-censorship-control {
+    min-width: 158px;
+}
+
+.animator-preview-select-wrap {
+    position: relative;
+    display: block;
+}
+
+.animator-preview-select-wrap select {
+    width: 100%;
+    height: 42px;
+    padding: 0 38px 0 12px;
+    border: 1px solid #303632;
+    border-radius: 7px;
+    color: #e7e3da;
+    background: rgba(18, 22, 19, 0.94);
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.24);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    appearance: none;
+    cursor: pointer;
+}
+
+.animator-preview-select-wrap select:hover {
+    border-color: #48504b;
+    background: rgba(27, 32, 28, 0.97);
+}
+
+.animator-preview-select-wrap select:focus-visible {
+    outline: 2px solid #f2eee5;
+    outline-offset: 2px;
+}
+
+.animator-preview-select-wrap option:disabled {
+    color: #747a75;
+}
+
+.animator-preview-select-caret {
+    position: absolute;
+    top: 50%;
+    right: 13px;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid #9ea49f;
+    border-bottom: 2px solid #9ea49f;
+    pointer-events: none;
+    transform: translateY(-70%) rotate(45deg);
 }
 
 .animator-preview-tool-button {

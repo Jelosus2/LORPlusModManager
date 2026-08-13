@@ -298,8 +298,48 @@ export type AnimatorRuntimeActorInteractions = Readonly<{
     }>;
 }>;
 
+export type AnimatorRuntimeMaterialRPlusBinding = Readonly<{
+    rendererId: string;
+    materialIndex: number;
+    materialId: string;
+    texturePropertyName: string;
+    originTextureId: string | null;
+    rplusTextureId: string | null;
+}>;
+
+export type AnimatorRuntimeMaterialRPlusSwitcher = Readonly<{
+    componentId: string;
+    bindings: readonly AnimatorRuntimeMaterialRPlusBinding[];
+}>;
+
+export type AnimatorRuntimeSpriteRPlusBinding = Readonly<{
+    rendererId: string;
+    originSpriteId: string | null;
+    rplusSpriteId: string | null;
+}>;
+
+export type AnimatorRuntimeSpriteRPlusSwitcher = Readonly<{
+    componentId: string;
+    bindings: readonly AnimatorRuntimeSpriteRPlusBinding[];
+}>;
+
+export type AnimatorRuntimeMosaic = Readonly<{
+    componentId: string;
+    gameObjectId: string;
+    rendererId: string;
+    enabled: boolean;
+    referenceScreenSize: number;
+    minMultiplier: number;
+    maxMultiplier: number;
+}>;
+
 export type AnimatorRuntimeInteractions = Readonly<{
     actor: AnimatorRuntimeActorInteractions;
+    rplus: Readonly<{
+        materialSwitchers: readonly AnimatorRuntimeMaterialRPlusSwitcher[];
+        spriteSwitchers: readonly AnimatorRuntimeSpriteRPlusSwitcher[];
+    }>;
+    mosaics: readonly AnimatorRuntimeMosaic[];
 }>;
 
 export type ResolvedAnimatorProperty =

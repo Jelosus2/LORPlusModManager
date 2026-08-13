@@ -56,6 +56,7 @@ export class AnimatorRuntimePackage {
     private readonly puppet2dIkSolver: AnimatorPuppet2DIkSolver;
     private readonly particleSimulatorsById = new Map<string, AnimatorParticleSimulator>();
     private readonly particleInitializationDiagnostics: string[] = [];
+    private rPlusEnabled = false;
     readonly state: AnimatorSceneState;
     readonly hierarchy: AnimatorTransformHierarchy;
     readonly geometryReader: AnimatorGeometryReader;
@@ -98,6 +99,19 @@ export class AnimatorRuntimePackage {
 
     get particleSimulators(): ReadonlyMap<string, AnimatorParticleSimulator> {
         return this.particleSimulatorsById;
+    }
+
+    get hasRPlusPresentation(): boolean {
+        const rplus = this.manifest.scene.interactions.rplus;
+
+        return (
+            rplus.materialSwitchers.some((switcher) => switcher.bindings.some((binding) => binding.rplusTextureId !== null)) ||
+            rplus.spriteSwitchers.some((switcher) => switcher.bindings.some((binding) => binding.rplusSpriteId !== null))
+        );
+    }
+
+    get isRPlusEnabled(): boolean {
+        return this.rPlusEnabled;
     }
 
     static async load(preparation: AnimatorModPreviewPreparation, signal?: AbortSignal): Promise<AnimatorRuntimePackage> {
@@ -162,6 +176,7 @@ export class AnimatorRuntimePackage {
         }
 
         const applicationResult = this.poseApplier.apply(poses);
+        this.applyRPlusPresentation();
 
         for (const diagnostic of applicationResult.diagnostics)
             AnimatorRuntimeUtils.appendUniqueString(diagnostics, diagnosticKeys, diagnostic);
@@ -238,6 +253,15 @@ export class AnimatorRuntimePackage {
         return triggeredControllers;
     }
 
+    setRPlusEnabled(enabled: boolean): AnimatorRuntimeFrameResult {
+        if (enabled && !this.hasRPlusPresentation)
+            throw new Error("This Animator skin does not contain an R+ presentation.");
+
+        this.rPlusEnabled = enabled;
+
+        return this.advance(0);
+    }
+
     private initializeControllers() {
         const controllersById = new Map<string, AnimatorControllerDefinition>();
 
@@ -261,6 +285,46 @@ export class AnimatorRuntimePackage {
                 throw new Error(`Animator "${animator.id}" references missing controller "${animator.controllerId}".`);
 
             this.controllerEvaluatorsByAnimatorId.set(animator.id, new AnimatorControllerEvaluator(controller, this.manifest.animations.clips));
+        }
+    }
+
+    private applyRPlusPresentation() {
+        const rplus = this.manifest.scene.interactions.rplus;
+
+        for (const switcher of rplus.materialSwitchers)
+        {
+            for (const binding of switcher.bindings)
+            {
+                const textureId = this.rPlusEnabled
+                    ? binding.rplusTextureId
+                    : binding.originTextureId;
+
+                if (!textureId)
+                    continue;
+
+                this.state.setMaterialTextureOverride(
+                    binding.rendererId,
+                    "SkinnedMeshRenderer",
+                    binding.materialIndex,
+                    binding.texturePropertyName,
+                    textureId
+                );
+            }
+        }
+
+        for (const switcher of rplus.spriteSwitchers)
+        {
+            for (const binding of switcher.bindings)
+            {
+                const spriteId = this.rPlusEnabled
+                    ? binding.rplusSpriteId
+                    : binding.originSpriteId;
+
+                if (!spriteId)
+                    continue;
+
+                this.state.requireSpriteRenderer(binding.rendererId).spriteId = spriteId;
+            }
         }
     }
 
