@@ -1,10 +1,10 @@
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ApplicationLogSource } from "../../shared/application.js";
+import { LocalFileResponse } from "./LocalFileResponse.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
-import { net, protocol } from "electron";
-import { pathToFileURL } from "node:url";
 import { Paths } from "#utils/Paths.js";
+import { protocol } from "electron";
 import path from "node:path";
 import fse from "fs-extra";
 
@@ -69,7 +69,10 @@ export class ModAssetProtocol {
                 if (!stats.isFile())
                     return new Response(null, { status: 404 });
 
-                return net.fetch(pathToFileURL(assetPath).toString());
+                return LocalFileResponse.create(assetPath, {
+                    size: stats.size,
+                    cacheControl: "no-store"
+                });
             }
             catch (error)
             {

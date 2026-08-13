@@ -181,7 +181,7 @@ function formatBytes(value: number): string {
     return `${amount >= 10 || unitIndex === 0 ? amount.toFixed(0) : amount.toFixed(1)} ${units[unitIndex]}`;
 }
 
-function closeModal(): void {
+function closeModal() {
     if (activeUpdate.value === "application")
         updateStore.closeStartupModal();
     else if (activeUpdate.value === "plugin")

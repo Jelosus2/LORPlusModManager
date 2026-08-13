@@ -120,19 +120,7 @@ export class StaticModPreviewService {
     }
 
     private async findStaticSkin(skin2dId: string, variantId: string | null): Promise<StaticCharacterSkin> {
-        const candidates = await characterCatalog.findBySkinId(skin2dId);
-
-        const normalizedVariant = variantId === null
-            ? null
-            : StringUtils.normalize(variantId);
-
-        const skin = candidates.find((candidate) => {
-            const candidateVariant = candidate.variantId === null
-                ? null
-                : StringUtils.normalize(candidate.variantId);
-
-            return candidateVariant === normalizedVariant;
-        });
+        const skin = await characterCatalog.findSkin(skin2dId, variantId);
 
         if (!skin)
             throw new UserFacingError("The mod's character skin is no longer present in the catalog.");

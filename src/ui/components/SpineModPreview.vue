@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SpineCharacterSkin, SpineHitbox, PreviewSprite, PreviewTransform } from "../../shared/characters";
+import type { PreviewBounds, PreviewFit } from "@/composables/usePreviewViewport";
 import type { InstalledMod } from "../../shared/mod";
 
 import ResetStateIcon from "./icons/ResetStateIcon.vue";
@@ -8,9 +9,10 @@ import HitboxIcon from "./icons/HitboxIcon.vue";
 import PauseIcon from "./icons/PauseIcon.vue";
 import PlayIcon from "./icons/PlayIcon.vue";
 
-import { Application, Assets, Cache, Container, Graphics, Matrix, Sprite, Texture } from "pixi.js";
+import { Application, Assets, Cache, Container, Graphics, Matrix, Sprite, Texture, Rectangle } from "pixi.js";
 import { SpineMultiplyAlphaCutoff } from "@/data/SpineMultiplyAlphaCutoff.ts";
 import { Skin, Spine, type Bone } from "@esotericsoftware/spine-pixi-v8";
+import { usePreviewViewport } from "@/composables/usePreviewViewport";
 import { ApplicationLogSource } from "../../shared/application.ts";
 import { getSkinBackgroundUrl } from "@/data/skinBackgrounds";
 import { RendererLogger } from "@/utils/RendererLogger.ts";
@@ -30,13 +32,6 @@ type FaceSkinOption = Readonly<{
     label: string;
 }>;
 
-type PreviewBounds = Readonly<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}>;
-
 const CENSORSHIP_SKIN_NAMES = {
     rplus: "breast/RPlus",
     unedited: "breast/Unedited",
@@ -44,10 +39,6 @@ const CENSORSHIP_SKIN_NAMES = {
 } as const;
 
 const UNITY_MULTIPLY_ALPHA_CUTOFF = 0.1;
-const MIN_PREVIEW_ZOOM = 0.25;
-const MAX_PREVIEW_ZOOM = 4;
-const PREVIEW_ZOOM_SENSITIVITY = 0.0015;
-const PAN_DRAG_THRESHOLD = 4;
 const MOSAIC_PIXEL_SIZE = 12;
 
 const props = defineProps<{
@@ -67,8 +58,6 @@ const isDecoration1Enabled = ref(false);
 const isDecoration2Enabled = ref(false);
 const availableFaceSkins = ref<readonly FaceSkinOption[]>([]);
 const selectedFaceSkinName = ref("");
-const isPanning = ref(false);
-const previewZoom = ref(100);
 const isAnimationPaused = ref(false);
 
 const instanceId = crypto.randomUUID();
@@ -94,13 +83,24 @@ let isPostSpecialTouchState = false;
 let isInteractionPlaying = false;
 let assetsLoaded = false;
 let disposed = false;
-let fittedPreviewScale = 1;
-let activePanPointerId: number | null = null;
-let panStartClientX = 0;
-let panStartClientY = 0;
-let panLastClientX = 0;
-let panLastClientY = 0;
-let didDragPreview = false;
+
+const {
+    isPanning,
+    didDragPreview,
+    previewZoom,
+    fitPreview,
+    resetPreviewView,
+    handlePreviewWheel,
+    startPreviewPan,
+    movePreviewPan,
+    finishPreviewPan,
+    resetPointerInteraction
+} = usePreviewViewport({
+    getApplication: () => application,
+    getHost: () => stageHost.value,
+    getScene: () => previewScene,
+    getFit: getSpinePreviewFit
+});
 
 async function createPreview() {
     const host = stageHost.value;
@@ -245,6 +245,8 @@ async function createPreview() {
 }
 
 async function destroyPreview() {
+    resetPointerInteraction();
+
     resizeObserver?.disconnect();
     resizeObserver = null;
 
@@ -476,53 +478,32 @@ function applySkinComposition() {
     updateMosaicOverlayVisibility();
 }
 
-function fitPreview() {
-    if (!application || !previewScene || !spine)
-        return;
+function getSpinePreviewFit(): PreviewFit | null {
+    if (!spine)
+        return null;
 
-    const screenWidth = application.screen.width;
-    const screenHeight = application.screen.height;
     const camera = props.skin.backgroundPreview?.camera;
 
-    if (camera)
-    {
-        const cameraBounds = getTransformedSpriteBounds(camera);
-        if (cameraBounds.width <= 0 || cameraBounds.height <= 0)
-            return;
-
-        const viewportScale = Math.max(screenWidth / cameraBounds.width, screenHeight / cameraBounds.height) / camera.zoom;
-        const cameraCenterX = cameraBounds.x + cameraBounds.width / 2;
-        const cameraCenterY = cameraBounds.y + cameraBounds.height / 2;
-
-        setFittedPreviewView(
-            viewportScale,
-            screenWidth / 2 - cameraCenterX * viewportScale,
-            screenHeight / 2 - cameraCenterY * viewportScale
-        );
-        return;
+    if (camera) {
+        return {
+            bounds: getTransformedSpriteBounds(camera),
+            mode: "cover",
+            zoom: camera.zoom,
+            padding: 0
+        };
     }
 
-    const bounds = getTransformedRectangleBounds(
-        spine.bounds.x,
-        spine.bounds.y,
-        spine.bounds.width,
-        spine.bounds.height,
-        toPixiMatrix(props.skin.spinePreview.transform)
-    );
-
-    if (bounds.width <= 0 || bounds.height <= 0)
-        return;
-
-    const padding = Math.min(64, screenWidth * 0.06, screenHeight * 0.06);
-    const availableWidth = Math.max(screenWidth - padding * 2, 1);
-    const availableHeight = Math.max(screenHeight - padding * 2, 1);
-    const viewportScale = Math.min(availableWidth / bounds.width, availableHeight / bounds.height);
-
-    setFittedPreviewView(
-        viewportScale,
-        screenWidth / 2 - (bounds.x + bounds.width / 2) * viewportScale,
-        screenHeight / 2 - (bounds.y + bounds.height / 2) * viewportScale
-    );
+    return {
+        bounds: getTransformedRectangleBounds(
+            spine.bounds.x,
+            spine.bounds.y,
+            spine.bounds.width,
+            spine.bounds.height,
+            toPixiMatrix(props.skin.spinePreview.transform)
+        ),
+        mode: "contain",
+        padding: 64
+    };
 }
 
 function createHitboxLayer() {
@@ -544,12 +525,17 @@ function createHitboxLayer() {
 function createHitboxGraphic(hitbox: SpineHitbox, kind: "touch" | "special"): Graphics {
     const color = kind === "special" ? 0xe5a06d : 0x91b8cf;
     const fillAlpha = kind === "special" ? 0.14 : 0.09;
+    const x = -hitbox.width / 2;
+    const y = -hitbox.height / 2;
+    const width = hitbox.width;
+    const height = hitbox.height;
 
     const graphic = new Graphics()
-        .rect(-hitbox.width / 2, -hitbox.height / 2, hitbox.width, hitbox.height)
+        .rect(x, y, width, height)
         .fill({ color, alpha: fillAlpha })
-        .stroke({ color, alpha: 0.95, width: 0.065 });
+        .stroke({ color, alpha: 0.95, width: 1, pixelLine: true });
 
+    graphic.hitArea = new Rectangle(x, y, width, height);
     graphic.position.set(hitbox.x, -hitbox.y);
     graphic.rotation = -hitbox.rotation * Math.PI / 180;
     graphic.eventMode = "static";
@@ -558,7 +544,7 @@ function createHitboxGraphic(hitbox: SpineHitbox, kind: "touch" | "special"): Gr
     graphic.on("pointertap", (event) => {
         event.stopPropagation();
 
-        if (didDragPreview)
+        if (didDragPreview.value)
             return;
 
         playInteractionAnimation(kind);
@@ -675,16 +661,6 @@ function transformPoint(matrix: Matrix, x: number, y: number) {
 
 function toPixiMatrix(transform: PreviewTransform): Matrix {
     return new Matrix(transform.a, -transform.b, -transform.c, transform.d, transform.tx, -transform.ty);
-}
-
-function setFittedPreviewView(scale: number, x: number, y: number) {
-    if (!previewScene)
-        return;
-
-    fittedPreviewScale = scale;
-    previewScene.scale.set(scale);
-    previewScene.position.set(x, y);
-    previewZoom.value = 100;
 }
 
 function getRuntimeSpines(): Spine[] {
@@ -818,130 +794,6 @@ function resolveCensorshipSkinName(type: CensorshipType): string {
         return CENSORSHIP_SKIN_NAMES.rplus;
 
     return CENSORSHIP_SKIN_NAMES[type];
-}
-
-function resetPreviewView() {
-    didDragPreview = false;
-    fitPreview();
-}
-
-function handlePreviewWheel(event: WheelEvent) {
-    if (!previewScene || fittedPreviewScale <= 0)
-        return;
-
-    const pointer = getPreviewPointerPosition(event);
-    if (!pointer)
-        return;
-
-    const deltaMultiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE
-        ? 16
-        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
-            ? stageHost.value?.clientHeight ?? 1
-            : 1;
-
-    const normalizedDelta = event.deltaY * deltaMultiplier;
-    const currentScale = previewScene.scale.x;
-    const currentZoom = currentScale / fittedPreviewScale;
-
-    const nextZoom = Math.min(
-        MAX_PREVIEW_ZOOM,
-        Math.max(MIN_PREVIEW_ZOOM, currentZoom * Math.exp(-normalizedDelta * PREVIEW_ZOOM_SENSITIVITY))
-    );
-
-    const nextScale = fittedPreviewScale * nextZoom;
-    if (Math.abs(nextScale - currentScale) < 0.0001)
-        return;
-
-    const localPointerX = (pointer.x - previewScene.position.x) / currentScale;
-    const localPointerY = (pointer.y - previewScene.position.y) / currentScale;
-
-    previewScene.scale.set(nextScale);
-    previewScene.position.set(pointer.x - localPointerX * nextScale, pointer.y - localPointerY * nextScale);
-
-    previewZoom.value = Math.round(nextZoom * 100);
-}
-
-function startPreviewPan(event: PointerEvent) {
-    if (!previewScene ||activePanPointerId !== null || (event.button !== 0 && event.button !== 1))
-        return;
-
-    activePanPointerId = event.pointerId;
-    panStartClientX = event.clientX;
-    panStartClientY = event.clientY;
-    panLastClientX = event.clientX;
-    panLastClientY = event.clientY;
-    didDragPreview = false;
-    isPanning.value = false;
-
-    if (event.button === 1)
-        event.preventDefault();
-}
-
-
-function movePreviewPan(event: PointerEvent) {
-    if (!previewScene || !application || activePanPointerId !== event.pointerId)
-        return;
-
-    const target = event.currentTarget as HTMLElement;
-    const bounds = target.getBoundingClientRect();
-
-    if (bounds.width <= 0 || bounds.height <= 0)
-        return;
-
-    if (!didDragPreview)
-    {
-        const dragDistance = Math.hypot(event.clientX - panStartClientX, event.clientY - panStartClientY);
-        if (dragDistance < PAN_DRAG_THRESHOLD)
-            return;
-
-        didDragPreview = true;
-        isPanning.value = true;
-        target.setPointerCapture(event.pointerId);
-    }
-
-    const deltaX = event.clientX - panLastClientX;
-    const deltaY = event.clientY - panLastClientY;
-
-    previewScene.position.x += deltaX * application.screen.width / bounds.width;
-    previewScene.position.y += deltaY * application.screen.height / bounds.height;
-
-    panLastClientX = event.clientX;
-    panLastClientY = event.clientY;
-
-    event.preventDefault();
-}
-
-function finishPreviewPan(event: PointerEvent) {
-    if (activePanPointerId !== event.pointerId)
-        return;
-
-    const target = event.currentTarget as HTMLElement;
-    const pointerId = activePanPointerId;
-
-    activePanPointerId = null;
-    isPanning.value = false;
-
-    if (target.hasPointerCapture(pointerId))
-        target.releasePointerCapture(pointerId);
-
-    window.setTimeout(() => {
-        didDragPreview = false;
-    }, 0);
-}
-
-function getPreviewPointerPosition(event: MouseEvent) {
-    const host = stageHost.value;
-    if (!host || !application)
-        return null;
-
-    const bounds = host.getBoundingClientRect();
-    if (bounds.width <= 0 || bounds.height <= 0)
-        return null;
-
-    return {
-        x: (event.clientX - bounds.left) * application.screen.width / bounds.width,
-        y: (event.clientY - bounds.top) * application.screen.height / bounds.height
-    };
 }
 
 function resolveAssetName(extension: ".json" | ".atlas"): string | null {

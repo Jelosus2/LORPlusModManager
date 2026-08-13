@@ -199,7 +199,7 @@ export class CatalogAssetCacheService {
         }
     }
 
-    private async saveFile(destinationPath: string, contents: Buffer): Promise<void> {
+    private async saveFile(destinationPath: string, contents: Buffer) {
         const directory = path.dirname(destinationPath);
         const temporaryPath = path.join(directory, `.${path.basename(destinationPath)}.${randomUUID()}.tmp`);
 

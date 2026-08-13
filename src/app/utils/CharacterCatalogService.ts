@@ -39,7 +39,7 @@ export class CharacterCatalogService {
     private skinsByAssetName = new Map<string, readonly CharacterSkin[]>();
     private readonly EMPTY_RESULTS: readonly CharacterSkin[] = Object.freeze([]);
     private readonly MAX_CATALOG_ENTRIES = 2000;
-    private readonly MAX_ASSETS_PER_ENTRY = 10;
+    private readonly MAX_ASSETS_PER_ENTRY = 20;
     private readonly MAX_SPINE_NAME_LENGTH = 128;
     private readonly MAX_SPINE_SCALE = 10;
     private readonly MAX_HITBOX_COORDINATE = 100_000;
@@ -93,6 +93,22 @@ export class CharacterCatalogService {
         await this.getCatalog();
 
         return this.skinsByAssetName.get(StringUtils.normalize(assetName)) ?? this.EMPTY_RESULTS;
+    }
+
+    async findSkin(skin2dId: string, variantId: string | null): Promise<CharacterSkin | null> {
+        const candidates = await this.findBySkinId(skin2dId);
+
+        const normalizedVariant = variantId === null
+            ? null
+            : StringUtils.normalize(variantId);
+
+        return candidates.find((candidate) => {
+            const candidateVariant = candidate.variantId === null
+                ? null
+                : StringUtils.normalize(candidate.variantId);
+
+            return candidateVariant === normalizedVariant;
+        }) ?? null;
     }
 
     async installCatalogContents(contents: string): Promise<CharacterCatalog> {

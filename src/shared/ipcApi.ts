@@ -27,7 +27,8 @@ import type {
     CatalogIconRepairResult,
     CatalogBackgroundRepairProgress,
     CatalogBackgroundRepairResult,
-    StaticModPreviewPreparation
+    StaticModPreviewPreparation,
+    AnimatorModPreviewPreparation
 } from "./characters.js";
 import type { GameLocationResult, SetupState, GameLocationChangeProgress, GameLocationChangeResult, GameLocationSelectionResult } from "./setup.js";
 import type { ApplicationInfo, ExternalApplicationPage, ApplicationLogEntry, ApplicationLogWriteRequest } from "./application.js";
@@ -81,4 +82,5 @@ export type IpcApi = {
     repairCatalogBackgrounds: () => Promise<CatalogBackgroundRepairResult>;
     onCatalogBackgroundRepairProgress: (callback: (progress: CatalogBackgroundRepairProgress) => void) => () => void;
     prepareStaticModPreview: (modId: string) => Promise<StaticModPreviewPreparation>;
+    prepareAnimatorModPreview: (modId: string) => Promise<AnimatorModPreviewPreparation>;
 };

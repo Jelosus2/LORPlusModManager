@@ -378,7 +378,7 @@ export class GameLauncherService {
         }
     }
 
-    private listen(server: Server): Promise<void> {
+    private listen(server: Server) {
         return new Promise<void>((resolve, reject) => {
             const handleError = (error: Error) => {
                 server.off("listening", handleListening);

@@ -11,12 +11,14 @@ import type {
     StaticPreviewRenderer,
     StaticPreviewSpriteMesh
 } from "../../shared/characters";
+import type { PreviewBounds, PreviewFit } from "@/composables/usePreviewViewport.ts";
 import type { InstalledMod } from "../../shared/mod";
 
 import ResetViewIcon from "./icons/ResetViewIcon.vue";
 import HitboxIcon from "./icons/HitboxIcon.vue";
 
 import { Application, Assets, Cache, Container, Graphics, Matrix, Rectangle, Sprite, Texture } from "pixi.js";
+import { usePreviewViewport } from "@/composables/usePreviewViewport.ts";
 import { PixelateFilter } from "pixi-filters/pixelate";
 import { ref, onMounted, onBeforeUnmount } from "vue";
 
@@ -24,13 +26,6 @@ import { getCachedPreviewAssetUrl } from "@/data/previewAssets";
 import { getSkinBackgroundUrl } from "@/data/skinBackgrounds";
 import { getModAssetUrl } from "@/data/modAssets";
 import { ErrorUtils } from "@/utils/ErrorUtils";
-
-type PreviewBounds = Readonly<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}>;
 
 type CensorshipType =
     | "rplus"
@@ -58,11 +53,6 @@ type RuntimeMaskLayer = Readonly<{
     instance: SpriteLayerInstance;
 }>;
 
-const MIN_PREVIEW_ZOOM = 0.25;
-const MAX_PREVIEW_ZOOM = 4;
-const PREVIEW_ZOOM_SENSITIVITY = 0.0015;
-const PAN_DRAG_THRESHOLD = 4;
-
 const props = defineProps<{
     mod: InstalledMod;
     skin: StaticCharacterSkin;
@@ -78,8 +68,6 @@ const selectedFaceAssetName = ref("");
 const isDecoration1Enabled = ref(props.skin.staticPreview.defaultParts);
 const isDecoration2Enabled = ref(props.skin.staticPreview.defaultParts2);
 const areHitboxesVisible = ref(false);
-const isPanning = ref(false);
-const previewZoom = ref(100);
 
 const instanceId = crypto.randomUUID();
 const backgroundLayers = props.skin.backgroundPreview?.layers ?? [];
@@ -96,14 +84,24 @@ let normalFace: SpriteLayerInstance | null = null;
 let pixelatedFace: SpriteLayerInstance | null = null;
 let resizeObserver: ResizeObserver | null = null;
 let resizeFrame: number | null = null;
-let fittedPreviewScale = 1;
-let activePanPointerId: number | null = null;
-let panStartClientX = 0;
-let panStartClientY = 0;
-let panLastClientX = 0;
-let panLastClientY = 0;
-let didDragPreview = false;
 let disposed = false;
+
+const {
+    isPanning,
+    previewZoom,
+    fitPreview,
+    resetPreviewView,
+    handlePreviewWheel,
+    startPreviewPan,
+    movePreviewPan,
+    finishPreviewPan,
+    resetPointerInteraction
+} = usePreviewViewport({
+    getApplication: () => application,
+    getHost: () => stageHost.value,
+    getScene: () => previewScene,
+    getFit: getStaticPreviewFit
+});
 
 const registeredAliases: string[] = [];
 const croppedTextures: Texture[] = [];
@@ -210,6 +208,8 @@ async function createPreview() {
 }
 
 async function destroyPreview() {
+    resetPointerInteraction();
+
     resizeObserver?.disconnect();
     resizeObserver = null;
 
@@ -255,8 +255,6 @@ async function destroyPreview() {
     hitboxLayer = null;
     normalFace = null;
     pixelatedFace = null;
-    activePanPointerId = null;
-    didDragPreview = false;
 
     runtimeLayers.length = 0;
     runtimeMaskLayers.length = 0;
@@ -482,11 +480,11 @@ function configureSpriteMeshMask(meshMask: Graphics, mesh: StaticPreviewSpriteMe
 
     const { vertices, triangles } = mesh;
 
-    for (let index = 0; index < triangles.length; index += 3)
+    for (let i = 0; i < triangles.length; i += 3)
     {
-        const first = triangles[index] * 2;
-        const second = triangles[index + 1] * 2;
-        const third = triangles[index + 2] * 2;
+        const first = triangles[i] * 2;
+        const second = triangles[i + 1] * 2;
+        const third = triangles[i + 2] * 2;
 
         meshMask.poly([
             vertices[first],
@@ -648,52 +646,33 @@ function createCroppedTexture(texture: Texture, source: StaticPreviewSpriteSourc
     return croppedTexture;
 }
 
-function fitPreview() {
-    if (!application || !previewScene || !normalCharacterRoot)
-        return;
-
-    const screenWidth = application.screen.width;
-    const screenHeight = application.screen.height;
+function getStaticPreviewFit(): PreviewFit | null {
     const camera = props.skin.backgroundPreview?.camera;
 
-    if (camera)
-    {
-        const bounds = getTransformedSpriteBounds(camera);
-        const scale = Math.max(screenWidth / bounds.width, screenHeight / bounds.height) / camera.zoom;
-
-        setFittedPreviewView(
-            scale,
-            screenWidth / 2 - (bounds.x + bounds.width / 2) * scale,
-            screenHeight / 2 - (bounds.y + bounds.height / 2) * scale
-        );
-
-        return;
+    if (camera) {
+        return {
+            bounds: getTransformedSpriteBounds(camera),
+            mode: "cover",
+            zoom: camera.zoom,
+            padding: 0
+        };
     }
 
+    if (!normalCharacterRoot)
+        return null;
+
     const bounds = normalCharacterRoot.getLocalBounds();
-    if (bounds.width <= 0 || bounds.height <= 0)
-        return;
 
-    const padding = Math.min(64, screenWidth * 0.06,  screenHeight * 0.06);
-    const availableWidth = Math.max(screenWidth - padding * 2, 1);
-    const availableHeight = Math.max(screenHeight - padding * 2, 1);
-    const scale = Math.min(availableWidth / bounds.width, availableHeight / bounds.height);
-
-    setFittedPreviewView(
-        scale,
-        screenWidth / 2 - (bounds.minX + bounds.width / 2) * scale,
-        screenHeight / 2 - (bounds.minY + bounds.height / 2) * scale
-    );
-}
-
-function setFittedPreviewView(scale: number, x: number, y: number) {
-    if (!previewScene)
-        return;
-
-    fittedPreviewScale = scale;
-    previewScene.scale.set(scale);
-    previewScene.position.set(x, y);
-    previewZoom.value = 100;
+    return {
+        bounds: {
+            x: bounds.minX,
+            y: bounds.minY,
+            width: bounds.width,
+            height: bounds.height
+        },
+        mode: "contain",
+        padding: 64
+    };
 }
 
 function schedulePreviewFit() {
@@ -870,117 +849,6 @@ function formatFaceLabel(assetName: string): string {
         .replaceAll("_", " ");
 }
 
-function resetPreviewView() {
-    didDragPreview = false;
-    fitPreview();
-}
-
-function handlePreviewWheel(event: WheelEvent) {
-    if (!previewScene || fittedPreviewScale <= 0)
-        return;
-
-    const pointer = getPreviewPointerPosition(event);
-    if (!pointer)
-        return;
-
-    const deltaMultiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE
-        ? 16
-        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
-            ? stageHost.value?.clientHeight ?? 1
-            : 1;
-
-    const normalizedDelta = event.deltaY * deltaMultiplier;
-    const currentScale = previewScene.scale.x;
-    const currentZoom = currentScale / fittedPreviewScale;
-
-    const nextZoom = Math.min(
-        MAX_PREVIEW_ZOOM,
-        Math.max( MIN_PREVIEW_ZOOM, currentZoom * Math.exp(-normalizedDelta * PREVIEW_ZOOM_SENSITIVITY))
-    );
-
-    const nextScale = fittedPreviewScale * nextZoom;
-    if (Math.abs(nextScale - currentScale) < 0.0001)
-        return;
-
-    const localPointerX = (pointer.x - previewScene.position.x) / currentScale;
-    const localPointerY = (pointer.y - previewScene.position.y) / currentScale;
-
-    previewScene.scale.set(nextScale);
-    previewScene.position.set(pointer.x - localPointerX * nextScale, pointer.y - localPointerY * nextScale);
-
-    previewZoom.value = Math.round(nextZoom * 100);
-}
-
-function startPreviewPan(event: PointerEvent) {
-    if (!previewScene || activePanPointerId !== null || (event.button !== 0 && event.button !== 1))
-        return;
-
-    const target = event.currentTarget as HTMLElement;
-
-    activePanPointerId = event.pointerId;
-    panStartClientX = event.clientX;
-    panStartClientY = event.clientY;
-    panLastClientX = event.clientX;
-    panLastClientY = event.clientY;
-    didDragPreview = false;
-    isPanning.value = false;
-
-    target.setPointerCapture(event.pointerId);
-
-    if (event.button === 1)
-        event.preventDefault();
-}
-
-function movePreviewPan(event: PointerEvent) {
-    if (!previewScene || !application || activePanPointerId !== event.pointerId)
-        return;
-
-    const target = event.currentTarget as HTMLElement;
-    const bounds = target.getBoundingClientRect();
-
-    if (bounds.width <= 0 || bounds.height <= 0)
-        return;
-
-    if (!didDragPreview)
-    {
-        const dragDistance = Math.hypot(event.clientX - panStartClientX, event.clientY - panStartClientY);
-        if (dragDistance < PAN_DRAG_THRESHOLD)
-            return;
-
-        didDragPreview = true;
-        isPanning.value = true;
-    }
-
-    const deltaX = event.clientX - panLastClientX;
-    const deltaY = event.clientY - panLastClientY;
-
-    previewScene.position.x += deltaX * application.screen.width / bounds.width;
-    previewScene.position.y += deltaY * application.screen.height / bounds.height;
-
-    panLastClientX = event.clientX;
-    panLastClientY = event.clientY;
-
-    event.preventDefault();
-}
-
-function finishPreviewPan(event: PointerEvent) {
-    if (activePanPointerId !== event.pointerId)
-        return;
-
-    const target = event.currentTarget as HTMLElement;
-    const pointerId = activePanPointerId;
-
-    activePanPointerId = null;
-    isPanning.value = false;
-
-    if (target.hasPointerCapture(pointerId))
-        target.releasePointerCapture(pointerId);
-
-    window.setTimeout(() => {
-        didDragPreview = false;
-    }, 0);
-}
-
 function setContainerAttached(parent: Container | null, child: Container | null, attached: boolean) {
     if (!parent || !child)
         return;
@@ -994,21 +862,6 @@ function setContainerAttached(parent: Container | null, child: Container | null,
     {
         parent.removeChild(child);
     }
-}
-
-function getPreviewPointerPosition(event: MouseEvent) {
-    const host = stageHost.value;
-    if (!host || !application)
-        return null;
-
-    const bounds = host.getBoundingClientRect();
-    if (bounds.width <= 0 || bounds.height <= 0)
-        return null;
-
-    return {
-        x: (event.clientX - bounds.left) * application.screen.width / bounds.width,
-        y: (event.clientY - bounds.top) * application.screen.height / bounds.height
-    };
 }
 
 onMounted(createPreview);

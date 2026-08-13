@@ -100,7 +100,7 @@ export class UpdateController {
     }
 
     @IpcHelper.IpcHandle("updates:install-application")
-    installApplicationUpdate(): void {
+    installApplicationUpdate() {
         ApplicationLogger.info(ApplicationLogSource.updates, "Application update installation requested.");
         applicationUpdateService.install();
     }

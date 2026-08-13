@@ -1,4 +1,4 @@
-import type { ExtractedUnityPreviewAsset, UnityPreviewAssetType, UnitySpriteGeometry } from "./UnityWorkerClient.js";
+import type { ExtractedUnityPreviewAsset, UnityPreviewAssetType, UnitySpriteGeometry, UnityAnimatorRuntimeFile } from "./UnityWorkerClient.js";
 import type { ResolvedGameAssetBundle } from "#game/GameAssetBundleResolver.js";
 
 import { gameAssetBundleResolver } from "#game/GameAssetBundleResolver.js";
@@ -41,13 +41,44 @@ type PreviewAssetMetadata = Readonly<{
     sprite?: UnitySpriteGeometry;
 }>;
 
+export type CachedAnimatorRuntimePackage = Readonly<{
+    key: string;
+    bundleName: string;
+    versionHash: string;
+    locator: string;
+    formatVersion: number;
+    entryPath: string;
+    files: readonly UnityAnimatorRuntimeFile[];
+}>;
+
+type AnimatorRuntimeMetadata = Readonly<{
+    metadataVersion: 1;
+    kind: "animator-runtime";
+    key: string;
+    bundleName: string;
+    versionHash: string;
+    locator: string;
+    runtimeFormatVersion: 11;
+    files: readonly UnityAnimatorRuntimeFile[];
+}>;
+
+export type ResolvedAnimatorRuntimeFile = Readonly<{
+    filePath: string;
+    size: number;
+    sha256: string;
+}>;
+
 export class UnityPreviewAssetCacheService {
     private readonly FORMAT_VERSION = 1;
     private readonly MAXIMUM_REQUESTS = 64;
     private readonly MAXIMUM_ASSET_NAME_LENGTH = 256;
     private readonly MAXIMUM_METADATA_SIZE = 16 * 1024;
+    private readonly ANIMATOR_RUNTIME_FORMAT_VERSION = 11;
+    private readonly MAXIMUM_RUNTIME_METADATA_SIZE = 2 * 1024 * 1024;
+    private readonly MAXIMUM_RUNTIME_PACKAGE_SIZE = 2 * 1024 ** 3;
     private readonly worker = new UnityWorkerClient();
     private readonly pending = new Map<string, Promise<readonly CachedUnityPreviewAsset[]>>();
+    private readonly pendingAnimatorRuntimes = new Map<string, Promise<CachedAnimatorRuntimePackage>>();
     private readonly PNG_SIGNATURE = Buffer.from([
         0x89, 0x50, 0x4e, 0x47,
         0x0d, 0x0a, 0x1a, 0x0a
@@ -76,7 +107,126 @@ export class UnityPreviewAssetCacheService {
         return operation;
     }
 
+    ensureAnimatorRuntime(bundleName: string, locator: string): Promise<CachedAnimatorRuntimePackage> {
+        if (!Paths.isSafeGameAssetBundleName(bundleName) || !Paths.isSafeGameAssetBundleName(locator))
+            throw new UserFacingError("The requested Animator preview package is invalid.");
+
+        const operationKey = JSON.stringify([
+            StringUtils.normalize(bundleName),
+            StringUtils.normalize(locator),
+            this.ANIMATOR_RUNTIME_FORMAT_VERSION
+        ]);
+
+        const existing = this.pendingAnimatorRuntimes.get(operationKey);
+        if (existing)
+            return existing;
+
+        const operation = this.ensureAnimatorRuntimeInternal(bundleName, locator).finally(() => {
+            this.pendingAnimatorRuntimes.delete(operationKey);
+        });
+
+        this.pendingAnimatorRuntimes.set(operationKey, operation);
+        return operation;
+    }
+
+    async resolveAnimatorRuntimeFile(bundleName: string, versionHash: string, key: string, relativePath: string): Promise<ResolvedAnimatorRuntimeFile | null> {
+        if (
+            !Paths.isSafeGameAssetBundleName(bundleName) ||
+            !Paths.isSafeGameAssetBundleVersionHash(versionHash) ||
+            !/^[0-9a-f]{64}$/i.test(key) ||
+            !this.isAnimatorRuntimeFilePath(relativePath)
+        )
+        {
+            return null;
+        }
+
+        const configuredBundleRoot = Paths.getUnityPreviewBundleCachePath(bundleName, versionHash);
+        const configuredEntryPath = path.join(configuredBundleRoot, key);
+
+        try
+        {
+            const configuredEntryStats = await fse.lstat(configuredEntryPath);
+            if (!configuredEntryStats.isDirectory() || configuredEntryStats.isSymbolicLink())
+                return null;
+
+            const bundleRoot = await fse.realpath(configuredBundleRoot);
+            const entryPath = await fse.realpath(configuredEntryPath);
+
+            if (!Paths.isSubpath(bundleRoot, entryPath))
+                return null;
+
+            const metadataPath = path.join(entryPath, "metadata.json");
+            const metadataStats = await fse.lstat(metadataPath);
+
+            if (metadataStats.isSymbolicLink() || !metadataStats.isFile() || metadataStats.size === 0 || metadataStats.size > this.MAXIMUM_RUNTIME_METADATA_SIZE)
+                return null;
+
+            const rawMetadata: unknown = JSON.parse(await fse.readFile(metadataPath, "utf-8"));
+            const metadata = this.parseAnimatorRuntimeMetadata(rawMetadata);
+
+            if (
+                !metadata ||
+                metadata.bundleName !== bundleName ||
+                metadata.versionHash !== versionHash ||
+                metadata.key !== key
+            )
+            {
+                return null;
+            }
+
+            const file = metadata.files.find((candidate) => candidate.path === relativePath);
+            if (!file)
+                return null;
+
+            const configuredFilePath = this.getAnimatorRuntimeFilePath(entryPath, relativePath);
+            const configuredFileStats = await fse.lstat(configuredFilePath);
+
+            if (!configuredFileStats.isFile() || configuredFileStats.isSymbolicLink() || configuredFileStats.size !== file.size)
+                return null;
+
+            const filePath = await fse.realpath(configuredFilePath);
+            if (!Paths.isSubpath(entryPath, filePath))
+                return null;
+
+            return Object.freeze({
+                filePath,
+                size: file.size,
+                sha256: file.sha256
+            });
+        }
+        catch (error)
+        {
+            if (error instanceof SyntaxError || (TypeCheck.isNodeError(error) && ["ENOENT", "ENOTDIR"].includes(error.code ?? "")))
+                return null;
+
+            throw error;
+        }
+    }
+
     private async ensureBundleAssetsInternal(bundleName: string, requests: readonly UnityPreviewAssetRequest[]): Promise<readonly CachedUnityPreviewAsset[]> {
+        return this.tryConfigureCandidates(
+            bundleName,
+            (candidate) => this.ensureFromCandidate(candidate, requests),
+            `The original assets required from "${bundleName}" could not be prepared.`,
+            "None of the cached game-bundle versions contained all the requested assets."
+        );
+    }
+
+    private async ensureAnimatorRuntimeInternal(bundleName: string, locator: string): Promise<CachedAnimatorRuntimePackage> {
+        return this.tryConfigureCandidates(
+            bundleName,
+            (candidate) => this.ensureAnimatorRuntimeFromCandidate(candidate, locator),
+            `The Animator preview package required from "${bundleName}" could not be prepared.`,
+            "None of the cached game-bundle versions contained a usable Animator runtime."
+        );
+    }
+
+    private async tryConfigureCandidates<T>(
+        bundleName: string,
+        operation: (candidate: ResolvedGameAssetBundle) => Promise<T>,
+        failureMessage: string,
+        fallbackMessage: string
+    ): Promise<T> {
         const candidates = await gameAssetBundleResolver.findConfiguredCandidates(bundleName);
         if (candidates.length === 0)
             throw new UserFacingError(`The original game bundle "${bundleName}" is not available. Start or update the game once so it can download the required files.`);
@@ -87,7 +237,7 @@ export class UnityPreviewAssetCacheService {
         {
             try
             {
-                return await this.ensureFromCandidate(candidate, requests);
+                return await operation(candidate);
             }
             catch (error)
             {
@@ -95,11 +245,7 @@ export class UnityPreviewAssetCacheService {
             }
         }
 
-        throw ErrorUtils.withContext(
-            `The original assets required from "${bundleName}" could not be prepared.`,
-            new AggregateError(failures),
-            "None of the cached game-bundle versions contained all the requested assets."
-        );
+        throw ErrorUtils.withContext(failureMessage, new AggregateError(failures), fallbackMessage);
     }
 
     private async ensureFromCandidate(
@@ -138,7 +284,21 @@ export class UnityPreviewAssetCacheService {
         return Object.freeze(result);
     }
 
-    private async extractMissingAssets(candidate: ResolvedGameAssetBundle, requests: readonly UnityPreviewAssetRequest[]): Promise<void> {
+    private async ensureAnimatorRuntimeFromCandidate(candidate: ResolvedGameAssetBundle, locator: string): Promise<CachedAnimatorRuntimePackage> {
+        const cached = await this.loadCachedAnimatorRuntime(candidate, locator);
+        if (cached)
+            return cached;
+
+        await this.extractAnimatorRuntime(candidate, locator);
+
+        const extracted = await this.loadCachedAnimatorRuntime(candidate, locator);
+        if (!extracted)
+            throw new Error("The extracted Animator runtime package could not be validated.");
+
+        return extracted;
+    }
+
+    private async extractMissingAssets(candidate: ResolvedGameAssetBundle, requests: readonly UnityPreviewAssetRequest[]) {
         const bundleCachePath = Paths.getUnityPreviewBundleCachePath(candidate.bundleName, candidate.versionHash);
         const stagingPath = path.join(bundleCachePath, `.staging-${randomUUID()}`);
         const temporaryEntries: string[] = [];
@@ -177,12 +337,52 @@ export class UnityPreviewAssetCacheService {
         }
     }
 
+    private async extractAnimatorRuntime(candidate: ResolvedGameAssetBundle, locator: string) {
+        const bundleCachePath = Paths.getUnityPreviewBundleCachePath(candidate.bundleName, candidate.versionHash);
+        const key = this.createAnimatorRuntimeKey(locator);
+        const stagingPath = path.join(bundleCachePath, `.staging-animator-${randomUUID()}`);
+        const temporaryPath = path.join(bundleCachePath, `.${key}.${randomUUID()}.tmp`);
+        const destinationPath = path.join(bundleCachePath, key);
+
+        await fse.ensureDir(bundleCachePath);
+
+        try
+        {
+            const runtime = await this.worker.prepareAnimatorRuntime(candidate.filePath, candidate.bundleName, stagingPath, locator);
+
+            if (runtime.bundleName !== candidate.bundleName || runtime.locator !== locator || runtime.formatVersion !== this.ANIMATOR_RUNTIME_FORMAT_VERSION)
+                throw new Error("The Unity worker prepared the wrong Animator runtime package.");
+
+            await this.validateRuntimeFiles(stagingPath, runtime.files);
+
+            const metadata: AnimatorRuntimeMetadata = {
+                metadataVersion: 1,
+                kind: "animator-runtime",
+                key,
+                bundleName: candidate.bundleName,
+                versionHash: candidate.versionHash,
+                locator,
+                runtimeFormatVersion: this.ANIMATOR_RUNTIME_FORMAT_VERSION,
+                files: runtime.files
+            };
+
+            await fse.writeFile(path.join(stagingPath, "metadata.json"), JSON.stringify(metadata), { encoding: "utf-8", flag: "wx" });
+            await fse.move(stagingPath, temporaryPath);
+            await fse.move(temporaryPath, destinationPath, { overwrite: true });
+        }
+        finally
+        {
+            await this.removeTemporaryPath(stagingPath);
+            await this.removeTemporaryPath(temporaryPath);
+        }
+    }
+
     private async publishAsset(
         candidate: ResolvedGameAssetBundle,
         written: ExtractedUnityPreviewAsset,
         stagingPath: string,
         temporaryEntries: string[]
-    ): Promise<void> {
+    ) {
         if (written.size <= 0 || written.size > UnityPreviewAssetCacheService.MAXIMUM_IMAGE_SIZE)
             throw new Error(`The extracted preview asset "${written.name}" has an invalid size.`);
 
@@ -238,16 +438,8 @@ export class UnityPreviewAssetCacheService {
         try
         {
             const metadataStats = await fse.lstat(metadataPath);
-
-            if (
-                metadataStats.isSymbolicLink() ||
-                !metadataStats.isFile() ||
-                metadataStats.size === 0 ||
-                metadataStats.size > this.MAXIMUM_METADATA_SIZE
-            )
-            {
+            if (metadataStats.isSymbolicLink() || !metadataStats.isFile() || metadataStats.size === 0 || metadataStats.size > this.MAXIMUM_METADATA_SIZE)
                 return null;
-            }
 
             const rawMetadata: unknown = JSON.parse(await fse.readFile(metadataPath, "utf-8"));
             const metadata = this.parseMetadata(rawMetadata);
@@ -291,6 +483,51 @@ export class UnityPreviewAssetCacheService {
                         sprite: metadata.sprite
                     }
                     : {})
+            });
+        }
+        catch (error)
+        {
+            if (error instanceof SyntaxError || (TypeCheck.isNodeError(error) && ["ENOENT", "ENOTDIR"].includes(error.code ?? "")))
+                return null;
+
+            throw error;
+        }
+    }
+
+    private async loadCachedAnimatorRuntime(candidate: ResolvedGameAssetBundle, locator: string): Promise<CachedAnimatorRuntimePackage | null> {
+        const key = this.createAnimatorRuntimeKey(locator);
+        const entryPath = path.join(Paths.getUnityPreviewBundleCachePath(candidate.bundleName, candidate.versionHash), key);
+        const metadataPath = path.join(entryPath, "metadata.json");
+
+        try
+        {
+            const metadataStats = await fse.lstat(metadataPath);
+            if (metadataStats.isSymbolicLink() || !metadataStats.isFile() || metadataStats.size === 0 || metadataStats.size > this.MAXIMUM_RUNTIME_METADATA_SIZE)
+                return null;
+
+            const rawMetadata: unknown = JSON.parse(await fse.readFile(metadataPath, "utf-8"));
+            const metadata = this.parseAnimatorRuntimeMetadata(rawMetadata);
+
+            if (!metadata ||
+                metadata.key !== key ||
+                metadata.bundleName !== candidate.bundleName ||
+                metadata.versionHash !== candidate.versionHash ||
+                metadata.locator !== locator
+            )
+            {
+                return null;
+            }
+
+            await this.validateRuntimeFiles(entryPath, metadata.files);
+
+            return Object.freeze({
+                key,
+                bundleName: metadata.bundleName,
+                versionHash: metadata.versionHash,
+                locator: metadata.locator,
+                formatVersion: metadata.runtimeFormatVersion,
+                entryPath,
+                files: Object.freeze(metadata.files.map((file) => Object.freeze({ ...file })))
             });
         }
         catch (error)
@@ -349,7 +586,7 @@ export class UnityPreviewAssetCacheService {
         }
     }
 
-    private async removeTemporaryPath(filePath: string): Promise<void> {
+    private async removeTemporaryPath(filePath: string) {
         try
         {
             await fse.rm(filePath, { recursive: true, force: true });
@@ -358,6 +595,125 @@ export class UnityPreviewAssetCacheService {
         {
             ApplicationLogger.warning(ApplicationLogSource.modLibrary, "Could not remove a temporary preview-cache entry.", error);
         }
+    }
+
+    private async hashFile(filePath: string): Promise<string> {
+        const file = await open(filePath, "r");
+        const digest = createHash("sha256");
+        const buffer = Buffer.allocUnsafe(1024 * 1024);
+
+        try
+        {
+            let position = 0;
+
+            while (true)
+            {
+                const result = await file.read(buffer, 0, buffer.length, position);
+                if (result.bytesRead === 0)
+                    break;
+
+                digest.update(buffer.subarray(0, result.bytesRead));
+                position += result.bytesRead;
+            }
+
+            return digest.digest("hex");
+        }
+        finally
+        {
+            await file.close();
+        }
+    }
+
+    private parseAnimatorRuntimeMetadata(value: unknown): AnimatorRuntimeMetadata | null {
+        if (
+            !TypeCheck.isRecord(value) ||
+            value.metadataVersion !== 1 ||
+            value.kind !== "animator-runtime" ||
+            !TypeCheck.isValidString(value.key, 64) ||
+            !/^[0-9a-f]{64}$/i.test(value.key) ||
+            !Paths.isSafeGameAssetBundleName(value.bundleName) ||
+            !Paths.isSafeGameAssetBundleVersionHash(value.versionHash) ||
+            !Paths.isSafeGameAssetBundleName(value.locator) ||
+            value.runtimeFormatVersion !== this.ANIMATOR_RUNTIME_FORMAT_VERSION ||
+            !TypeCheck.isValidArray(value.files, 1024) ||
+            value.files.length === 0 ||
+            !value.files.every((file) => this.isAnimatorRuntimeFile(file))
+        )
+        {
+            return null;
+        }
+
+        const files = value.files as UnityAnimatorRuntimeFile[];
+        const uniquePaths = new Set(files.map((file) => file.path.toLocaleLowerCase("en-US")));
+
+        if (uniquePaths.size !== files.length || !uniquePaths.has("runtime.json") || !uniquePaths.has("geometry.bin") || !uniquePaths.has("animations.bin"))
+            return null;
+
+        const totalSize = files.reduce((total, file) => total + file.size, 0);
+
+        if (!Number.isSafeInteger(totalSize) || totalSize <= 0 || totalSize > this.MAXIMUM_RUNTIME_PACKAGE_SIZE)
+            return null;
+
+        return value as AnimatorRuntimeMetadata;
+    }
+
+    private isAnimatorRuntimeFile(value: unknown): value is UnityAnimatorRuntimeFile {
+        return (
+            TypeCheck.isRecord(value) &&
+            this.isAnimatorRuntimeFilePath(value.path) &&
+            TypeCheck.isValidInteger(value.size, true) &&
+            value.size > 0 &&
+            value.size <= 1024 * 1024 * 1024 &&
+            TypeCheck.isValidString(value.sha256, 64) &&
+            /^[0-9a-f]{64}$/i.test(value.sha256)
+        );
+    }
+
+    private isAnimatorRuntimeFilePath(value: unknown): value is string {
+        return (
+            TypeCheck.isValidString(value, 160) &&
+            (
+                value === "runtime.json" ||
+                value === "geometry.bin" ||
+                value === "animations.bin" ||
+                /^textures\/[0-9a-f]{64}\.png$/i.test(value)
+            )
+        );
+    }
+
+    private async validateRuntimeFiles(entryPath: string, files: readonly UnityAnimatorRuntimeFile[]) {
+        let totalSize = 0;
+
+        for (const file of files)
+        {
+            if (!this.isAnimatorRuntimeFile(file))
+                throw new Error("The Animator runtime package contains an invalid file.");
+
+            const filePath = this.getAnimatorRuntimeFilePath(entryPath, file.path);
+            const stats = await fse.lstat(filePath);
+
+            if (stats.isSymbolicLink() || !stats.isFile() || stats.size !== file.size)
+                throw new Error(`The Animator runtime file "${file.path}" is invalid.`);
+
+            if (await this.hashFile(filePath) !== file.sha256)
+                throw new Error(`The Animator runtime file "${file.path}" failed its integrity check.`);
+
+            totalSize += stats.size;
+        }
+
+        if (!Number.isSafeInteger(totalSize) || totalSize > this.MAXIMUM_RUNTIME_PACKAGE_SIZE)
+            throw new Error("The Animator runtime package has an invalid total size.");
+    }
+
+    private getAnimatorRuntimeFilePath(entryPath: string, relativePath: string): string {
+        if (!this.isAnimatorRuntimeFilePath(relativePath))
+            throw new Error("Invalid Animator runtime file path.");
+
+        const filePath = path.join(entryPath, ...relativePath.split("/"));
+        if (!Paths.isSubpath(entryPath, filePath))
+            throw new Error("Invalid Animator runtime file path.");
+
+        return filePath;
     }
 
     private validateAndDeduplicateRequests(requests: readonly UnityPreviewAssetRequest[]): readonly UnityPreviewAssetRequest[] {
@@ -403,6 +759,16 @@ export class UnityPreviewAssetCacheService {
             .update(request.type)
             .update("\0")
             .update(StringUtils.normalize(request.name))
+            .digest("hex");
+    }
+
+    private createAnimatorRuntimeKey(locator: string): string {
+        return createHash("sha256")
+            .update("AnimatorRuntime")
+            .update("\0")
+            .update(String(this.ANIMATOR_RUNTIME_FORMAT_VERSION))
+            .update("\0")
+            .update(StringUtils.normalize(locator))
             .digest("hex");
     }
 

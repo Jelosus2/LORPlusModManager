@@ -246,3 +246,17 @@ export type StaticModPreviewPreparation = Readonly<{
     variantId: string | null;
     assets: readonly PreparedStaticPreviewAsset[];
 }>;
+
+export type AnimatorRuntimeReference = Readonly<{
+    bundleName: string;
+    versionHash: string;
+    cacheKey: string;
+    formatVersion: number;
+}>;
+
+export type AnimatorModPreviewPreparation = Readonly<{
+    modId: string;
+    skin2dId: string;
+    variantId: string | null;
+    runtime: AnimatorRuntimeReference;
+}>;

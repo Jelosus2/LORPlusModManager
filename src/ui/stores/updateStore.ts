@@ -420,7 +420,7 @@ export const useUpdateStore = defineStore("updates", () => {
         };
     }
 
-    function closeStartupModal(): void {
+    function closeStartupModal() {
         isStartupModalOpen.value = false;
 
         if (pendingPluginStartupModal)
@@ -435,7 +435,7 @@ export const useUpdateStore = defineStore("updates", () => {
         }
     }
 
-    function closePluginUpdateModal(): void {
+    function closePluginUpdateModal() {
         if (isUpdatingPlugin.value)
             return;
 
@@ -451,7 +451,7 @@ export const useUpdateStore = defineStore("updates", () => {
         }
     }
 
-    function closeCatalogUpdateModal(): void {
+    function closeCatalogUpdateModal() {
         if (isUpdatingCatalog.value)
             return;
 

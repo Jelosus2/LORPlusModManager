@@ -1,6 +1,9 @@
+from animator_runtime_package import prepare_animator_runtime_package
+from animation_clip_decoder import inspect_animation_clips
 from importlib.metadata import version
 from contextlib import redirect_stdout
 from pathlib import Path
+from typing import Any
 from PIL import Image
 import traceback
 import UnityPy
@@ -73,7 +76,7 @@ class BoundedFile(io.BufferedIOBase):
         super().close()
 
 
-def read_exact(stream, size: int) -> bytes:
+def read_exact(stream: Any, size: int) -> bytes:
     data = stream.read(size)
 
     if len(data) != size:
@@ -82,7 +85,7 @@ def read_exact(stream, size: int) -> bytes:
     return data
 
 
-def skip_header_string(stream):
+def skip_header_string(stream: Any):
     for _ in range(MAX_UNITY_HEADER_STRING):
         if read_exact(stream, 1) == b"\0":
             return
@@ -190,7 +193,7 @@ def validate_output_name(output_name: str):
         raise ValueError(f"Invalid output filename: {output_name}")
 
 
-def create_untrimmed_sprite_image(sprite, context: str) -> tuple[Image.Image, dict]:
+def create_untrimmed_sprite_image(sprite: Any, context: str) -> tuple[Image.Image, dict]:
     rect = sprite.m_Rect
     pivot = sprite.m_Pivot
     pixels_per_unit = float(sprite.m_PixelsToUnits)
@@ -530,6 +533,13 @@ def main() -> int:
             elif command == "extract-preview":
                 destination = require_path(request, "destination", must_exist=False)
                 result = extract_preview_assets(bundle_path, destination, request.get("assets"))
+            elif command == "inspect-animation-clips":
+                environment = load_unity_environment(bundle_path)
+                result = inspect_animation_clips(environment, bundle_path.name)
+            elif command == "prepare-animator-runtime":
+                destination = require_path(request, "destination", must_exist=False)
+                environment = load_unity_environment(bundle_path)
+                result = prepare_animator_runtime_package(environment, request.get("bundleName"), destination, request.get("locator"))
             else:
                 raise ValueError("Unsupported worker command.")
 

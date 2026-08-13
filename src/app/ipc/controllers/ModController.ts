@@ -10,11 +10,12 @@ import type {
     ModSyncRequest,
     ModSyncResult
 } from "../../../shared/mod.js";
-import type { StaticModPreviewPreparation } from "../../../shared/characters.js";
+import type { StaticModPreviewPreparation, AnimatorModPreviewPreparation } from "../../../shared/characters.js";
 import type { IpcMainInvokeEvent, OpenDialogOptions } from "electron";
 
 import { ModImporter, ModImportError, type ModImportSource } from "#mod/ModImporter.js";
 import { ModLibraryService, ModLibraryError } from "#mod/ModLibraryService.js";
+import { animatorModPreviewService } from "#mod/AnimatorModPreviewService.js";
 import { staticModPreviewService } from "#mod/StaticModPreviewService.js";
 import { ModRecoveryCoordinator } from "#mod/ModRecoveryCoordinator.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
@@ -319,6 +320,34 @@ export class ModController {
             operation.complete({
                 modId: value,
                 preparedAssets: result.assets.length
+            });
+
+            return result;
+        }
+        catch (error)
+        {
+            operation.fail(error);
+            throw error;
+        }
+    }
+
+    @IpcHelper.IpcHandle("mod:prepare-animator-preview")
+    async prepareAnimatorPreview(_event: IpcMainInvokeEvent, value: unknown): Promise<AnimatorModPreviewPreparation> {
+        if (!TypeCheck.isUuid(value))
+            throw new UserFacingError("The selected mod identifier is invalid.");
+
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.modLibrary, "Animator mod preview preparation", {
+            modId: value
+        });
+
+        try
+        {
+            const result = await animatorModPreviewService.prepare(value);
+
+            operation.complete({
+                modId: value,
+                bundleName: result.runtime.bundleName,
+                runtimeFormatVersion: result.runtime.formatVersion
             });
 
             return result;

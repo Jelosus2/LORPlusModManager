@@ -61,6 +61,19 @@ export type UnityPreviewExtraction = {
     written: ExtractedUnityPreviewAsset[];
 };
 
+export type UnityAnimatorRuntimeFile = Readonly<{
+    path: string;
+    size: number;
+    sha256: string;
+}>;
+
+export type UnityAnimatorRuntimePackage = Readonly<{
+    bundleName: string;
+    formatVersion: number;
+    locator: string;
+    files: readonly UnityAnimatorRuntimeFile[];
+}>;
+
 type WorkerRequest =
     | {
         protocolVersion: number;
@@ -80,6 +93,14 @@ type WorkerRequest =
         bundlePath: string;
         destination: string;
         assets: UnityPreviewAssetSelection[];
+    }
+    | {
+        protocolVersion: number;
+        command: "prepare-animator-runtime";
+        bundlePath: string;
+        bundleName: string;
+        destination: string;
+        locator: string;
     };
 
 export class UnityWorkerError extends Error {
@@ -168,6 +189,40 @@ export class UnityWorkerClient {
             bundleName: response.bundleName,
             written: response.written
         };
+    }
+
+    async prepareAnimatorRuntime(bundlePath: string, bundleName: string, destination: string, locator: string): Promise<UnityAnimatorRuntimePackage> {
+        const response = await this.execute({
+            protocolVersion: this.PROTOCOL_VERSION,
+            command: "prepare-animator-runtime",
+            bundlePath,
+            bundleName,
+            destination,
+            locator
+        }, this.EXTRACTION_TIMEOUT);
+
+        if (
+            response.bundleName !== bundleName ||
+            response.formatVersion !== 11 ||
+            response.locator !== locator ||
+            !TypeCheck.isValidArray(response.files, 1024) ||
+            response.files.length === 0 ||
+            !response.files.every((file) => this.isAnimatorRuntimeFile(file))
+        )
+        {
+            throw new UnityWorkerError("The Unity worker returned an invalid Animator runtime package.");
+        }
+
+        const paths = new Set(response.files.map((file) => file.path.toLocaleLowerCase("en-US")));
+        if (!paths.has("runtime.json") || !paths.has("geometry.bin") || !paths.has("animations.bin") || paths.size !== response.files.length)
+            throw new UnityWorkerError("The Unity worker returned an incomplete Animator runtime package.");
+
+        return Object.freeze({
+            bundleName: response.bundleName,
+            formatVersion: response.formatVersion,
+            locator: response.locator,
+            files: Object.freeze(response.files.map((file) => Object.freeze({ ...file })))
+        });
     }
 
     private execute(request: WorkerRequest, timeout: number): Promise<Record<string, unknown>> {
@@ -340,6 +395,27 @@ export class UnityWorkerClient {
             this.isFiniteNumber(value.pivot.x) &&
             this.isFiniteNumber(value.pivot.y)
         );
+    }
+
+    private isAnimatorRuntimeFile(value: unknown): value is UnityAnimatorRuntimeFile {
+        return (
+            TypeCheck.isRecord(value) &&
+            this.isAnimatorRuntimeFilePath(value.path) &&
+            TypeCheck.isValidInteger(value.size, true) &&
+            value.size > 0 &&
+            value.size <= 1024 * 1024 * 1024 &&
+            TypeCheck.isValidString(value.sha256, 64) &&
+            /^[0-9a-f]{64}$/i.test(value.sha256)
+        );
+    }
+
+    private isAnimatorRuntimeFilePath(value: unknown): value is string {
+        if (!TypeCheck.isValidString(value, 160))
+            return false;
+        if (value === "runtime.json" || value === "geometry.bin" || value === "animations.bin")
+            return true;
+
+        return /^textures\/[0-9a-f]{64}\.png$/i.test(value);
     }
 
     private isFiniteNumber(value: unknown): value is number {

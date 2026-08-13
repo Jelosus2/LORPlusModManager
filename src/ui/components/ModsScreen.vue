@@ -3,6 +3,7 @@ import type { InstalledMod, ModSyncLogEntry, ModSyncMethod, ModSyncRequest } fro
 import type { CharacterSkin } from "../../shared/characters";
 
 import ModSyncProgressDialog from "./ModSyncProgressDialog.vue";
+import AnimatorModPreview from "./AnimatorModPreview.vue";
 import StaticModPreview from "./StaticModPreview.vue";
 import SpineModPreview from "./SpineModPreview.vue";
 import RefreshIcon from "./icons/RefreshIcon.vue";
@@ -1630,6 +1631,11 @@ function closeModPreview() {
                     :skin="modPendingPreview.catalogSkin"
                 />
 
+                <AnimatorModPreview
+                    v-else-if="modPendingPreview.catalogSkin?.isAnimatorSkin"
+                    :mod="modPendingPreview.mod"
+                />
+
                 <div v-else class="mod-preview-placeholder">
                     <span aria-hidden="true">
                         <EyeIcon />
@@ -3030,8 +3036,10 @@ h1 {
 
 .mod-preview-layout.is-preview-controls-hidden :deep(.spine-preview-controls),
 .mod-preview-layout.is-preview-controls-hidden :deep(.static-preview-controls),
+.mod-preview-layout.is-preview-controls-hidden :deep(.animator-preview-controls),
 .mod-preview-layout.is-preview-controls-hidden :deep(.spine-preview-navigation),
-.mod-preview-layout.is-preview-controls-hidden :deep(.static-preview-navigation) {
+.mod-preview-layout.is-preview-controls-hidden :deep(.static-preview-navigation),
+.mod-preview-layout.is-preview-controls-hidden :deep(.animator-preview-navigation) {
     display: none;
 }
 

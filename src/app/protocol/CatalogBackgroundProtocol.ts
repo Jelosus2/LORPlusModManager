@@ -1,10 +1,10 @@
 import { CatalogBackgroundService } from "#update/CatalogBackgroundService.js";
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ApplicationLogSource } from "../../shared/application.js";
+import { LocalFileResponse } from "./LocalFileResponse.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
-import { net, protocol } from "electron";
-import { pathToFileURL } from "node:url";
 import { Paths } from "#utils/Paths.js";
+import { protocol } from "electron";
 import fse from "fs-extra";
 
 export class CatalogBackgroundProtocol {
@@ -32,7 +32,11 @@ export class CatalogBackgroundProtocol {
                 if (!stats.isFile() || stats.size === 0 || stats.size > CatalogBackgroundService.MAX_CATALOG_BACKGROUND_SIZE)
                     return new Response(null, { status: 404 });
 
-                return net.fetch(pathToFileURL(filePath).toString());
+                return LocalFileResponse.create(filePath, {
+                    size: stats.size,
+                    contentType: "image/webp",
+                    cacheControl: "no-cache"
+                });
             }
             catch (error)
             {

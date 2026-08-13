@@ -1,10 +1,10 @@
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ApplicationLogSource } from "../../shared/application.js";
 import { CatalogIconService } from "#update/CatalogIconService.js";
+import { LocalFileResponse } from "./LocalFileResponse.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
-import { net, protocol } from "electron";
-import { pathToFileURL } from "node:url";
 import { Paths } from "#utils/Paths.js";
+import { protocol } from "electron";
 import fse from "fs-extra";
 
 export class CatalogIconProtocol {
@@ -32,7 +32,11 @@ export class CatalogIconProtocol {
                 if (!stats.isFile() || stats.size > CatalogIconService.MAX_CATALOG_ICON_SIZE)
                     return new Response(null, { status: 404 });
 
-                return net.fetch(pathToFileURL(iconPath).toString());
+                return LocalFileResponse.create(iconPath, {
+                    size: stats.size,
+                    contentType: "image/png",
+                    cacheControl: "no-cache"
+                });
             }
             catch (error)
             {
