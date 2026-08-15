@@ -1,4 +1,4 @@
-import type { AnimatorRuntimeMaterial, AnimatorRuntimeScene, AnimatorRuntimeMesh, AnimatorRuntimeSkinnedMeshRenderer } from "./AnimatorBindingResolver";
+import type { AnimatorRuntimeMaterial, AnimatorRuntimeScene, AnimatorRuntimeMesh, AnimatorRuntimeSkinnedMeshRenderer, AnimatorRendererType } from "./AnimatorBindingResolver";
 
 import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
 
@@ -41,9 +41,18 @@ export type AnimatorSpriteRendererState = {
     texturePropertyOverrides: Map<number, Map<string, string | null>>;
 };
 
+export type AnimatorParticleSystemRendererState = {
+    enabled: boolean;
+    materialIds: (string | null)[];
+    sortingOrder: number;
+    materialPropertyOverrides: AnimatorMaterialPropertyOverrides;
+    texturePropertyOverrides: Map<number, Map<string, string | null>>;
+};
+
 export type AnimatorRendererState =
     | AnimatorSkinnedMeshRendererState
-    | AnimatorSpriteRendererState;
+    | AnimatorSpriteRendererState
+    | AnimatorParticleSystemRendererState;
 
 export type AnimatorMaterialPropertyType =
     | "float"
@@ -58,6 +67,7 @@ export class AnimatorSceneState {
     readonly gameObjects = new Map<string, AnimatorGameObjectState>();
     readonly skinnedMeshRenderers = new Map<string, AnimatorSkinnedMeshRendererState>();
     readonly spriteRenderers = new Map<string, AnimatorSpriteRendererState>();
+    readonly particleSystemRenderers = new Map<string, AnimatorParticleSystemRendererState>();
 
     constructor(private readonly scene: AnimatorRuntimeScene) {
         this.materialsById = AnimatorRuntimeUtils.indexUniqueById(scene.materials, "Material");
@@ -117,6 +127,19 @@ export class AnimatorSceneState {
             state.materialPropertyOverrides.clear();
             state.texturePropertyOverrides.clear();
         }
+
+        for (const renderer of this.scene.particleSystemRenderers)
+        {
+            const state = this.requireParticleSystemRenderer(renderer.id);
+
+            state.enabled = renderer.enabled;
+            state.sortingOrder = renderer.sortingOrder;
+
+            this.copyNullableStrings(state.materialIds, renderer.materialIds);
+
+            state.materialPropertyOverrides.clear();
+            state.texturePropertyOverrides.clear();
+        }
     }
 
     requireTransform(id: string): AnimatorTransformState {
@@ -151,15 +174,29 @@ export class AnimatorSceneState {
         return state;
     }
 
-    requireRenderer(id: string, type: "SkinnedMeshRenderer" | "SpriteRenderer"): AnimatorRendererState {
-        return type === "SkinnedMeshRenderer"
-            ? this.requireSkinnedMeshRenderer(id)
-            : this.requireSpriteRenderer(id);
+    requireParticleSystemRenderer(id: string): AnimatorParticleSystemRendererState {
+        const state = this.particleSystemRenderers.get(id);
+        if (!state)
+            throw new Error(`ParticleSystemRenderer "${id}" does not exist in the scene state.`);
+
+        return state;
+    }
+
+    requireRenderer(id: string, type: AnimatorRendererType): AnimatorRendererState {
+        switch (type)
+        {
+            case "SkinnedMeshRenderer":
+                return this.requireSkinnedMeshRenderer(id);
+            case "SpriteRenderer":
+                return this.requireSpriteRenderer(id);
+            case "ParticleSystemRenderer":
+                return this.requireParticleSystemRenderer(id);
+        }
     }
 
     getMaterialPropertyValue(
         rendererId: string,
-        rendererType: "SkinnedMeshRenderer" | "SpriteRenderer",
+        rendererType: AnimatorRendererType,
         materialSlot: number,
         propertyName: string,
         propertyType: AnimatorMaterialPropertyType
@@ -224,7 +261,7 @@ export class AnimatorSceneState {
 
     setMaterialPropertyOverride(
         rendererId: string,
-        rendererType: "SkinnedMeshRenderer" | "SpriteRenderer",
+        rendererType: AnimatorRendererType,
         materialSlot: number,
         propertyName: string,
         value: AnimatorMaterialPropertyValue
@@ -244,7 +281,7 @@ export class AnimatorSceneState {
         properties.set(propertyName, this.cloneMaterialValue(value));
     }
 
-    getMaterialTextureId(rendererId: string, rendererType: "SkinnedMeshRenderer" | "SpriteRenderer", materialSlot: number, propertyName: string): string | null {
+    getMaterialTextureId(rendererId: string, rendererType: AnimatorRendererType, materialSlot: number, propertyName: string): string | null {
         const renderer = this.requireRenderer(rendererId, rendererType);
         AnimatorRuntimeUtils.requireMaterialSlot(renderer, materialSlot);
 
@@ -263,7 +300,7 @@ export class AnimatorSceneState {
         return material.textureProperties.find((property) => property.name === propertyName)?.textureId ?? null;
     }
 
-    setMaterialTextureOverride(rendererId: string, rendererType: "SkinnedMeshRenderer" | "SpriteRenderer", materialSlot: number, propertyName: string, textureId: string | null) {
+    setMaterialTextureOverride(rendererId: string, rendererType: AnimatorRendererType, materialSlot: number, propertyName: string, textureId: string | null) {
         const renderer = this.requireRenderer(rendererId, rendererType);
 
         AnimatorRuntimeUtils.requireMaterialSlot(renderer, materialSlot);
@@ -330,6 +367,20 @@ export class AnimatorSceneState {
                 flipX: renderer.flipX,
                 flipY: renderer.flipY,
                 size: [...AnimatorRuntimeUtils.requireFiniteVector(renderer.size, 2, `SpriteRenderer "${renderer.id}" size`)],
+                sortingOrder: renderer.sortingOrder,
+                materialPropertyOverrides: new Map(),
+                texturePropertyOverrides: new Map()
+            });
+        }
+
+        for (const renderer of this.scene.particleSystemRenderers)
+        {
+            if (this.particleSystemRenderers.has(renderer.id))
+                throw new Error(`ParticleSystemRenderer "${renderer.id}" is duplicated.`);
+
+            this.particleSystemRenderers.set(renderer.id, {
+                enabled: renderer.enabled,
+                materialIds: [...renderer.materialIds],
                 sortingOrder: renderer.sortingOrder,
                 materialPropertyOverrides: new Map(),
                 texturePropertyOverrides: new Map()

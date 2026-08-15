@@ -19,8 +19,8 @@ export type AnimatorParticleSnapshot = Readonly<{
     position: AnimatorParticleVector3;
     velocity: AnimatorParticleVector3;
     rotation: AnimatorParticleVector3;
-    initialSize: number;
-    size: number;
+    initialSize: AnimatorParticleVector3;
+    size: AnimatorParticleVector3;
     initialColor: AnimatorParticleColor;
     color: AnimatorParticleColor;
     textureFrame: number;
@@ -65,6 +65,18 @@ type NoiseSamples = Readonly<{
     positionAmount: AnimatorParticleCurveSample;
 }>;
 
+type SizeOverLifetimeModule = Readonly<{
+    x: AnimatorParticleMinMaxCurve;
+    y: AnimatorParticleMinMaxCurve | null;
+    z: AnimatorParticleMinMaxCurve | null;
+}>;
+
+type SizeOverLifetimeSamples = Readonly<{
+    x: AnimatorParticleCurveSample;
+    y: AnimatorParticleCurveSample | null;
+    z: AnimatorParticleCurveSample | null;
+}>;
+
 type MutableVector3 = {
     x: number;
     y: number;
@@ -80,13 +92,13 @@ type MutableParticle = {
     velocity: MutableVector3;
     velocityLimit: VelocityLimitSamples | null;
     rotation: MutableVector3;
-    initialSize: number;
-    size: number;
+    initialSize: AnimatorParticleVector3;
+    size: MutableVector3;
     initialColor: AnimatorParticleColor;
     color: AnimatorParticleColor;
     gravity: AnimatorParticleCurveSample;
     noise: NoiseSamples | null;
-    sizeOverLifetime: AnimatorParticleCurveSample | null;
+    sizeOverLifetime: SizeOverLifetimeSamples | null;
     rotationOverLifetime: RotationOverLifetimeSamples | null;
     colorOverLifetime: AnimatorParticleGradientSample | null;
     textureFrame: number;
@@ -99,7 +111,9 @@ type ParticleObject = AnimatorRuntimeRecord<AnimatorRuntimeParticleValue>;
 type InitialModule = Readonly<{
     lifetime: AnimatorParticleMinMaxCurve;
     speed: AnimatorParticleMinMaxCurve;
-    size: AnimatorParticleMinMaxCurve;
+    sizeX: AnimatorParticleMinMaxCurve;
+    sizeY: AnimatorParticleMinMaxCurve | null;
+    sizeZ: AnimatorParticleMinMaxCurve | null;
     rotationX: AnimatorParticleMinMaxCurve | null;
     rotationY: AnimatorParticleMinMaxCurve | null;
     rotationZ: AnimatorParticleMinMaxCurve;
@@ -124,8 +138,11 @@ type EmissionModule = Readonly<{
     bursts: readonly EmissionBurst[];
 }>;
 
-type ConeShapeModule = Readonly<{
+type ParticleShapeType = 0 | 4 | 5;
+
+type ParticleShapeModule = Readonly<{
     enabled: boolean;
+    type: ParticleShapeType;
     radius: number;
     radiusThickness: number;
     arcRadians: number;
@@ -157,13 +174,13 @@ export class AnimatorParticleSimulator {
     private readonly gravityAcceleration: MutableVector3 = { x: 0, y: -9.81, z: 0 };
     private readonly initialModule: InitialModule;
     private readonly emissionModule: EmissionModule;
-    private readonly shapeModule: ConeShapeModule;
+    private readonly shapeModule: ParticleShapeModule;
     private readonly textureSheetModule: TextureSheetModule | null;
     private readonly velocityLimitModule: VelocityLimitModule | null;
     private readonly noiseModule: NoiseModule | null;
     private readonly noiseSeed: number;
     private readonly startDelay: AnimatorParticleMinMaxCurve;
-    private readonly sizeOverLifetime: AnimatorParticleMinMaxCurve | null;
+    private readonly sizeOverLifetime: SizeOverLifetimeModule | null;
     private readonly rotationOverLifetime: RotationOverLifetimeModule | null;
     private readonly colorOverLifetime: AnimatorParticleMinMaxGradient | null;
     private readonly particles: MutableParticle[] = [];
@@ -227,8 +244,8 @@ export class AnimatorParticleSimulator {
             position: Object.freeze({ ...particle.position }),
             velocity: Object.freeze({ ...particle.velocity }),
             rotation: Object.freeze({ ...particle.rotation }),
-            initialSize: particle.initialSize,
-            size: particle.size,
+            initialSize: Object.freeze({ ...particle.initialSize }),
+            size: Object.freeze({ ...particle.size }),
             initialColor: particle.initialColor,
             color: particle.color,
             textureFrame: particle.textureFrame
@@ -298,23 +315,21 @@ export class AnimatorParticleSimulator {
     }
 
     private updateParticles(deltaSeconds: number) {
-        for (let index = this.particles.length - 1; index >= 0; index--)
+        for (let i = this.particles.length - 1; i >= 0; i--)
         {
-            const particle = this.particles[index];
+            const particle = this.particles[i];
 
             particle.age += deltaSeconds;
 
             if (particle.age >= particle.lifetime)
             {
-                this.particles.splice(index, 1);
+                this.particles.splice(i, 1);
                 continue;
             }
 
             const normalizedAge = AnimatorRuntimeUtils.clamp01(particle.age / particle.lifetime);
-            this.updateTextureFrame(particle, normalizedAge);
 
-            if (particle.sizeOverLifetime)
-                particle.size = particle.initialSize * Math.max(0, particle.sizeOverLifetime.evaluate(normalizedAge));
+            this.updateParticlePresentation(particle, normalizedAge);
 
             if (particle.rotationOverLifetime)
             {
@@ -323,22 +338,55 @@ export class AnimatorParticleSimulator {
                 particle.rotation.z += particle.rotationOverLifetime.z.evaluate(normalizedAge) * deltaSeconds;
             }
 
-            if (particle.colorOverLifetime)
-                particle.color = this.multiplyColors(particle.initialColor, particle.colorOverLifetime.evaluate(normalizedAge));
-
             const gravityModifier = particle.gravity.evaluate(normalizedAge);
-
-            particle.velocity.x += this.gravityAcceleration.x * gravityModifier * deltaSeconds;
-            particle.velocity.y += this.gravityAcceleration.y * gravityModifier * deltaSeconds;
-            particle.velocity.z += this.gravityAcceleration.z * gravityModifier * deltaSeconds;
-            this.applyVelocityLimit(particle, normalizedAge, deltaSeconds);
+            const gravityVelocity = {
+                x: this.gravityAcceleration.x * gravityModifier * deltaSeconds,
+                y: this.gravityAcceleration.y * gravityModifier * deltaSeconds,
+                z: this.gravityAcceleration.z * gravityModifier * deltaSeconds
+            };
 
             const noiseVelocity = this.sampleNoiseVelocity(particle, normalizedAge);
+            let transientVelocity = noiseVelocity;
 
-            particle.position.x += (particle.velocity.x + noiseVelocity.x) * deltaSeconds;
-            particle.position.y += (particle.velocity.y + noiseVelocity.y) * deltaSeconds;
-            particle.position.z += (particle.velocity.z + noiseVelocity.z) * deltaSeconds;
+            if (this.velocityLimitModule)
+            {
+                transientVelocity = {
+                    x: noiseVelocity.x + gravityVelocity.x,
+                    y: noiseVelocity.y + gravityVelocity.y,
+                    z: noiseVelocity.z + gravityVelocity.z
+                };
+            }
+            else
+            {
+                particle.velocity.x += gravityVelocity.x;
+                particle.velocity.y += gravityVelocity.y;
+                particle.velocity.z += gravityVelocity.z;
+            }
+
+            const movementVelocity = this.applyVelocityLimit(particle, transientVelocity, normalizedAge, deltaSeconds);
+
+            particle.position.x += movementVelocity.x * deltaSeconds;
+            particle.position.y += movementVelocity.y * deltaSeconds;
+            particle.position.z += movementVelocity.z * deltaSeconds;
         }
+    }
+
+    private updateParticlePresentation(particle: MutableParticle,normalizedAge: number) {
+        this.updateTextureFrame(particle, normalizedAge);
+
+        if (particle.sizeOverLifetime)
+        {
+            const xMultiplier = Math.max(0, particle.sizeOverLifetime.x.evaluate(normalizedAge));
+            const yMultiplier = Math.max(0, particle.sizeOverLifetime.y?.evaluate(normalizedAge) ?? xMultiplier);
+            const zMultiplier = Math.max(0, particle.sizeOverLifetime.z?.evaluate(normalizedAge) ?? xMultiplier);
+
+            particle.size.x = particle.initialSize.x * xMultiplier;
+            particle.size.y = particle.initialSize.y * yMultiplier;
+            particle.size.z = particle.initialSize.z * zMultiplier;
+        }
+
+        if (particle.colorOverLifetime)
+            particle.color = this.multiplyColors(particle.initialColor, particle.colorOverLifetime.evaluate(normalizedAge));
     }
 
     private advancePlayback(deltaSeconds: number) {
@@ -467,7 +515,13 @@ export class AnimatorParticleSimulator {
             return;
 
         const speed = this.initialModule.speed.createSample(random).evaluate(0);
-        const initialSize = Math.max(0, this.initialModule.size.createSample(random).evaluate(0));
+        const initialSizeX = Math.max(0, this.initialModule.sizeX.createSample(random).evaluate(0));
+
+        const initialSize: MutableVector3 = {
+            x: initialSizeX,
+            y: Math.max(0, this.initialModule.sizeY?.createSample(random).evaluate(0) ?? initialSizeX),
+            z: Math.max(0, this.initialModule.sizeZ?.createSample(random).evaluate(0) ?? initialSizeX)
+        };
 
         const rotation = {
             x: this.initialModule.rotationX?.createSample(random).evaluate(0) ?? 0,
@@ -500,7 +554,7 @@ export class AnimatorParticleSimulator {
                 : null,
             rotation,
             initialSize,
-            size: initialSize,
+            size: { ...initialSize },
             initialColor,
             color: initialColor,
             gravity: this.initialModule.gravity.createSample(random),
@@ -511,7 +565,13 @@ export class AnimatorParticleSimulator {
                     positionAmount: this.noiseModule.positionAmount.createSample(random)
                 })
                 : null,
-            sizeOverLifetime: this.sizeOverLifetime?.createSample(random) ?? null,
+            sizeOverLifetime: this.sizeOverLifetime
+                ? Object.freeze({
+                    x: this.sizeOverLifetime.x.createSample(random),
+                    y: this.sizeOverLifetime.y?.createSample(random) ?? null,
+                    z: this.sizeOverLifetime.z?.createSample(random) ?? null
+                })
+                : null,
             rotationOverLifetime: this.rotationOverLifetime
                 ? Object.freeze({
                     x: this.rotationOverLifetime.x?.createSample(random) ?? null,
@@ -525,7 +585,7 @@ export class AnimatorParticleSimulator {
             textureStartFrame: this.textureSheetModule?.startFrame.createSample(random) ?? null
         };
 
-        this.updateTextureFrame(particle, 0);
+        this.updateParticlePresentation(particle, 0);
         this.particles.push(particle);
     }
 
@@ -538,49 +598,91 @@ export class AnimatorParticleSimulator {
             };
         }
 
-        const azimuth = random.nextFloat() * this.shapeModule.arcRadians;
-        const minimumRadius = this.shapeModule.radius * (1 - this.shapeModule.radiusThickness);
+        let localPosition: MutableVector3;
+        let localDirection: MutableVector3;
 
-        const radius = Math.sqrt(
-            AnimatorRuntimeUtils.lerp(
-                minimumRadius * minimumRadius,
-                this.shapeModule.radius * this.shapeModule.radius,
-                random.nextFloat()
-            )
-        );
-
-        const cosine = Math.cos(azimuth);
-        const sine = Math.sin(azimuth);
-
-        const position = this.rotateEulerDegrees(
+        switch (this.shapeModule.type)
+        {
+            case 0:
             {
-                x: cosine * radius * this.shapeModule.scale.x,
-                y: sine * radius * this.shapeModule.scale.y,
-                z: 0
-            },
-            this.shapeModule.rotation
-        );
+                const azimuth = random.nextFloat() * Math.PI * 2;
+                const vertical = (random.nextFloat() * 2) - 1;
+                const planar = Math.sqrt(Math.max(0, 1 - vertical * vertical));
+
+                const unit = {
+                    x: Math.cos(azimuth) * planar,
+                    y: Math.sin(azimuth) * planar,
+                    z: vertical
+                };
+
+                const minimumRadius = this.shapeModule.radius * (1 - this.shapeModule.radiusThickness);
+                const radius = Math.cbrt(AnimatorRuntimeUtils.lerp(minimumRadius ** 3, this.shapeModule.radius ** 3, random.nextFloat()));
+
+                localPosition = {
+                    x: unit.x * radius * this.shapeModule.scale.x,
+                    y: unit.y * radius * this.shapeModule.scale.y,
+                    z: unit.z * radius * this.shapeModule.scale.z
+                };
+
+                localDirection = unit;
+                break;
+            }
+
+            case 4:
+            {
+                const azimuth = random.nextFloat() * this.shapeModule.arcRadians;
+                const minimumRadius = this.shapeModule.radius * (1 - this.shapeModule.radiusThickness);
+
+                const radius = Math.sqrt(
+                    AnimatorRuntimeUtils.lerp(
+                        minimumRadius * minimumRadius,
+                        this.shapeModule.radius * this.shapeModule.radius,
+                        random.nextFloat()
+                    )
+                );
+
+                const cosine = Math.cos(azimuth);
+                const sine = Math.sin(azimuth);
+
+                localPosition = {
+                    x: cosine * radius * this.shapeModule.scale.x,
+                    y: sine * radius * this.shapeModule.scale.y,
+                    z: 0
+                };
+
+                const radialFraction = this.shapeModule.radius > this.EPSILON
+                    ? radius / this.shapeModule.radius
+                    : 0;
+
+                const coneSine = Math.sin(this.shapeModule.angleRadians) * radialFraction;
+
+                localDirection = {
+                    x: cosine * coneSine,
+                    y: sine * coneSine,
+                    z: Math.cos(this.shapeModule.angleRadians)
+                };
+
+                break;
+            }
+
+            case 5:
+                localPosition = {
+                    x: (random.nextFloat() - 0.5) * this.shapeModule.scale.x,
+                    y: (random.nextFloat() - 0.5) * this.shapeModule.scale.y,
+                    z: (random.nextFloat() - 0.5) * this.shapeModule.scale.z
+                };
+
+                localDirection = { x: 0, y: 0, z: 1 };
+                break;
+        }
+
+        const position = this.rotateEulerDegrees(localPosition, this.shapeModule.rotation);
 
         position.x += this.shapeModule.position.x;
         position.y += this.shapeModule.position.y;
         position.z += this.shapeModule.position.z;
 
-        const radialFraction = this.shapeModule.radius > this.EPSILON
-            ? radius / this.shapeModule.radius
-            : 0;
-
-        const coneSine = Math.sin(this.shapeModule.angleRadians) * radialFraction;
-
-        const direction = this.normalizeVector(
-            this.rotateEulerDegrees(
-                {
-                    x: cosine * coneSine,
-                    y: sine * coneSine,
-                    z: Math.cos(this.shapeModule.angleRadians)
-                },
-                this.shapeModule.rotation
-            )
-        );
+        const direction = this.normalizeVector(this.rotateEulerDegrees(localDirection, this.shapeModule.rotation));
 
         return { position, direction };
     }
@@ -591,8 +693,6 @@ export class AnimatorParticleSimulator {
 
         if (!this.requireBoolean(module, "enabled", context))
             throw new Error(`${context} must be enabled.`);
-        if (this.requireBoolean(module, "size3D", context))
-            throw new Error(`${context} uses unsupported three-axis start size.`);
 
         const gravitySource = AnimatorRuntimeUtils.requireIntegerProperty(module, "gravitySource", context);
         if (gravitySource !== 0)
@@ -607,11 +707,18 @@ export class AnimatorParticleSimulator {
             throw new Error(`${context} has an invalid rotation-direction probability.`);
 
         const rotation3D = this.requireBoolean(module, "rotation3D", context);
+        const size3D = this.requireBoolean(module, "size3D", context);
 
         return Object.freeze({
             lifetime: AnimatorParticleMinMaxCurve.parse(AnimatorRuntimeUtils.requireProperty(module, "startLifetime", context), `${context} start lifetime`),
             speed: AnimatorParticleMinMaxCurve.parse(AnimatorRuntimeUtils.requireProperty(module, "startSpeed", context), `${context} start speed`),
-            size: AnimatorParticleMinMaxCurve.parse(AnimatorRuntimeUtils.requireProperty(module, "startSize", context), `${context} start size`),
+            sizeX: AnimatorParticleMinMaxCurve.parse(AnimatorRuntimeUtils.requireProperty(module, "startSize", context), `${context} start X size`),
+            sizeY: size3D
+                ? AnimatorParticleMinMaxCurve.parse(AnimatorRuntimeUtils.requireProperty(module, "startSizeY", context), `${context} start Y size`)
+                : null,
+            sizeZ: size3D
+                ? AnimatorParticleMinMaxCurve.parse(AnimatorRuntimeUtils.requireProperty(module, "startSizeZ", context), `${context} start Z size`)
+                : null,
             rotationX: rotation3D
                 ? AnimatorParticleMinMaxCurve.parse(
                     AnimatorRuntimeUtils.requireProperty(module, "startRotationX", context),
@@ -694,7 +801,7 @@ export class AnimatorParticleSimulator {
         });
     }
 
-    private parseShapeModule(definition: AnimatorRuntimeParticleSystem): ConeShapeModule {
+    private parseShapeModule(definition: AnimatorRuntimeParticleSystem): ParticleShapeModule {
         const context = `ParticleSystem "${definition.id}" ShapeModule`;
         const module = this.requireModule(definition, "ShapeModule");
         const enabled = this.requireBoolean(module, "enabled", context);
@@ -703,6 +810,7 @@ export class AnimatorParticleSimulator {
         {
             return Object.freeze({
                 enabled: false,
+                type: 4,
                 radius: 0,
                 radiusThickness: 0,
                 arcRadians: 0,
@@ -714,7 +822,7 @@ export class AnimatorParticleSimulator {
         }
 
         const type = AnimatorRuntimeUtils.requireIntegerProperty(module, "type", context);
-        if (type !== 4)
+        if (type !== 0 && type !== 4 && type !== 5)
             throw new Error(`${context} uses unsupported shape type ${type}.`);
 
         const placementMode = AnimatorRuntimeUtils.requireIntegerProperty(module, "placementMode", context);
@@ -745,6 +853,7 @@ export class AnimatorParticleSimulator {
 
         return Object.freeze({
             enabled: true,
+            type,
             radius,
             radiusThickness,
             arcRadians: arcDegrees * Math.PI / 180,
@@ -902,32 +1011,36 @@ export class AnimatorParticleSimulator {
         particle.textureFrame = Math.min(tileCount - 1, Math.floor(wrappedFrame * tileCount));
     }
 
-    private applyVelocityLimit(particle: MutableParticle, normalizedAge: number, deltaSeconds: number) {
+    private applyVelocityLimit(particle: MutableParticle, transientVelocity: MutableVector3, normalizedAge: number, deltaSeconds: number): MutableVector3 {
+        const combinedVelocity = {
+            x: particle.velocity.x + transientVelocity.x,
+            y: particle.velocity.y + transientVelocity.y,
+            z: particle.velocity.z + transientVelocity.z
+        };
+
         const module = this.velocityLimitModule;
         const samples = particle.velocityLimit;
 
         if (!module || !samples)
-            return;
+            return combinedVelocity;
 
-        const velocity = particle.velocity;
-        const speed = Math.hypot(velocity.x, velocity.y, velocity.z);
-
+        const speed = Math.hypot(combinedVelocity.x, combinedVelocity.y, combinedVelocity.z);
         if (speed <= this.EPSILON)
-            return;
+            return combinedVelocity;
 
         const limit = Math.max(0, samples.magnitude.evaluate(normalizedAge));
         let targetSpeed = speed;
 
-        if (targetSpeed > limit)
+        if (speed > limit)
         {
-            const excessSpeed = targetSpeed - limit;
-            targetSpeed -= excessSpeed * module.dampen;
+            const retention = Math.pow(Math.max(0, 1 - module.dampen), deltaSeconds * 30);
+            targetSpeed = limit + ((speed - limit) * retention);
         }
 
         let drag = Math.max(0, samples.drag.evaluate(normalizedAge));
 
         if (module.multiplyDragByParticleSize)
-            drag *= Math.max(0, particle.size);
+            drag *= Math.max(particle.size.x, particle.size.y, particle.size.z);
 
         if (module.multiplyDragByParticleVelocity)
             drag *= targetSpeed;
@@ -936,17 +1049,26 @@ export class AnimatorParticleSimulator {
 
         if (targetSpeed <= this.EPSILON)
         {
-            velocity.x = 0;
-            velocity.y = 0;
-            velocity.z = 0;
-            return;
+            particle.velocity.x = -transientVelocity.x;
+            particle.velocity.y = -transientVelocity.y;
+            particle.velocity.z = -transientVelocity.z;
+
+            return { x: 0, y: 0, z: 0 };
         }
 
         const scale = targetSpeed / speed;
 
-        velocity.x *= scale;
-        velocity.y *= scale;
-        velocity.z *= scale;
+        const limitedVelocity = {
+            x: combinedVelocity.x * scale,
+            y: combinedVelocity.y * scale,
+            z: combinedVelocity.z * scale
+        };
+
+        particle.velocity.x = limitedVelocity.x - transientVelocity.x;
+        particle.velocity.y = limitedVelocity.y - transientVelocity.y;
+        particle.velocity.z = limitedVelocity.z - transientVelocity.z;
+
+        return limitedVelocity;
     }
 
     private sampleNoiseVelocity(particle: MutableParticle, normalizedAge: number): MutableVector3 {
@@ -958,13 +1080,18 @@ export class AnimatorParticleSimulator {
 
         const strength = samples.strength.evaluate(normalizedAge);
         const positionAmount = samples.positionAmount.evaluate(normalizedAge);
-        const scroll = samples.scrollSpeed.evaluate(normalizedAge) * this.simulationTime;
-        const effectiveStrength = strength * positionAmount * (module.damping ? module.frequency : 1);
+        const frequency = module.frequency;
+        const scroll = samples.scrollSpeed.evaluate(normalizedAge) * this.simulationTime * frequency;
+
+        const dampingScale = module.damping
+            ? 1 / frequency
+            : 1;
+
+        const effectiveStrength = strength * positionAmount * dampingScale * frequency;
 
         if (Math.abs(effectiveStrength) <= this.EPSILON)
             return { x: 0, y: 0, z: 0 };
 
-        const frequency = module.frequency;
         const curl = this.sampleCurlNoise(
             (particle.position.x * frequency) + scroll,
             (particle.position.y * frequency) + (scroll * 0.754877666),
@@ -1017,28 +1144,18 @@ export class AnimatorParticleSimulator {
             z: derivative(1, 0) - derivative(0, 1)
         };
 
-        const magnitude = Math.hypot(curl.x, curl.y, curl.z);
+        if (!Number.isFinite(curl.x) || !Number.isFinite(curl.y) || !Number.isFinite(curl.z))
+            throw new Error(`ParticleSystem "${this.definition.id}" generated invalid curl noise.`);
 
-        if (magnitude <= this.EPSILON)
-            return { x: 0, y: 0, z: 0 };
-
-        const scale = magnitude > 1
-            ? 1 / magnitude
-            : 1;
-
-        return {
-            x: curl.x * scale,
-            y: curl.y * scale,
-            z: curl.z * scale
-        };
+        return curl;
     }
 
     private sampleNoisePotential(x: number, y: number, z: number, component: number): number {
         const seed = (this.noiseSeed ^ Math.imul(component + 1, 0x85ebca6b)) >>> 0;
-        return this.sampleValueNoise(x, y, z, seed);
+        return this.sampleGradientNoise(x, y, z, seed);
     }
 
-    private sampleValueNoise(x: number, y: number, z: number, seed: number): number {
+    private sampleGradientNoise(x: number, y: number, z: number, seed: number): number {
         const x0 = Math.floor(x);
         const y0 = Math.floor(y);
         const z0 = Math.floor(z);
@@ -1046,23 +1163,84 @@ export class AnimatorParticleSimulator {
         const y1 = y0 + 1;
         const z1 = z0 + 1;
 
-        const fade = (value: number) => value * value * value * (value * ((value * 6) - 15) + 10);
+        const fade = (value: number): number => value * value * value * (value * ((value * 6) - 15) + 10);
+        const interpolate = (left: number, right: number, amount: number): number => left + ((right - left) * amount);
 
         const tx = fade(x - x0);
         const ty = fade(y - y0);
         const tz = fade(z - z0);
 
-        const sample = (sampleX: number, sampleY: number, sampleZ: number) => this.sampleNoiseLattice(sampleX, sampleY, sampleZ, seed);
+        const gradientDot = (latticeX: number, latticeY: number, latticeZ: number): number => {
+            const hash = this.hashNoiseLattice(latticeX, latticeY, latticeZ, seed);
 
-        const x00 = AnimatorRuntimeUtils.lerp(sample(x0, y0, z0), sample(x1, y0, z0), tx);
-        const x10 = AnimatorRuntimeUtils.lerp(sample(x0, y1, z0), sample(x1, y1, z0), tx);
-        const x01 = AnimatorRuntimeUtils.lerp(sample(x0, y0, z1), sample(x1, y0, z1), tx);
-        const x11 = AnimatorRuntimeUtils.lerp(sample(x0, y1, z1), sample(x1, y1, z1), tx);
+            let gradientX = 0;
+            let gradientY = 0;
+            let gradientZ = 0;
 
-        return AnimatorRuntimeUtils.lerp(AnimatorRuntimeUtils.lerp(x00, x10, ty), AnimatorRuntimeUtils.lerp(x01, x11, ty), tz);
+            switch (hash % 12)
+            {
+                case 0:
+                    gradientX = 1;
+                    gradientY = 1;
+                    break;
+                case 1:
+                    gradientX = -1;
+                    gradientY = 1;
+                    break;
+                case 2:
+                    gradientX = 1;
+                    gradientY = -1;
+                    break;
+                case 3:
+                    gradientX = -1;
+                    gradientY = -1;
+                    break;
+                case 4:
+                    gradientX = 1;
+                    gradientZ = 1;
+                    break;
+                case 5:
+                    gradientX = -1;
+                    gradientZ = 1;
+                    break;
+                case 6:
+                    gradientX = 1;
+                    gradientZ = -1;
+                    break;
+                case 7:
+                    gradientX = -1;
+                    gradientZ = -1;
+                    break;
+                case 8:
+                    gradientY = 1;
+                    gradientZ = 1;
+                    break;
+                case 9:
+                    gradientY = -1;
+                    gradientZ = 1;
+                    break;
+                case 10:
+                    gradientY = 1;
+                    gradientZ = -1;
+                    break;
+                default:
+                    gradientY = -1;
+                    gradientZ = -1;
+                    break;
+            }
+
+            return gradientX * (x - latticeX) + gradientY * (y - latticeY) + gradientZ * (z - latticeZ);
+        };
+
+        const x00 = interpolate(gradientDot(x0, y0, z0), gradientDot(x1, y0, z0), tx);
+        const x10 = interpolate(gradientDot(x0, y1, z0), gradientDot(x1, y1, z0), tx);
+        const x01 = interpolate(gradientDot(x0, y0, z1), gradientDot(x1, y0, z1), tx);
+        const x11 = interpolate(gradientDot(x0, y1, z1), gradientDot(x1, y1, z1), tx);
+
+        return interpolate(interpolate(x00, x10, ty), interpolate(x01, x11, ty), tz);
     }
 
-    private sampleNoiseLattice(x: number, y: number, z: number, seed: number): number {
+    private hashNoiseLattice(x: number, y: number, z: number, seed: number): number {
         let hash = seed;
 
         hash ^= Math.imul(x, 0x8da6b343);
@@ -1074,7 +1252,7 @@ export class AnimatorParticleSimulator {
         hash = Math.imul(hash, 0x846ca68b);
         hash ^= hash >>> 16;
 
-        return ((hash >>> 0) / 0xffffffff) * 2 - 1;
+        return hash >>> 0;
     }
 
     private validateSystem(definition: AnimatorRuntimeParticleSystem) {
@@ -1183,16 +1361,24 @@ export class AnimatorParticleSimulator {
         return (hash >>> 0) || DEFAULT_ANIMATOR_PARTICLE_RANDOM_SEED;
     }
 
-    private parseSizeOverLifetimeModule(definition: AnimatorRuntimeParticleSystem): AnimatorParticleMinMaxCurve | null {
+    private parseSizeOverLifetimeModule(definition: AnimatorRuntimeParticleSystem): SizeOverLifetimeModule | null {
         const context = `ParticleSystem "${definition.id}" SizeModule`;
         const module = this.requireModule(definition, "SizeModule");
 
         if (!this.requireBoolean(module, "enabled", context))
             return null;
-        if (this.requireBoolean(module, "separateAxes", context))
-            throw new Error(`${context} uses unsupported separate-axis sizing.`);
 
-        return AnimatorParticleMinMaxCurve.parse(AnimatorRuntimeUtils.requireProperty(module, "curve", context), `${context} curve`);
+        const separateAxes = this.requireBoolean(module, "separateAxes", context);
+
+        return Object.freeze({
+            x: AnimatorParticleMinMaxCurve.parse(AnimatorRuntimeUtils.requireProperty(module, "curve", context), `${context} X curve`),
+            y: separateAxes
+                ? AnimatorParticleMinMaxCurve.parse(AnimatorRuntimeUtils.requireProperty(module, "y", context), `${context} Y curve`)
+                : null,
+            z: separateAxes
+                ? AnimatorParticleMinMaxCurve.parse(AnimatorRuntimeUtils.requireProperty(module, "z", context), `${context} Z curve`)
+                : null
+        });
     }
 
     private parseRotationOverLifetimeModule(definition: AnimatorRuntimeParticleSystem): RotationOverLifetimeModule | null {

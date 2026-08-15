@@ -1,4 +1,5 @@
 import type { AnimatorRuntimeParticleSystemRenderer, AnimatorRuntimeMaterial, AnimatorRuntimeScene } from "./AnimatorBindingResolver";
+import type { AnimatorPreparedGeometry, PreparedAnimatorMesh } from "./AnimatorPreparedGeometry";
 import type { AnimatorTransformHierarchy } from "./AnimatorTransformHierarchy";
 
 import { AnimatorParticleSimulator } from "./AnimatorParticleSimulator";
@@ -12,7 +13,10 @@ export type PreparedAnimatorParticleRenderer = Readonly<{
     sourceOrder: number;
     sortingLayerId: number;
     sortingOrder: number;
+    renderMode: 0 | 4;
+    mesh: PreparedAnimatorMesh | null;
     materialId: string;
+    materialSlot: number;
     textureId: string;
     material: AnimatorRuntimeMaterial;
     simulator: AnimatorParticleSimulator;
@@ -20,13 +24,20 @@ export type PreparedAnimatorParticleRenderer = Readonly<{
     maximumParticleSize: number;
     pivot: readonly number[];
     flip: readonly number[];
+    renderAlignment: number;
+    blendMode: "normal" | "add";
 }>;
 
 export class AnimatorParticleRendererModel {
     readonly renderers: readonly PreparedAnimatorParticleRenderer[];
     readonly diagnostics: readonly string[];
 
-    constructor(scene: AnimatorRuntimeScene, simulatorsById: ReadonlyMap<string, AnimatorParticleSimulator>, hierarchy: AnimatorTransformHierarchy) {
+    constructor(
+        scene: AnimatorRuntimeScene,
+        simulatorsById: ReadonlyMap<string, AnimatorParticleSimulator>,
+        hierarchy: AnimatorTransformHierarchy,
+        geometry: AnimatorPreparedGeometry
+    ) {
         const materialsById = AnimatorRuntimeUtils.indexUniqueById(scene.materials, "Material");
         const particleSystemsById = AnimatorRuntimeUtils.indexUniqueById(scene.particleSystems, "ParticleSystem");
         const rendererIds = new Set<string>();
@@ -65,7 +76,7 @@ export class AnimatorParticleRendererModel {
 
             try
             {
-                renderers.push(this.prepareRenderer(renderer, simulator, sourceOrder, materialsById, hierarchy));
+                renderers.push(this.prepareRenderer(renderer, simulator, sourceOrder, materialsById, hierarchy, geometry));
             }
             catch (error)
             {
@@ -92,22 +103,34 @@ export class AnimatorParticleRendererModel {
         simulator: AnimatorParticleSimulator,
         sourceOrder: number,
         materialsById: ReadonlyMap<string, AnimatorRuntimeMaterial>,
-        hierarchy: AnimatorTransformHierarchy
+        hierarchy: AnimatorTransformHierarchy,
+        geometry: AnimatorPreparedGeometry
     ): PreparedAnimatorParticleRenderer {
         if (renderer.gameObjectId !== simulator.gameObjectId)
             throw new Error("Its ParticleSystem belongs to a different GameObject.");
-        if (renderer.renderMode !== 0)
-            throw new Error(`Render mode ${renderer.renderMode} is unsupported.`);
+
+        const renderMode = renderer.renderMode;
+
+        if (renderMode !== 0 && renderMode !== 4)
+            throw new Error(`Render mode ${renderMode} is unsupported.`);
+        if (renderMode === 4 && renderer.renderAlignment !== 2)
+            throw new Error(`Mesh particles require local render alignment.`);
         if (renderer.sortMode !== 0)
             throw new Error(`Sort mode ${renderer.sortMode} is unsupported.`);
-        if (renderer.renderAlignment !== 2)
+        if (renderer.renderAlignment !== 0 && renderer.renderAlignment !== 2)
             throw new Error(`Render alignment ${renderer.renderAlignment} is unsupported.`);
-        if (renderer.materialIds.length !== 1)
-            throw new Error("Exactly one particle material is required.");
 
-        const materialId = renderer.materialIds[0];
+        const distinctMaterialIds = [...new Set(renderer.materialIds.filter((materialId): materialId is string => materialId !== null))];
+        if (distinctMaterialIds.length !== 1)
+            throw new Error("Exactly one distinct particle material is required.");
+
+        const materialId = distinctMaterialIds[0];
         if (!materialId)
             throw new Error("Its particle material is missing.");
+
+        const materialSlot = renderer.materialIds.findIndex((candidate) => candidate === materialId);
+        if (materialSlot < 0)
+            throw new Error("Its particle material slot is missing.");
 
         const material = materialsById.get(materialId);
         if (!material)
@@ -130,11 +153,17 @@ export class AnimatorParticleRendererModel {
             throw new Error("Its particle-size limits are invalid.");
         }
 
+        const blendMode = material.blendMode;
+        if (blendMode !== "normal" && blendMode !== "add")
+            throw new Error(`Material "${material.name}" has an unsupported blend mode.`);
+
         AnimatorRuntimeUtils.requireFiniteVector(renderer.pivot, 3, "Particle renderer pivot");
         AnimatorRuntimeUtils.requireFiniteVector(renderer.flip, 3, "Particle renderer flip");
 
         if (renderer.flip.some((value) => value < 0 || value > 1))
             throw new Error("Its particle flip probabilities are invalid.");
+
+        const mesh = this.prepareParticleMesh(renderer, geometry);
 
         return Object.freeze({
             id: renderer.id,
@@ -144,14 +173,40 @@ export class AnimatorParticleRendererModel {
             sourceOrder,
             sortingLayerId: renderer.sortingLayerId,
             sortingOrder: renderer.sortingOrder,
+            renderMode,
+            mesh,
             materialId,
+            materialSlot,
             textureId: textureProperty.textureId,
             material,
             simulator,
             minimumParticleSize: renderer.minimumParticleSize,
             maximumParticleSize: renderer.maximumParticleSize,
             pivot: Object.freeze([...renderer.pivot]),
-            flip: Object.freeze([...renderer.flip])
+            flip: Object.freeze([...renderer.flip]),
+            renderAlignment: renderer.renderAlignment,
+            blendMode
         });
+    }
+
+    private prepareParticleMesh(renderer: AnimatorRuntimeParticleSystemRenderer, geometry: AnimatorPreparedGeometry): PreparedAnimatorMesh | null {
+        if (renderer.renderMode === 0)
+            return null;
+
+        if (!renderer.meshId)
+            throw new Error("Its particle Mesh is missing.");
+
+        const mesh = geometry.requireMesh(renderer.meshId);
+
+        if (!mesh.uv0)
+            throw new Error(`Particle Mesh "${mesh.name}" has no texture coordinates.`);
+        if (mesh.submeshes.length !== 1)
+            throw new Error(`Particle Mesh "${mesh.name}" must contain exactly one submesh.`);
+
+        const submesh = mesh.submeshes[0];
+        if (submesh.materialSlot >= renderer.materialIds.length)
+            throw new Error(`Particle Mesh "${mesh.name}" references an invalid material slot.`);
+
+        return mesh;
     }
 }

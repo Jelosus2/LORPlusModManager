@@ -301,6 +301,41 @@ def derive_sprite_uvs(sprite: Any, render_data: Any, vertices: list[Any], textur
     return result
 
 
+def resolve_shader_name(shader_pointer: Any) -> str | None:
+    if not shader_pointer.path_id:
+        return None
+
+    try:
+        shader = shader_pointer.deref().parse_as_object()
+    except FileNotFoundError:
+        return None
+
+    parsed_form = getattr(shader, "m_ParsedForm", None)
+
+    for value in (getattr(parsed_form, "m_Name", None), getattr(shader, "m_Name", None)):
+        if isinstance(value, str) and value:
+            return value
+
+    return None
+
+
+def resolve_material_blend_mode(float_properties: list[dict], shader_name: str | None) -> Literal["normal", "add"]:
+    values = {
+        str(property_value["name"]): float(property_value["value"])
+        for property_value in float_properties
+    }
+
+    explicit_mode = values.get("_BlendMode")
+    source = values.get("_Src", values.get("_SrcBlend"))
+    destination = values.get("_Dst", values.get("_DstBlend"))
+    normalized_shader = (shader_name or "").casefold()
+
+    if explicit_mode == 1.0 or (source == 1.0 and destination == 1.0) or "particles/additive" in normalized_shader:
+        return "add"
+
+    return "normal"
+
+
 def export_blend_shapes(mesh: Any, writer: GeometryWriter) -> list[dict]:
     shape_data = mesh.m_Shapes
 
@@ -528,6 +563,8 @@ def export_material(material_reader: Any) -> dict:
             "value": color(value)
         })
 
+    shader_name = resolve_shader_name(material.m_Shader)
+
     return {
         "id": str(material_reader.path_id),
         "name": material.m_Name,
@@ -536,7 +573,8 @@ def export_material(material_reader: Any) -> dict:
         "textureProperties": texture_properties,
         "floatProperties": float_properties,
         "intProperties": int_properties,
-        "colorProperties": color_properties
+        "colorProperties": color_properties,
+        "blendMode": resolve_material_blend_mode(float_properties, shader_name),
     }
 
 
@@ -1483,6 +1521,10 @@ def export_scene(environment: Any, writer: GeometryWriter, locator: str, texture
 
         elif component_type == "ParticleSystemRenderer":
             renderer = component_reader.parse_as_object()
+            mesh_id = object_id(renderer.m_Mesh)
+
+            if mesh_id:
+                mesh_readers[int(renderer.m_Mesh.path_id)] = renderer.m_Mesh.deref()
 
             for material in renderer.m_Materials:
                 if material.path_id:
@@ -1492,6 +1534,7 @@ def export_scene(environment: Any, writer: GeometryWriter, locator: str, texture
                 "id": str(component_reader.path_id),
                 "gameObjectId": object_id(renderer.m_GameObject),
                 "enabled": bool(renderer.m_Enabled),
+                "meshId": mesh_id,
                 "materialIds": [
                     object_id(material)
                     for material in renderer.m_Materials

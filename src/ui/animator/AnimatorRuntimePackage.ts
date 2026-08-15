@@ -1,8 +1,8 @@
 import type { AnimatorControllerDefinition, AnimatorParameterIdentifier } from "./AnimatorControllerEvaluator";
+import type { AnimatorRuntimeScene, AnimatorRuntimeBackgroundPartGroup } from "./AnimatorBindingResolver";
 import type { AnimatorModPreviewPreparation } from "../../shared/characters";
 import type { AnimatorAnimationManifest } from "./AnimatorAnimationSampler";
 import type { AnimatorGeometryManifest } from "./AnimatorGeometryReader";
-import type { AnimatorRuntimeScene } from "./AnimatorBindingResolver";
 
 import { AnimatorParticleRendererModel } from "./AnimatorParticleRendererModel";
 import { AnimatorControllerEvaluator } from "./AnimatorControllerEvaluator";
@@ -48,7 +48,6 @@ export type AnimatorRuntimeFrameResult = Readonly<{
 export class AnimatorRuntimePackage {
     private static readonly MAXIMUM_MANIFEST_LENGTH = 32 * 1024 * 1024;
     private static readonly WORLD_GRAVITY_Y = -9.81;
-    private static readonly MATRIX_DETERMINANT_EPSILON = 1e-12;
     private readonly textureUrlsById = new Map<string, string>();
     private readonly controllerEvaluatorsByAnimatorId = new Map<string, AnimatorControllerEvaluator>();
     private readonly poseEvaluator: AnimatorPoseEvaluator;
@@ -96,7 +95,7 @@ export class AnimatorRuntimePackage {
         this.initializeControllers();
         this.initializeParticleSimulators();
 
-        this.particleRenderers = new AnimatorParticleRendererModel(manifest.scene, this.particleSimulatorsById, this.hierarchy);
+        this.particleRenderers = new AnimatorParticleRendererModel(manifest.scene, this.particleSimulatorsById, this.hierarchy, this.preparedGeometry);
         this.particleInitializationDiagnostics.push(...this.particleRenderers.diagnostics);
 
         this.reset();
@@ -209,6 +208,7 @@ export class AnimatorRuntimePackage {
         const applicationResult = this.poseApplier.apply(poses);
         this.applyRPlusPresentation();
         this.applyDecorationPresentation();
+        this.applyBackgroundPresentation();
 
         for (const diagnostic of applicationResult.diagnostics)
             AnimatorRuntimeUtils.appendUniqueString(diagnostics, diagnosticKeys, diagnostic);
@@ -424,6 +424,9 @@ export class AnimatorRuntimePackage {
 
             this.decoration1States.set(view.componentId, view.part1.defaultEnabled);
             this.decoration2States.set(view.componentId, view.part2.defaultEnabled);
+
+            this.validatePartGroup(view.componentId, "background", view.background);
+            this.validateBackgroundTransforms(view.componentId, view.background);
         }
     }
 
@@ -446,11 +449,57 @@ export class AnimatorRuntimePackage {
         }
     }
 
+    private validateBackgroundTransforms(componentId: string, background: AnimatorRuntimeBackgroundPartGroup) {
+        const transformIds = new Set<string>();
+
+        for (const change of background.transformChanges)
+        {
+            if (transformIds.has(change.transformId))
+                throw new Error(`ActorPartsView "${componentId}" background references Transform "${change.transformId}" more than once.`);
+
+            transformIds.add(change.transformId);
+            this.state.requireTransform(change.transformId);
+
+            AnimatorRuntimeUtils.requireFiniteVector(change.onPosition, 3, `ActorPartsView "${componentId}" background enabled position`);
+            AnimatorRuntimeUtils.requireFiniteVector(change.onScale, 3, `ActorPartsView "${componentId}" background enabled scale`);
+            AnimatorRuntimeUtils.requireFiniteVector(change.offPosition, 3, `ActorPartsView "${componentId}" background disabled position`);
+            AnimatorRuntimeUtils.requireFiniteVector(change.offScale, 3, `ActorPartsView "${componentId}" background disabled scale`);
+        }
+    }
+
     private applyDecorationPresentation() {
         for (const view of this.manifest.scene.interactions.partsViews)
         {
             this.applyPartGroup(view.part1, this.decoration1States.get(view.componentId) ?? view.part1.defaultEnabled);
             this.applyPartGroup(view.part2, this.decoration2States.get(view.componentId) ?? view.part2.defaultEnabled);
+        }
+    }
+
+    private applyBackgroundPresentation() {
+        for (const view of this.manifest.scene.interactions.partsViews)
+        {
+            const background = view.background;
+
+            this.applyPartGroup(background, true);
+
+            for (const change of background.transformChanges)
+            {
+                const transform = this.state.requireTransform(change.transformId);
+
+                AnimatorRuntimeUtils.copyFiniteVector(
+                    transform.localPosition,
+                    change.onPosition,
+                    3,
+                    `ActorPartsView "${view.componentId}" background position`
+                );
+
+                AnimatorRuntimeUtils.copyFiniteVector(
+                    transform.localScale,
+                    change.onScale,
+                    3,
+                    `ActorPartsView "${view.componentId}" background scale`
+                );
+            }
         }
     }
 
@@ -517,48 +566,34 @@ export class AnimatorRuntimePackage {
     }
 
     private updateParticleGravity(): readonly string[] {
-        const diagnostics: string[] = [];
-
         for (const simulator of this.particleSimulatorsById.values())
         {
-            const matrix = this.hierarchy.requireWorldMatrixForGameObject(simulator.gameObjectId);
+            const transformId = this.hierarchy.requireTransformIdForGameObject(simulator.gameObjectId);
+            const worldRotation = this.hierarchy.requireWorldRotation(transformId);
+            const gravity = this.rotateWorldVectorIntoLocal(worldRotation, 0, AnimatorRuntimePackage.WORLD_GRAVITY_Y, 0);
 
-            const a = matrix[0];
-            const b = matrix[1];
-            const c = matrix[2];
-            const d = matrix[4];
-            const e = matrix[5];
-            const f = matrix[6];
-            const g = matrix[8];
-            const h = matrix[9];
-            const i = matrix[10];
-
-            const determinant =
-                a * (e * i - f * h) -
-                b * (d * i - f * g) +
-                c * (d * h - e * g);
-
-            if (!Number.isFinite(determinant) || Math.abs(determinant) <= AnimatorRuntimePackage.MATRIX_DETERMINANT_EPSILON) {
-                simulator.setLocalGravityAcceleration({
-                    x: 0,
-                    y: 0,
-                    z: 0
-                });
-
-                diagnostics.push(`ParticleSystem "${simulator.particleSystemId}" cannot apply world gravity because its Transform is singular.`);
-                continue;
-            }
-
-            const gravityY = AnimatorRuntimePackage.WORLD_GRAVITY_Y;
-
-            simulator.setLocalGravityAcceleration({
-                x: ((c * h - b * i) * gravityY) / determinant,
-                y: ((a * i - c * g) * gravityY) / determinant,
-                z: ((b * g - a * h) * gravityY) / determinant
-            });
+            simulator.setLocalGravityAcceleration(gravity);
         }
 
-        return diagnostics;
+        return [];
+    }
+
+    private rotateWorldVectorIntoLocal(worldRotation: readonly number[], worldX: number, worldY: number, worldZ: number): { x: number; y: number; z: number; } {
+        AnimatorRuntimeUtils.requireFiniteVector(worldRotation, 4, "Particle-system world rotation");
+
+        const x = -worldRotation[0];
+        const y = -worldRotation[1];
+        const z = -worldRotation[2];
+        const w = worldRotation[3];
+
+        const dot = (x * worldX) + (y * worldY) + (z * worldZ);
+        const vectorScale = (w * w) - (x * x) - (y * y) - (z * z);
+
+        return {
+            x: (2 * dot * x) + (vectorScale * worldX) + (2 * w * ((y * worldZ) - (z * worldY))),
+            y: (2 * dot * y) + (vectorScale * worldY) + (2 * w * ((z * worldX) - (x * worldZ))),
+            z: (2 * dot * z) + (vectorScale * worldZ) + (2 * w * ((x * worldY) - (y * worldX)))
+        };
     }
 
     private static createRuntimeRootUrl(preparation: AnimatorModPreviewPreparation): string {

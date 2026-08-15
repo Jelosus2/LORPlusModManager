@@ -96,6 +96,7 @@ export type AnimatorRuntimeMaterial = Readonly<{
     name: string;
     shaderId: string | null;
     renderQueue: number;
+    blendMode: "normal" | "add";
     textureProperties: readonly AnimatorRuntimeTextureProperty[];
     floatProperties: readonly AnimatorRuntimeFloatProperty[];
     intProperties: readonly AnimatorRuntimeIntegerProperty[];
@@ -150,6 +151,7 @@ export type AnimatorRuntimeParticleSystemRenderer = Readonly<{
     gameObjectId: string;
     particleSystemId: string;
     enabled: boolean;
+    meshId: string | null;
     materialIds: readonly (string | null)[];
     sortingLayerId: number;
     sortingOrder: number;
@@ -370,6 +372,11 @@ export type AnimatorRuntimeInteractions = Readonly<{
     mosaics: readonly AnimatorRuntimeMosaic[];
 }>;
 
+export type AnimatorRendererType =
+    | "SkinnedMeshRenderer"
+    | "SpriteRenderer"
+    | "ParticleSystemRenderer";
+
 export type ResolvedAnimatorProperty =
     | Readonly<{
         kind: "gameObjectActive";
@@ -381,12 +388,12 @@ export type ResolvedAnimatorProperty =
     | Readonly<{
         kind: "rendererEnabled";
         rendererId: string;
-        rendererType: "SkinnedMeshRenderer" | "SpriteRenderer";
+        rendererType: AnimatorRendererType;
     }>
     | Readonly<{
         kind: "rendererSortingOrder";
         rendererId: string;
-        rendererType: "SkinnedMeshRenderer" | "SpriteRenderer";
+        rendererType: AnimatorRendererType;
     }>
     | Readonly<{
         kind: "spriteRendererColor";
@@ -413,7 +420,7 @@ export type ResolvedAnimatorProperty =
     | Readonly<{
         kind: "materialProperty";
         rendererId: string;
-        rendererType: "SkinnedMeshRenderer" | "SpriteRenderer";
+        rendererType: AnimatorRendererType;
         propertyName: string;
         propertyType: "float" | "integer" | "vector" | "textureTransform";
         component: "x" | "y" | "z" | "w" | "r" | "g" | "b" | "a" | null;
@@ -422,7 +429,7 @@ export type ResolvedAnimatorProperty =
     | Readonly<{
         kind: "materialReference";
         rendererId: string;
-        rendererType: "SkinnedMeshRenderer" | "SpriteRenderer";
+        rendererType: AnimatorRendererType;
         materialSlot: number;
     }>
     | Readonly<{
@@ -455,7 +462,7 @@ export type AnimatorBindingResolution = Readonly<{
 
 type RendererTarget = Readonly<{
     rendererId: string;
-    rendererType: "SkinnedMeshRenderer" | "SpriteRenderer";
+    rendererType: AnimatorRendererType;
     materialIds: readonly (string | null)[];
     meshId: string | null;
 }>;
@@ -498,24 +505,22 @@ export class AnimatorBindingResolver {
         [UnityCrc32.generateCrc("m_Size.x"), "x"],
         [UnityCrc32.generateCrc("m_Size.y"), "y"]
     ]);
-    private readonly transformsById: Map<string, AnimatorRuntimeTransform>;
     private readonly transformsByGameObjectId: Map<string, AnimatorRuntimeTransform>;
-    private readonly gameObjectsById: Map<string, AnimatorRuntimeGameObject>;
     private readonly meshesById: Map<string, AnimatorRuntimeMesh>;
     private readonly materialsById: Map<string, AnimatorRuntimeMaterial>;
     private readonly spritesById: Map<string, AnimatorRuntimeSprite>;
     private readonly skinnedRenderersByGameObjectId: Map<string, AnimatorRuntimeSkinnedMeshRenderer[]>;
     private readonly spriteRenderersByGameObjectId: Map<string, AnimatorRuntimeSpriteRenderer[]>;
+    private readonly particleRenderersByGameObjectId: Map<string, AnimatorRuntimeParticleSystemRenderer[]>;
 
     constructor(private readonly scene: AnimatorRuntimeScene) {
-        this.transformsById = AnimatorRuntimeUtils.indexUniqueById(scene.transforms, "Transform");
         this.transformsByGameObjectId = this.indexTransformsByGameObject();
-        this.gameObjectsById = AnimatorRuntimeUtils.indexUniqueById(scene.gameObjects, "GameObject");
         this.meshesById = AnimatorRuntimeUtils.indexUniqueById(scene.meshes, "Mesh");
         this.materialsById = AnimatorRuntimeUtils.indexUniqueById(scene.materials, "Material");
         this.spritesById = AnimatorRuntimeUtils.indexUniqueById(scene.sprites, "Sprite");
         this.skinnedRenderersByGameObjectId = this.groupByGameObject(scene.skinnedMeshRenderers);
         this.spriteRenderersByGameObjectId = this.groupByGameObject(scene.spriteRenderers);
+        this.particleRenderersByGameObjectId = this.groupByGameObject(scene.particleSystemRenderers);
     }
 
     resolve(animatorId: string, clip: AnimatorBindingClip): AnimatorBindingResolution {
@@ -524,6 +529,7 @@ export class AnimatorBindingResolver {
             throw new Error(`Animator "${animatorId}" does not exist in the runtime scene.`);
 
         const targetsByHash = this.buildPathIndex(animator);
+        const siblingTargetHashes = this.buildSiblingResolvedPathHashes(animator);
         const bindings: (ResolvedAnimatorBinding | null)[] = Array.from({ length: clip.bindings.length }, () => null);
         const diagnostics: AnimatorBindingDiagnostic[] = [];
         const usedBindingIndices = new Set<number>();
@@ -544,7 +550,7 @@ export class AnimatorBindingResolver {
 
             try
             {
-                const target = this.requireTarget(targetsByHash, binding.pathHash, clip.name, binding.bindingIndex);
+                const target = this.requireTarget(targetsByHash, siblingTargetHashes, binding.pathHash, clip.name, binding.bindingIndex);
 
                 bindings[binding.bindingIndex] = {
                     bindingIndex: binding.bindingIndex,
@@ -643,9 +649,14 @@ export class AnimatorBindingResolver {
         if (binding.customType === this.CUSTOM_RENDERER_PROPERTY)
             return this.resolveRendererProperty(target.gameObjectId, binding);
 
-        if (binding.typeId === this.SKINNED_MESH_RENDERER_TYPE_ID && binding.customType === 0 && !binding.isPPtrCurve && attribute === this.HASH_ENABLED)
+        if (
+            (binding.typeId === this.SKINNED_MESH_RENDERER_TYPE_ID || binding.typeId === this.PARTICLE_SYSTEM_RENDERER_TYPE_ID) &&
+            binding.customType === 0 &&
+            !binding.isPPtrCurve &&
+            attribute === this.HASH_ENABLED
+        )
         {
-            const renderer = this.requireRenderer(target.gameObjectId, this.SKINNED_MESH_RENDERER_TYPE_ID);
+            const renderer = this.requireRenderer(target.gameObjectId, binding.typeId);
 
             return {
                 kind: "rendererEnabled",
@@ -935,6 +946,22 @@ export class AnimatorBindingResolver {
             };
         }
 
+        if (typeId === this.PARTICLE_SYSTEM_RENDERER_TYPE_ID)
+        {
+            const matches = this.particleRenderersByGameObjectId.get(gameObjectId) ?? [];
+            if (matches.length !== 1)
+                throw new BindingResolutionError("The ParticleSystemRenderer target could not be resolved uniquely.");
+
+            const renderer = matches[0];
+
+            return {
+                rendererId: renderer.id,
+                rendererType: "ParticleSystemRenderer",
+                materialIds: renderer.materialIds,
+                meshId: renderer.meshId
+            };
+        }
+
         if (typeId === this.SPRITE_RENDERER_TYPE_ID)
         {
             const matches = this.spriteRenderersByGameObjectId.get(gameObjectId) ?? [];
@@ -951,7 +978,7 @@ export class AnimatorBindingResolver {
             };
         }
 
-        if (typeId === this.MESH_RENDERER_TYPE_ID || typeId === this.PARTICLE_SYSTEM_RENDERER_TYPE_ID)
+        if (typeId === this.MESH_RENDERER_TYPE_ID)
             throw new BindingResolutionError("This renderer type is not exported by runtime format.");
 
         throw new BindingResolutionError(`Unsupported renderer type ${typeId}.`);
@@ -1013,15 +1040,46 @@ export class AnimatorBindingResolver {
         return result;
     }
 
-    private requireTarget(targetsByHash: Map<number, AnimatorRuntimeTransform[]>, pathHash: number, clipName: string, bindingIndex: number): AnimatorRuntimeTransform {
-        const matches = targetsByHash.get(pathHash >>> 0) ?? [];
+    private buildSiblingResolvedPathHashes(animator: AnimatorRuntimeAnimator): ReadonlySet<number> {
+        const result = new Set<number>();
+
+        if (!animator.controllerId)
+            return result;
+
+        for (const sibling of this.scene.animators)
+        {
+            if (sibling.id === animator.id || sibling.controllerId !== animator.controllerId)
+                continue;
+
+            for (const [hash, matches] of this.buildPathIndex(sibling))
+            {
+                if (matches.length === 1)
+                    result.add(hash);
+            }
+        }
+
+        return result;
+    }
+
+    private requireTarget(
+        targetsByHash: Map<number, AnimatorRuntimeTransform[]>,
+        siblingTargetHashes: ReadonlySet<number>,
+        pathHash: number,
+        clipName: string,
+        bindingIndex: number
+    ): AnimatorRuntimeTransform {
+        const normalizedHash = pathHash >>> 0;
+        const matches = targetsByHash.get(normalizedHash) ?? [];
+
+        if (matches.length === 0 && siblingTargetHashes.has(normalizedHash))
+            throw new IgnoredBindingResolutionError("The binding belongs to another Animator using the same controller.");
 
         if (matches.length !== 1)
         {
             throw new BindingResolutionError(
                 matches.length === 0
-                    ? `AnimationClip "${clipName}" binding ${bindingIndex} targets an unknown path hash ${pathHash >>> 0}.`
-                    : `AnimationClip "${clipName}" binding ${bindingIndex} has an ambiguous path hash ${pathHash >>> 0}.`
+                    ? `AnimationClip "${clipName}" binding ${bindingIndex} targets an unknown path hash ${normalizedHash}.`
+                    : `AnimationClip "${clipName}" binding ${bindingIndex} has an ambiguous path hash ${normalizedHash}.`
             );
         }
 

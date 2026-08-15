@@ -1,17 +1,13 @@
 import type { PreparedAnimatorSkinnedRenderer, PreparedAnimatorSpriteRenderer } from "./AnimatorRendererModel";
 import type { AnimatorRuntimeFrameResult, AnimatorRuntimePackage } from "./AnimatorRuntimePackage";
+import type { AnimatorRuntimeMaterial, AnimatorRendererType } from "./AnimatorBindingResolver";
 import type { AnimatorProjectedSpriteRenderer } from "./AnimatorSpriteProjector";
 import type { PreparedPreviewSpriteGeometry } from "../../shared/characters";
 import type { AnimatorDeformedSkinnedMesh } from "./AnimatorMeshDeformer";
-import type { AnimatorRuntimeMaterial } from "./AnimatorBindingResolver";
 
 import { AnimatorPixiParticleView } from "./AnimatorPixiParticleView";
 import { Container, Mesh, MeshGeometry, Texture } from "pixi.js";
 import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
-
-type AnimatorRendererType =
-    | "SkinnedMeshRenderer"
-    | "SpriteRenderer";
 
 type AnimatorPixiMeshView = {
     display: Mesh<MeshGeometry>;
@@ -465,10 +461,24 @@ export class AnimatorPixiScene {
 
         for (const view of this.particleViews)
         {
+            const state = this.runtime.state.requireParticleSystemRenderer(view.renderer.id);
             const sourceOrder = ordinaryRendererCount + view.renderer.sourceOrder;
-            const zIndex = view.renderer.sortingOrder * this.sortingStride + sourceOrder * this.submeshStride;
+            const zIndex = state.sortingOrder * this.sortingStride + sourceOrder * this.submeshStride;
+            const value = this.runtime.state.getMaterialPropertyValue(
+                view.renderer.id,
+                "ParticleSystemRenderer",
+                view.renderer.materialSlot,
+                "_MainTex_ST",
+                "textureTransform"
+            );
 
-            view.update(zIndex);
+            view.update({
+                enabled: state.enabled,
+                zIndex,
+                textureTransform: Array.isArray(value) && value.length === 4
+                    ? value
+                    : [1, 1, 0, 0]
+            });
         }
     }
 
