@@ -415,14 +415,16 @@ export class AnimatorPixiScene {
         {
             const rendererType = view.renderer.kind;
             const state = this.runtime.state.requireRenderer(view.renderer.id, rendererType);
+            const materialId = state.materialIds[view.materialSlot] ?? null;
 
-            const texture = this.resolveMaterialTexture(view.renderer.id, rendererType, view.materialSlot, state.materialIds[view.materialSlot] ?? null);
+            const texture = this.resolveMaterialTexture(view.renderer.id, rendererType, view.materialSlot, materialId);
             const color = this.resolveRendererColor(view.renderer.id, rendererType, view.materialSlot);
 
             view.display.visible = view.projection.visible && texture !== null && color.alpha > 0;
             view.display.zIndex = state.sortingOrder * this.sortingStride + view.renderer.sourceOrder * this.submeshStride + view.submeshOrder;
             view.display.tint = color.tint;
             view.display.alpha = color.alpha;
+            view.display.blendMode = this.resolveMaterialBlendMode(materialId);
 
             if (texture && view.display.texture !== texture)
                 view.display.texture = texture;
@@ -439,6 +441,8 @@ export class AnimatorPixiScene {
         for (const view of this.spriteViews)
         {
             const state = this.runtime.state.requireSpriteRenderer(view.renderer.id);
+            const materialId = state.materialIds[0] ?? null;
+
             if (view.geometryRevision !== view.projector.geometryRevision)
                 this.rebuildSpriteGeometry(view);
 
@@ -454,6 +458,7 @@ export class AnimatorPixiScene {
 
             view.display.tint = color.tint;
             view.display.alpha = color.alpha;
+            view.display.blendMode = this.resolveMaterialBlendMode(materialId);
 
             if (!view.projector.visible || !view.geometry)
                 continue;
@@ -622,16 +627,49 @@ export class AnimatorPixiScene {
     }
 
     private resolveRendererColor(rendererId: string, rendererType: AnimatorRendererType, materialSlot: number, multiplier: readonly number[] = [1, 1, 1, 1]): AnimatorDisplayColor {
-        const baseColor = this.getMaterialVector(rendererId, rendererType, materialSlot, "_Color") ?? [1, 1, 1, 1];
-        const rendererColor = this.getMaterialVector(rendererId, rendererType, materialSlot, "_RendererColor") ?? [1, 1, 1, 1];
+        const color = [1, 1, 1, 1];
+
+        for (const propertyName of ["_Color", "_TintColor", "_RendererColor"])
+        {
+            const value = this.getMaterialVector(rendererId, rendererType, materialSlot, propertyName);
+            if (!value)
+                continue;
+
+            color[0] *= value[0] ?? 1;
+            color[1] *= value[1] ?? 1;
+            color[2] *= value[2] ?? 1;
+            color[3] *= value[3] ?? 1;
+        }
+
+        const state = this.runtime.state.requireRenderer(rendererId, rendererType);
+        const materialId = state.materialIds[materialSlot] ?? null;
+        const material = materialId
+            ? this.materialsById.get(materialId) ?? null
+            : null;
+
+        if (material?.blendMode === "add")
+        {
+            color[0] *= 2;
+            color[1] *= 2;
+            color[2] *= 2;
+            color[3] *= 2;
+        }
+
         const additionalAlpha = this.getMaterialScalar(rendererId, rendererType, materialSlot, "_AdditionalAlpha") ?? 1;
 
         return this.createDisplayColor([
-            baseColor[0] * rendererColor[0] * (multiplier[0] ?? 1),
-            baseColor[1] * rendererColor[1] * (multiplier[1] ?? 1),
-            baseColor[2] * rendererColor[2] * (multiplier[2] ?? 1),
-            baseColor[3] * rendererColor[3] * additionalAlpha * (multiplier[3] ?? 1)
+            color[0] * (multiplier[0] ?? 1),
+            color[1] * (multiplier[1] ?? 1),
+            color[2] * (multiplier[2] ?? 1),
+            color[3] * additionalAlpha * (multiplier[3] ?? 1)
         ]);
+    }
+
+    private resolveMaterialBlendMode(materialId: string | null): AnimatorRuntimeMaterial["blendMode"] {
+        if (!materialId)
+            return "normal";
+
+        return this.materialsById.get(materialId)?.blendMode ?? "normal";
     }
 
     private createDisplayColor(color: readonly number[]): AnimatorDisplayColor {
