@@ -227,6 +227,16 @@ export type AnimatorRuntimeSpriteRenderer = Readonly<{
     sortingOrder: number;
 }>;
 
+export type AnimatorRuntimeMeshRenderer = Readonly<{
+    id: string;
+    gameObjectId: string;
+    enabled: boolean;
+    meshId: string | null;
+    materialIds: readonly (string | null)[];
+    sortingLayerId: number;
+    sortingOrder: number;
+}>;
+
 export type AnimatorRuntimeScene = Readonly<{
     transforms: readonly AnimatorRuntimeTransform[];
     gameObjects: readonly AnimatorRuntimeGameObject[];
@@ -234,6 +244,7 @@ export type AnimatorRuntimeScene = Readonly<{
     meshes: readonly AnimatorRuntimeMesh[];
     materials: readonly AnimatorRuntimeMaterial[];
     sprites: readonly AnimatorRuntimeSprite[];
+    meshRenderers: readonly AnimatorRuntimeMeshRenderer[];
     skinnedMeshRenderers: readonly AnimatorRuntimeSkinnedMeshRenderer[];
     spriteRenderers: readonly AnimatorRuntimeSpriteRenderer[];
     interactions: AnimatorRuntimeInteractions;
@@ -373,6 +384,7 @@ export type AnimatorRuntimeInteractions = Readonly<{
 }>;
 
 export type AnimatorRendererType =
+    | "MeshRenderer"
     | "SkinnedMeshRenderer"
     | "SpriteRenderer"
     | "ParticleSystemRenderer";
@@ -509,6 +521,7 @@ export class AnimatorBindingResolver {
     private readonly meshesById: Map<string, AnimatorRuntimeMesh>;
     private readonly materialsById: Map<string, AnimatorRuntimeMaterial>;
     private readonly spritesById: Map<string, AnimatorRuntimeSprite>;
+    private readonly meshRenderersByGameObjectId: Map<string, AnimatorRuntimeMeshRenderer[]>;
     private readonly skinnedRenderersByGameObjectId: Map<string, AnimatorRuntimeSkinnedMeshRenderer[]>;
     private readonly spriteRenderersByGameObjectId: Map<string, AnimatorRuntimeSpriteRenderer[]>;
     private readonly particleRenderersByGameObjectId: Map<string, AnimatorRuntimeParticleSystemRenderer[]>;
@@ -518,6 +531,7 @@ export class AnimatorBindingResolver {
         this.meshesById = AnimatorRuntimeUtils.indexUniqueById(scene.meshes, "Mesh");
         this.materialsById = AnimatorRuntimeUtils.indexUniqueById(scene.materials, "Material");
         this.spritesById = AnimatorRuntimeUtils.indexUniqueById(scene.sprites, "Sprite");
+        this.meshRenderersByGameObjectId = this.groupByGameObject(scene.meshRenderers);
         this.skinnedRenderersByGameObjectId = this.groupByGameObject(scene.skinnedMeshRenderers);
         this.spriteRenderersByGameObjectId = this.groupByGameObject(scene.spriteRenderers);
         this.particleRenderersByGameObjectId = this.groupByGameObject(scene.particleSystemRenderers);
@@ -650,7 +664,11 @@ export class AnimatorBindingResolver {
             return this.resolveRendererProperty(target.gameObjectId, binding);
 
         if (
-            (binding.typeId === this.SKINNED_MESH_RENDERER_TYPE_ID || binding.typeId === this.PARTICLE_SYSTEM_RENDERER_TYPE_ID) &&
+            (
+                binding.typeId === this.MESH_RENDERER_TYPE_ID ||
+                binding.typeId === this.SKINNED_MESH_RENDERER_TYPE_ID ||
+                binding.typeId === this.PARTICLE_SYSTEM_RENDERER_TYPE_ID
+            ) &&
             binding.customType === 0 &&
             !binding.isPPtrCurve &&
             attribute === this.HASH_ENABLED
@@ -930,6 +948,22 @@ export class AnimatorBindingResolver {
     }
 
     private requireRenderer(gameObjectId: string, typeId: number): RendererTarget {
+        if (typeId === this.MESH_RENDERER_TYPE_ID)
+        {
+            const matches = this.meshRenderersByGameObjectId.get(gameObjectId) ?? [];
+            if (matches.length !== 1)
+                throw new BindingResolutionError("The MeshRenderer target could not be resolved uniquely.");
+
+            const renderer = matches[0];
+
+            return {
+                rendererId: renderer.id,
+                rendererType: "MeshRenderer",
+                materialIds: renderer.materialIds,
+                meshId: renderer.meshId
+            };
+        }
+
         if (typeId === this.SKINNED_MESH_RENDERER_TYPE_ID)
         {
             const matches = this.skinnedRenderersByGameObjectId.get(gameObjectId) ?? [];
@@ -977,9 +1011,6 @@ export class AnimatorBindingResolver {
                 meshId: null
             };
         }
-
-        if (typeId === this.MESH_RENDERER_TYPE_ID)
-            throw new BindingResolutionError("This renderer type is not exported by runtime format.");
 
         throw new BindingResolutionError(`Unsupported renderer type ${typeId}.`);
     }

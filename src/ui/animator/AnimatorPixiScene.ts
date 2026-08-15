@@ -1,19 +1,23 @@
-import type { PreparedAnimatorSkinnedRenderer, PreparedAnimatorSpriteRenderer } from "./AnimatorRendererModel";
+import type { PreparedAnimatorSkinnedRenderer, PreparedAnimatorSpriteRenderer, PreparedAnimatorMeshRenderer } from "./AnimatorRendererModel";
 import type { AnimatorRuntimeFrameResult, AnimatorRuntimePackage } from "./AnimatorRuntimePackage";
 import type { AnimatorRuntimeMaterial, AnimatorRendererType } from "./AnimatorBindingResolver";
 import type { AnimatorProjectedSpriteRenderer } from "./AnimatorSpriteProjector";
 import type { PreparedPreviewSpriteGeometry } from "../../shared/characters";
-import type { AnimatorDeformedSkinnedMesh } from "./AnimatorMeshDeformer";
+import type { AnimatorProjectedMesh } from "./AnimatorMeshDeformer";
 
 import { AnimatorPixiParticleView } from "./AnimatorPixiParticleView";
 import { Container, Mesh, MeshGeometry, Texture } from "pixi.js";
 import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
 
+type AnimatorPixiMeshRenderer =
+    | PreparedAnimatorMeshRenderer
+    | PreparedAnimatorSkinnedRenderer;
+
 type AnimatorPixiMeshView = {
     display: Mesh<MeshGeometry>;
     geometry: MeshGeometry;
-    renderer: PreparedAnimatorSkinnedRenderer;
-    deformer: AnimatorDeformedSkinnedMesh;
+    renderer: AnimatorPixiMeshRenderer;
+    projection: AnimatorProjectedMesh;
     materialSlot: number;
     submeshOrder: number;
 };
@@ -83,7 +87,7 @@ export class AnimatorPixiScene {
         this.submeshStride = this.getMaximumSubmeshCount() + 1;
         this.sortingStride = (runtime.renderers.renderers.length + runtime.particleRenderers.renderers.length + 1) * this.submeshStride;
 
-        this.createSkinnedMeshViews();
+        this.createMeshViews();
         this.createSpriteViews();
         this.createFaceView(options.faceAssets ?? []);
 
@@ -144,7 +148,7 @@ export class AnimatorPixiScene {
         for (const view of this.meshViews)
         {
             if (view.display.visible)
-                includePositions(view.deformer.positions2d);
+                includePositions(view.projection.positions2d);
         }
 
         for (const view of this.spriteViews)
@@ -254,54 +258,55 @@ export class AnimatorPixiScene {
         this.root.destroy({ children: false });
     }
 
-    private createSkinnedMeshViews() {
+    private createMeshViews() {
+        for (const renderer of this.runtime.renderers.meshRenderers)
+            this.createMeshRendererViews(renderer, this.runtime.meshDeformer.requireRigid(renderer.id));
+
         for (const renderer of this.runtime.renderers.skinnedMeshRenderers)
+            this.createMeshRendererViews(renderer, this.runtime.meshDeformer.require(renderer.id));
+    }
+
+    private createMeshRendererViews(renderer: AnimatorPixiMeshRenderer, projection: AnimatorProjectedMesh) {
+        const mesh = renderer.mesh;
+        if (!mesh)
+            return;
+
+        if (!mesh.uv0)
+            throw new Error(`Mesh "${mesh.name}" has no texture coordinates.`);
+
+        const textureCoordinates = AnimatorRuntimeUtils.createTextureCoordinates(mesh.uv0);
+
+        for (const [submeshOrder, submesh] of mesh.submeshes.entries())
         {
-            const mesh = renderer.mesh;
-            if (!mesh)
-                continue;
+            if (submesh.materialSlot >= renderer.materials.length)
+                throw new Error(`Mesh "${mesh.name}" submesh ${submeshOrder} references an invalid material slot.`);
 
-            if (!mesh.uv0)
-                throw new Error(`Mesh "${mesh.name}" has no texture coordinates.`);
+            const geometry = new MeshGeometry({
+                positions: new Float32Array(projection.positions2d),
+                uvs: new Float32Array(textureCoordinates),
+                indices: new Uint32Array(submesh.indices),
+                shrinkBuffersToFit: false
+            });
 
-            const deformer = this.runtime.meshDeformer.meshes.get(renderer.id);
-            if (!deformer)
-                throw new Error(`Renderer "${renderer.id}" has no prepared mesh deformer.`);
+            geometry.batchMode = "no-batch";
 
-            const textureCoordinates = AnimatorRuntimeUtils.createTextureCoordinates(mesh.uv0);
+            const display = new Mesh({
+                geometry,
+                texture: Texture.EMPTY
+            });
 
-            for (const [submeshOrder, submesh] of mesh.submeshes.entries())
-            {
-                if (submesh.materialSlot >= renderer.materials.length)
-                    throw new Error(`Mesh "${mesh.name}" submesh ${submeshOrder} references an invalid material slot.`);
+            display.eventMode = "none";
 
-                const geometry = new MeshGeometry({
-                    positions: new Float32Array(deformer.positions2d),
-                    uvs: new Float32Array(textureCoordinates),
-                    indices: new Uint32Array(submesh.indices),
-                    shrinkBuffersToFit: false
-                });
+            this.meshViews.push({
+                display,
+                geometry,
+                renderer,
+                projection,
+                materialSlot: submesh.materialSlot,
+                submeshOrder
+            });
 
-                geometry.batchMode = "no-batch";
-
-                const display = new Mesh({
-                    geometry,
-                    texture: Texture.EMPTY
-                });
-
-                display.eventMode = "none";
-
-                this.meshViews.push({
-                    display,
-                    geometry,
-                    renderer,
-                    deformer,
-                    materialSlot: submesh.materialSlot,
-                    submeshOrder
-                });
-
-                this.root.addChild(display);
-            }
+            this.root.addChild(display);
         }
     }
 
@@ -399,20 +404,22 @@ export class AnimatorPixiScene {
     }
 
     private updateViews() {
-        this.updateSkinnedMeshViews();
+        this.updateMeshViews();
         this.updateSpriteViews();
         this.updateFaceView();
         this.updateParticleViews();
     }
 
-    private updateSkinnedMeshViews() {
+    private updateMeshViews() {
         for (const view of this.meshViews)
         {
-            const state = this.runtime.state.requireSkinnedMeshRenderer(view.renderer.id);
-            const texture = this.resolveMaterialTexture(view.renderer.id, "SkinnedMeshRenderer", view.materialSlot, state.materialIds[view.materialSlot] ?? null);
-            const color = this.resolveRendererColor(view.renderer.id, "SkinnedMeshRenderer", view.materialSlot);
+            const rendererType = view.renderer.kind;
+            const state = this.runtime.state.requireRenderer(view.renderer.id, rendererType);
 
-            view.display.visible = view.deformer.visible && texture !== null && color.alpha > 0;
+            const texture = this.resolveMaterialTexture(view.renderer.id, rendererType, view.materialSlot, state.materialIds[view.materialSlot] ?? null);
+            const color = this.resolveRendererColor(view.renderer.id, rendererType, view.materialSlot);
+
+            view.display.visible = view.projection.visible && texture !== null && color.alpha > 0;
             view.display.zIndex = state.sortingOrder * this.sortingStride + view.renderer.sourceOrder * this.submeshStride + view.submeshOrder;
             view.display.tint = color.tint;
             view.display.alpha = color.alpha;
@@ -420,10 +427,10 @@ export class AnimatorPixiScene {
             if (texture && view.display.texture !== texture)
                 view.display.texture = texture;
 
-            if (!view.deformer.visible)
+            if (!view.projection.visible)
                 continue;
 
-            view.geometry.positions.set(view.deformer.positions2d);
+            view.geometry.positions.set(view.projection.positions2d);
             view.geometry.getBuffer("aPosition").update();
         }
     }

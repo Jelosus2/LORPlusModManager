@@ -905,13 +905,13 @@ def export_animator_hitbox(
     collider_type = reader.type.name
 
     if collider_type == "BoxCollider":
-        center = typetree_vector(tree.get("m_Center"), ("x", "y"), f"{context} center")
+        center = typetree_vector(tree.get("m_Center"), ("x", "y", "z"), f"{context} center")
+        size = typetree_vector(tree.get("m_Size"), ("x", "y", "z"), f"{context} size")
     else:
         center = typetree_vector(tree.get("m_Offset"), ("x", "y"), f"{context} offset")
+        size = typetree_vector(tree.get("m_Size"), ("x", "y"), f"{context} size")
 
-    size = typetree_vector(tree.get("m_Size"), ("x", "y"), f"{context} size")
-
-    if size[0] <= 0 or size[1] <= 0:
+    if any(component < 0 for component in size) or sum(component > 0 for component in size) < 2:
         raise ValueError(f"{context} has an invalid size.")
 
     return {
@@ -1460,8 +1460,29 @@ def export_scene(environment: Any, writer: GeometryWriter, locator: str, texture
     sprite_renderers = []
     particle_systems = []
     particle_renderers = []
+    mesh_renderers = []
     mesh_readers = {}
     material_readers = {}
+    mesh_filter_mesh_ids_by_game_object: dict[str, str | None] = {}
+
+    for component_reader in component_readers.values():
+        if component_reader.type.name != "MeshFilter":
+            continue
+
+        mesh_filter = component_reader.parse_as_object()
+        game_object_id = object_id(mesh_filter.m_GameObject)
+
+        if game_object_id is None:
+            raise ValueError(f'MeshFilter "{component_reader.path_id}" has no GameObject.')
+
+        if game_object_id in mesh_filter_mesh_ids_by_game_object:
+            raise ValueError(f'GameObject "{game_object_id}" has multiple MeshFilters.')
+
+        mesh_id = object_id(mesh_filter.m_Mesh)
+        mesh_filter_mesh_ids_by_game_object[game_object_id] = mesh_id
+
+        if mesh_id:
+            mesh_readers[int(mesh_filter.m_Mesh.path_id)] = mesh_filter.m_Mesh.deref()
 
     for component_reader in component_readers.values():
         component_type = component_reader.type.name
@@ -1553,6 +1574,30 @@ def export_scene(environment: Any, writer: GeometryWriter, locator: str, texture
                 "flip": vector3(renderer.m_Flip)
             })
 
+        elif component_type == "MeshRenderer":
+            renderer = component_reader.parse_as_object()
+            game_object_id = object_id(renderer.m_GameObject)
+
+            if game_object_id is None:
+                raise ValueError(f'MeshRenderer "{component_reader.path_id}" has no GameObject.')
+
+            for material in renderer.m_Materials:
+                if material.path_id:
+                    material_readers[int(material.path_id)] = material.deref()
+
+            mesh_renderers.append({
+                "id": str(component_reader.path_id),
+                "gameObjectId": game_object_id,
+                "enabled": bool(renderer.m_Enabled),
+                "meshId": mesh_filter_mesh_ids_by_game_object.get(game_object_id),
+                "materialIds": [
+                    object_id(material)
+                    for material in renderer.m_Materials
+                ],
+                "sortingLayerId": int(renderer.m_SortingLayerID),
+                "sortingOrder": int(renderer.m_SortingOrder)
+            })
+
     if len(mesh_readers) > MAXIMUM_MESHES:
         raise ValueError("The Animator runtime contains too many meshes.")
 
@@ -1626,6 +1671,7 @@ def export_scene(environment: Any, writer: GeometryWriter, locator: str, texture
         "meshes": meshes,
         "materials": materials,
         "sprites": sprites,
+        "meshRenderers": mesh_renderers,
         "skinnedMeshRenderers": skinned_renderers,
         "spriteRenderers": sprite_renderers,
         "interactions": interactions,

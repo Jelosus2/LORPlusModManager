@@ -1,4 +1,10 @@
-import type { AnimatorRuntimeMaterial, AnimatorRuntimeScene, AnimatorRuntimeSkinnedMeshRenderer, AnimatorRuntimeSpriteRenderer } from "./AnimatorBindingResolver";
+import type {
+    AnimatorRuntimeMaterial,
+    AnimatorRuntimeScene,
+    AnimatorRuntimeSkinnedMeshRenderer,
+    AnimatorRuntimeSpriteRenderer,
+    AnimatorRuntimeMeshRenderer
+} from "./AnimatorBindingResolver";
 import type { PreparedAnimatorMesh, PreparedAnimatorSprite } from "./AnimatorPreparedGeometry";
 import type { AnimatorTransformHierarchy } from "./AnimatorTransformHierarchy";
 
@@ -8,6 +14,16 @@ import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
 export type PreparedAnimatorMaterialSlot = Readonly<{
     materialId: string | null;
     material: AnimatorRuntimeMaterial | null;
+}>;
+
+export type PreparedAnimatorMeshRenderer = Readonly<{
+    kind: "MeshRenderer";
+    id: string;
+    gameObjectId: string;
+    transformId: string;
+    sourceOrder: number;
+    mesh: PreparedAnimatorMesh | null;
+    materials: readonly PreparedAnimatorMaterialSlot[];
 }>;
 
 export type PreparedAnimatorSkinnedRenderer = Readonly<{
@@ -34,12 +50,14 @@ export type PreparedAnimatorSpriteRenderer = Readonly<{
 }>;
 
 export type PreparedAnimatorRenderer =
+    | PreparedAnimatorMeshRenderer
     | PreparedAnimatorSkinnedRenderer
     | PreparedAnimatorSpriteRenderer;
 
 export class AnimatorRendererModel {
     private readonly WEIGHT_EPSILON = 0.000001;
     private readonly materialsById: Map<string, AnimatorRuntimeMaterial>;
+    readonly meshRenderers: readonly PreparedAnimatorMeshRenderer[];
     readonly skinnedMeshRenderers: readonly PreparedAnimatorSkinnedRenderer[];
     readonly spriteRenderers: readonly PreparedAnimatorSpriteRenderer[];
     readonly renderers: readonly PreparedAnimatorRenderer[];
@@ -53,6 +71,14 @@ export class AnimatorRendererModel {
 
         const rendererIds = new Set<string>();
         let sourceOrder = 0;
+
+        this.meshRenderers = scene.meshRenderers
+            .filter((renderer) => renderer.meshId !== null && renderer.materialIds.some((materialId) => materialId !== null))
+            .map((renderer) => {
+                this.requireUniqueRendererId(renderer.id, rendererIds);
+
+                return this.prepareMeshRenderer(renderer, sourceOrder++);
+            });
 
         const skinnedMeshRenderers: PreparedAnimatorSkinnedRenderer[] = [];
 
@@ -77,9 +103,27 @@ export class AnimatorRendererModel {
         });
 
         this.renderers = [
+            ...this.meshRenderers,
             ...this.skinnedMeshRenderers,
             ...this.spriteRenderers
         ].sort((left, right) => left.sourceOrder - right.sourceOrder);
+    }
+
+    private prepareMeshRenderer(renderer: AnimatorRuntimeMeshRenderer, sourceOrder: number): PreparedAnimatorMeshRenderer {
+        const transformId = this.hierarchy.requireTransformIdForGameObject(renderer.gameObjectId);
+        const mesh = renderer.meshId
+            ? this.geometry.requireMesh(renderer.meshId)
+            : null;
+
+        return {
+            kind: "MeshRenderer",
+            id: renderer.id,
+            gameObjectId: renderer.gameObjectId,
+            transformId,
+            sourceOrder,
+            mesh,
+            materials: this.prepareMaterials(renderer.materialIds)
+        };
     }
 
     private prepareSkinnedMeshRenderer(renderer: AnimatorRuntimeSkinnedMeshRenderer, sourceOrder: number): PreparedAnimatorSkinnedRenderer {

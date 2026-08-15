@@ -1,7 +1,7 @@
 import type { PreparedAnimatorBlendShape, PreparedAnimatorBlendShapeFrame, PreparedAnimatorMesh } from "./AnimatorPreparedGeometry";
+import type { PreparedAnimatorSkinnedRenderer, PreparedAnimatorMeshRenderer } from "./AnimatorRendererModel";
 import type { AnimatorSkinnedMeshRendererState, AnimatorSceneState } from "./AnimatorSceneState";
 import type { AnimatorTransformHierarchy } from "./AnimatorTransformHierarchy";
-import type { PreparedAnimatorSkinnedRenderer } from "./AnimatorRendererModel";
 
 import { AnimatorMatrix4, type AnimatorMatrix4Array } from "./AnimatorMatrix4";
 import { AnimatorRendererModel } from "./AnimatorRendererModel";
@@ -11,7 +11,12 @@ type BlendShapeContribution = Readonly<{
     coefficient: number;
 }>;
 
-export class AnimatorDeformedSkinnedMesh {
+export interface AnimatorProjectedMesh {
+    readonly positions2d: Float32Array;
+    visible: boolean;
+}
+
+export class AnimatorDeformedSkinnedMesh implements AnimatorProjectedMesh {
     private readonly WEIGHT_EPSILON = 0.000001;
     private readonly FRAME_EPSILON = 0.000001;
     private readonly mesh: PreparedAnimatorMesh;
@@ -302,10 +307,62 @@ export class AnimatorDeformedSkinnedMesh {
     }
 }
 
+export class AnimatorProjectedRigidMesh implements AnimatorProjectedMesh {
+    private readonly mesh: PreparedAnimatorMesh;
+    readonly positions2d: Float32Array;
+    visible = false;
+
+    constructor(
+        readonly renderer: PreparedAnimatorMeshRenderer,
+        private readonly state: AnimatorSceneState,
+        private readonly hierarchy: AnimatorTransformHierarchy
+    ) {
+        if (!renderer.mesh)
+            throw new Error(`MeshRenderer "${renderer.id}" has no Mesh to project.`);
+
+        this.mesh = renderer.mesh;
+        this.positions2d = new Float32Array(this.mesh.vertexCount * 2);
+    }
+
+    update() {
+        const rendererState = this.state.requireMeshRenderer(this.renderer.id);
+
+        this.visible = rendererState.enabled && this.hierarchy.isGameObjectActiveInHierarchy(this.renderer.gameObjectId);
+        if (!this.visible)
+            return;
+
+        const worldMatrix = this.hierarchy.requireWorldMatrix(this.renderer.transformId);
+
+        for (let vertexIndex = 0; vertexIndex < this.mesh.vertexCount; vertexIndex++)
+        {
+            const sourceOffset = vertexIndex * 3;
+            const projectedOffset = vertexIndex * 2;
+            const x = this.mesh.positions[sourceOffset];
+            const y = this.mesh.positions[sourceOffset + 1];
+            const z = this.mesh.positions[sourceOffset + 2];
+
+            this.positions2d[projectedOffset] = worldMatrix[0] * x + worldMatrix[1] * y + worldMatrix[2] * z + worldMatrix[3];
+            this.positions2d[projectedOffset + 1] = worldMatrix[4] * x + worldMatrix[5] * y + worldMatrix[6] * z + worldMatrix[7];
+        }
+    }
+}
+
 export class AnimatorMeshDeformer {
+    readonly rigidMeshes = new Map<string, AnimatorProjectedRigidMesh>();
     readonly meshes = new Map<string, AnimatorDeformedSkinnedMesh>();
 
     constructor(renderers: AnimatorRendererModel, state: AnimatorSceneState, hierarchy: AnimatorTransformHierarchy) {
+        for (const renderer of renderers.meshRenderers)
+        {
+            if (!renderer.mesh)
+                continue;
+
+            if (this.rigidMeshes.has(renderer.id))
+                throw new Error(`MeshRenderer "${renderer.id}" has multiple mesh projectors.`);
+
+            this.rigidMeshes.set(renderer.id, new AnimatorProjectedRigidMesh(renderer, state, hierarchy));
+        }
+
         for (const renderer of renderers.skinnedMeshRenderers)
         {
             if (!renderer.mesh)
@@ -319,8 +376,19 @@ export class AnimatorMeshDeformer {
     }
 
     update() {
+        for (const mesh of this.rigidMeshes.values())
+            mesh.update();
+
         for (const mesh of this.meshes.values())
             mesh.update();
+    }
+
+    requireRigid(rendererId: string): AnimatorProjectedRigidMesh {
+        const mesh = this.rigidMeshes.get(rendererId);
+        if (!mesh)
+            throw new Error(`MeshRenderer "${rendererId}" has no mesh projector.`);
+
+        return mesh;
     }
 
     require(rendererId: string): AnimatorDeformedSkinnedMesh {

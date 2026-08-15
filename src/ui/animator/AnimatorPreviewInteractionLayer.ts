@@ -1,7 +1,7 @@
 import type { AnimatorRuntimeHitbox } from "./AnimatorBindingResolver";
 import type { AnimatorRuntimePackage } from "./AnimatorRuntimePackage";
 
-import { Container, Graphics, Matrix, Rectangle } from "pixi.js";
+import { Container, Graphics, Polygon } from "pixi.js";
 import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
 
 export type AnimatorPreviewInteractionKind =
@@ -13,11 +13,17 @@ type AnimatorPreviewInteractionOptions = Readonly<{
     onTriggered?: (kind: AnimatorPreviewInteractionKind) => void;
 }>;
 
+type ProjectedPoint = Readonly<{
+    x: number;
+    y: number;
+}>;
+
 type AnimatorHitboxView = Readonly<{
     definition: AnimatorRuntimeHitbox;
+    kind: AnimatorPreviewInteractionKind;
     root: Container;
     graphic: Graphics;
-    matrix: Matrix;
+    color: number;
 }>;
 
 export class AnimatorPreviewInteractionLayer {
@@ -69,8 +75,7 @@ export class AnimatorPreviewInteractionLayer {
 
             const world = this.runtime.hierarchy.requireWorldMatrixForGameObject(view.definition.gameObjectId);
 
-            view.matrix.set(world[0], world[4], world[1], world[5], world[3], world[7]);
-            view.root.setFromMatrix(view.matrix);
+            this.updateHitboxGeometry(view, world);
         }
     }
 
@@ -94,17 +99,8 @@ export class AnimatorPreviewInteractionLayer {
         this.validateHitbox(hitbox);
 
         const color = kind === "special" ? 0xe5a06d  : 0x91b8cf;
-        const x = hitbox.center[0] - hitbox.size[0] / 2;
-        const y = hitbox.center[1] - hitbox.size[1] / 2;
-        const width = hitbox.size[0];
-        const height = hitbox.size[1];
 
-        const graphic = new Graphics()
-            .rect(x, y, width, height)
-            .fill({ color, alpha: kind === "special" ? 0.14 : 0.09 })
-            .stroke({ color, alpha: 0.95, width: 1, pixelLine: true });
-
-        graphic.hitArea = new Rectangle(x, y, width, height);
+        const graphic = new Graphics();
         graphic.eventMode = "static";
         graphic.cursor = "pointer";
 
@@ -128,25 +124,135 @@ export class AnimatorPreviewInteractionLayer {
 
         this.views.push({
             definition: hitbox,
+            kind,
             root,
             graphic,
-            matrix: new Matrix()
+            color
         });
     }
 
     private validateHitbox(hitbox: AnimatorRuntimeHitbox) {
-        if (
-            hitbox.center.length < 2 ||
-            hitbox.size.length < 2 ||
-            !Number.isFinite(hitbox.center[0]) ||
-            !Number.isFinite(hitbox.center[1]) ||
-            !Number.isFinite(hitbox.size[0]) ||
-            !Number.isFinite(hitbox.size[1]) ||
-            hitbox.size[0] <= 0 ||
-            hitbox.size[1] <= 0
-        )
-        {
+        const requiredDimensions = hitbox.type === "BoxCollider"
+            ? 3
+            : 2;
+
+        if (hitbox.center.length < requiredDimensions || hitbox.size.length < requiredDimensions)
             throw new Error(`Animator hitbox "${hitbox.id}" has invalid geometry.`);
+
+        let positiveDimensions = 0;
+
+        for (let i = 0; i < requiredDimensions; i++)
+        {
+            const center = hitbox.center[i];
+            const size = hitbox.size[i];
+
+            if (!Number.isFinite(center) || !Number.isFinite(size) || size < 0)
+                throw new Error(`Animator hitbox "${hitbox.id}" has invalid geometry.`);
+
+            if (size > 0)
+                positiveDimensions++;
         }
+
+        if (positiveDimensions < 2)
+            throw new Error(`Animator hitbox "${hitbox.id}" has invalid geometry.`);
+    }
+
+    private updateHitboxGeometry(view: AnimatorHitboxView, world: ArrayLike<number>) {
+        const hull = this.projectHitbox(view.definition, world);
+        if (hull.length < 3)
+            throw new Error(`Animator hitbox "${view.definition.id}" has a degenerate projection.`);
+
+        const points = hull.flatMap((point) => [point.x, point.y]);
+
+        view.graphic
+            .clear()
+            .poly(points, true)
+            .fill({ color: view.color, alpha: view.kind === "special" ? 0.14 : 0.09 })
+            .stroke({ color: view.color, alpha: 0.95, width: 1, pixelLine: true });
+
+        view.graphic.hitArea = new Polygon(points);
+    }
+
+    private projectHitbox(hitbox: AnimatorRuntimeHitbox, world: ArrayLike<number>): readonly ProjectedPoint[] {
+        const centerX = hitbox.center[0];
+        const centerY = hitbox.center[1];
+        const centerZ = hitbox.type === "BoxCollider"
+            ? hitbox.center[2]
+            : 0;
+
+        const halfX = hitbox.size[0] / 2;
+        const halfY = hitbox.size[1] / 2;
+        const halfZ = hitbox.type === "BoxCollider"
+            ? hitbox.size[2] / 2
+            : 0;
+
+        const zSigns = hitbox.type === "BoxCollider"
+            ? [-1, 1]
+            : [0];
+
+        const projected: ProjectedPoint[] = [];
+
+        for (const xSign of [-1, 1])
+        {
+            for (const ySign of [-1, 1])
+            {
+                for (const zSign of zSigns)
+                {
+                    const x = centerX + halfX * xSign;
+                    const y = centerY + halfY * ySign;
+                    const z = centerZ + halfZ * zSign;
+
+                    projected.push({
+                        x: world[0] * x + world[1] * y + world[2] * z + world[3],
+                        y: world[4] * x + world[5] * y + world[6] * z + world[7]
+                    });
+                }
+            }
+        }
+
+        return this.createConvexHull(projected);
+    }
+
+    private createConvexHull(points: readonly ProjectedPoint[]): readonly ProjectedPoint[] {
+        const sorted = [...points].sort((left, right) =>
+            left.x === right.x
+                ? left.y - right.y
+                : left.x - right.x
+        );
+
+        const unique = sorted.filter((point, index) => index === 0 || point.x !== sorted[index - 1].x || point.y !== sorted[index - 1].y);
+        if (unique.length <= 2)
+            return unique;
+
+        const cross = (origin: ProjectedPoint, first: ProjectedPoint, second: ProjectedPoint) => (
+            (first.x - origin.x) * (second.y - origin.y) - (first.y - origin.y) * (second.x - origin.x)
+        );
+
+        const lower: ProjectedPoint[] = [];
+
+        for (const point of unique)
+        {
+            while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0)
+                lower.pop();
+
+            lower.push(point);
+        }
+
+        const upper: ProjectedPoint[] = [];
+
+        for (let i = unique.length - 1; i >= 0; i--)
+        {
+            const point = unique[i];
+
+            while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0)
+                upper.pop();
+
+            upper.push(point);
+        }
+
+        lower.pop();
+        upper.pop();
+
+        return [...lower, ...upper];
     }
 }

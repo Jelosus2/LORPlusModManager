@@ -41,13 +41,16 @@ export type AnimatorSpriteRendererState = {
     texturePropertyOverrides: Map<number, Map<string, string | null>>;
 };
 
-export type AnimatorParticleSystemRendererState = {
+export type AnimatorSimpleRendererState = {
     enabled: boolean;
     materialIds: (string | null)[];
     sortingOrder: number;
     materialPropertyOverrides: AnimatorMaterialPropertyOverrides;
     texturePropertyOverrides: Map<number, Map<string, string | null>>;
 };
+
+export type AnimatorMeshRendererState = AnimatorSimpleRendererState;
+export type AnimatorParticleSystemRendererState = AnimatorSimpleRendererState;
 
 export type AnimatorRendererState =
     | AnimatorSkinnedMeshRendererState
@@ -65,6 +68,7 @@ export class AnimatorSceneState {
     private readonly meshesById: Map<string, AnimatorRuntimeMesh>;
     readonly transforms = new Map<string, AnimatorTransformState>();
     readonly gameObjects = new Map<string, AnimatorGameObjectState>();
+    readonly meshRenderers = new Map<string, AnimatorMeshRendererState>();
     readonly skinnedMeshRenderers = new Map<string, AnimatorSkinnedMeshRendererState>();
     readonly spriteRenderers = new Map<string, AnimatorSpriteRendererState>();
     readonly particleSystemRenderers = new Map<string, AnimatorParticleSystemRendererState>();
@@ -87,6 +91,19 @@ export class AnimatorSceneState {
 
         for (const gameObject of this.scene.gameObjects)
             this.requireGameObject(gameObject.id).active = gameObject.active;
+
+        for (const renderer of this.scene.meshRenderers)
+        {
+            const state = this.requireMeshRenderer(renderer.id);
+
+            state.enabled = renderer.enabled;
+            state.sortingOrder = renderer.sortingOrder;
+
+            this.copyNullableStrings(state.materialIds, renderer.materialIds);
+
+            state.materialPropertyOverrides.clear();
+            state.texturePropertyOverrides.clear();
+        }
 
         for (const renderer of this.scene.skinnedMeshRenderers)
         {
@@ -158,6 +175,14 @@ export class AnimatorSceneState {
         return state;
     }
 
+    requireMeshRenderer(id: string): AnimatorMeshRendererState {
+        const state = this.meshRenderers.get(id);
+        if (!state)
+            throw new Error(`MeshRenderer "${id}" does not exist in the scene state.`);
+
+        return state;
+    }
+
     requireSkinnedMeshRenderer(id: string): AnimatorSkinnedMeshRendererState {
         const state = this.skinnedMeshRenderers.get(id);
         if (!state)
@@ -185,6 +210,8 @@ export class AnimatorSceneState {
     requireRenderer(id: string, type: AnimatorRendererType): AnimatorRendererState {
         switch (type)
         {
+            case "MeshRenderer":
+                return this.requireMeshRenderer(id);
             case "SkinnedMeshRenderer":
                 return this.requireSkinnedMeshRenderer(id);
             case "SpriteRenderer":
@@ -336,6 +363,20 @@ export class AnimatorSceneState {
 
             this.gameObjects.set(gameObject.id, {
                 active: gameObject.active
+            });
+        }
+
+        for (const renderer of this.scene.meshRenderers)
+        {
+            if (this.meshRenderers.has(renderer.id))
+                throw new Error(`MeshRenderer "${renderer.id}" is duplicated.`);
+
+            this.meshRenderers.set(renderer.id, {
+                enabled: renderer.enabled,
+                materialIds: [...renderer.materialIds],
+                sortingOrder: renderer.sortingOrder,
+                materialPropertyOverrides: new Map(),
+                texturePropertyOverrides: new Map()
             });
         }
 

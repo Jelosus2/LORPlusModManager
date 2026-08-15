@@ -203,7 +203,7 @@ export class UnityWorkerClient {
 
         if (
             response.bundleName !== bundleName ||
-            response.formatVersion !== 13 ||
+            response.formatVersion !== 15 ||
             response.locator !== locator ||
             !TypeCheck.isValidArray(response.files, 1024) ||
             response.files.length === 0 ||
