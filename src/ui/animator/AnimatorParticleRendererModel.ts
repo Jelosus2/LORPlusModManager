@@ -14,6 +14,7 @@ export type PreparedAnimatorParticleRenderer = Readonly<{
     sortingLayerId: number;
     sortingOrder: number;
     renderMode: 0 | 4;
+    scalingMode: 0 | 1;
     mesh: PreparedAnimatorMesh | null;
     materialId: string;
     materialSlot: number;
@@ -120,28 +121,49 @@ export class AnimatorParticleRendererModel {
         if (renderer.renderAlignment !== 0 && renderer.renderAlignment !== 2)
             throw new Error(`Render alignment ${renderer.renderAlignment} is unsupported.`);
 
-        const distinctMaterialIds = [...new Set(renderer.materialIds.filter((materialId): materialId is string => materialId !== null))];
-        if (distinctMaterialIds.length !== 1)
-            throw new Error("Exactly one distinct particle material is required.");
+        const materialCandidates: {
+            materialId: string;
+            materialSlot: number;
+            material: AnimatorRuntimeMaterial;
+            textureId: string;
+        }[] = [];
 
-        const materialId = distinctMaterialIds[0];
-        if (!materialId)
-            throw new Error("Its particle material is missing.");
+        const seenMaterialIds = new Set<string>();
 
-        const materialSlot = renderer.materialIds.findIndex((candidate) => candidate === materialId);
-        if (materialSlot < 0)
-            throw new Error("Its particle material slot is missing.");
+        for (const [materialSlot, materialId] of renderer.materialIds.entries())
+        {
+            if (!materialId || seenMaterialIds.has(materialId))
+                continue;
 
-        const material = materialsById.get(materialId);
-        if (!material)
-            throw new Error(`Material "${materialId}" is missing.`);
+            seenMaterialIds.add(materialId);
 
-        const textureProperty =
-            material.textureProperties.find((property) => property.name === "_MainTex" && property.textureId !== null) ??
-            material.textureProperties.find((property) => property.textureId !== null);
+            const material = materialsById.get(materialId);
+            if (!material)
+                throw new Error(`Material "${materialId}" is missing.`);
 
-        if (!textureProperty?.textureId)
-            throw new Error(`Material "${material.name}" has no texture.`);
+            const textureProperty =
+                material.textureProperties.find((property) => property.name === "_MainTex" && property.textureId !== null) ??
+                material.textureProperties.find((property) => property.textureId !== null);
+
+            if (!textureProperty?.textureId)
+                continue;
+
+            materialCandidates.push({
+                materialId,
+                materialSlot,
+                material,
+                textureId: textureProperty.textureId
+            });
+        }
+
+        if (materialCandidates.length > 1)
+            throw new Error("Multiple textured particle materials are unsupported.");
+
+        const selectedMaterial = materialCandidates[0];
+        if (!selectedMaterial)
+            throw new Error("It has no particle material with a texture.");
+
+        const { materialId, materialSlot, material, textureId } = selectedMaterial;
 
         if (
             !Number.isFinite(renderer.minimumParticleSize) ||
@@ -174,10 +196,11 @@ export class AnimatorParticleRendererModel {
             sortingLayerId: renderer.sortingLayerId,
             sortingOrder: renderer.sortingOrder,
             renderMode,
+            scalingMode: simulator.scalingMode,
             mesh,
             materialId,
             materialSlot,
-            textureId: textureProperty.textureId,
+            textureId,
             material,
             simulator,
             minimumParticleSize: renderer.minimumParticleSize,

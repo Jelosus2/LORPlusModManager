@@ -88,7 +88,7 @@ export class AnimatorRuntimePackage {
         this.meshDeformer = new AnimatorMeshDeformer(this.renderers, this.state, this.hierarchy);
         this.spriteProjector = new AnimatorSpriteProjector(manifest.scene, this.renderers.spriteRenderers, this.preparedGeometry, this.state, this.hierarchy);
         this.poseEvaluator = new AnimatorPoseEvaluator(manifest.scene, this.animationSampler);
-        this.poseApplier = new AnimatorScenePoseApplier(this.state);
+        this.poseApplier = new AnimatorScenePoseApplier(this.state, this.particleSimulatorsById);
         this.puppet2dIkSolver = new AnimatorPuppet2DIkSolver(manifest.scene, this.state, this.hierarchy);
 
         this.indexTextures();

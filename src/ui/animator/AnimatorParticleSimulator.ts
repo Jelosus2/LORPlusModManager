@@ -138,7 +138,7 @@ type EmissionModule = Readonly<{
     bursts: readonly EmissionBurst[];
 }>;
 
-type ParticleShapeType = 0 | 4 | 5;
+type ParticleShapeType = 0 | 4 | 5 | 12;
 
 type ParticleShapeModule = Readonly<{
     enabled: boolean;
@@ -186,6 +186,7 @@ export class AnimatorParticleSimulator {
     private readonly particles: MutableParticle[] = [];
     private random!: AnimatorParticleRandom;
     private rateOverTimeSample!: AnimatorParticleCurveSample;
+    private shapeRadius: number;
     private nextParticleId = 1;
     private delayRemaining = 0;
     private cycleTime = 0;
@@ -200,6 +201,7 @@ export class AnimatorParticleSimulator {
         this.initialModule = this.parseInitialModule(definition);
         this.emissionModule = this.parseEmissionModule(definition);
         this.shapeModule = this.parseShapeModule(definition);
+        this.shapeRadius = this.shapeModule.radius;
         this.sizeOverLifetime = this.parseSizeOverLifetimeModule(definition);
         this.rotationOverLifetime = this.parseRotationOverLifetimeModule(definition);
         this.velocityLimitModule = this.parseVelocityLimitModule(definition);
@@ -234,6 +236,14 @@ export class AnimatorParticleSimulator {
         });
     }
 
+    get scalingMode(): 0 | 1 {
+        return this.definition.scalingMode as 0 | 1;
+    }
+
+    get currentShapeRadius(): number {
+        return this.shapeRadius;
+    }
+
     getParticles(): readonly AnimatorParticleSnapshot[] {
         return this.particles.map((particle) => Object.freeze({
             id: particle.id,
@@ -266,6 +276,10 @@ export class AnimatorParticleSimulator {
 
         if (this.playing && this.delayRemaining <= this.EPSILON)
             this.emitBurstsAtTime(0);
+    }
+
+    resetAnimationOverrides() {
+        this.shapeRadius = this.shapeModule.radius;
     }
 
     play() {
@@ -312,6 +326,13 @@ export class AnimatorParticleSimulator {
         this.gravityAcceleration.x = acceleration.x;
         this.gravityAcceleration.y = acceleration.y;
         this.gravityAcceleration.z = acceleration.z;
+    }
+
+    setShapeRadius(value: number) {
+        if (!Number.isFinite(value))
+            throw new Error("Particle shape radius must be finite.");
+
+        this.shapeRadius = Math.max(0, value);
     }
 
     private updateParticles(deltaSeconds: number) {
@@ -615,8 +636,8 @@ export class AnimatorParticleSimulator {
                     z: vertical
                 };
 
-                const minimumRadius = this.shapeModule.radius * (1 - this.shapeModule.radiusThickness);
-                const radius = Math.cbrt(AnimatorRuntimeUtils.lerp(minimumRadius ** 3, this.shapeModule.radius ** 3, random.nextFloat()));
+                const minimumRadius = this.shapeRadius * (1 - this.shapeModule.radiusThickness);
+                const radius = Math.cbrt(AnimatorRuntimeUtils.lerp(minimumRadius ** 3, this.shapeRadius ** 3, random.nextFloat()));
 
                 localPosition = {
                     x: unit.x * radius * this.shapeModule.scale.x,
@@ -631,12 +652,12 @@ export class AnimatorParticleSimulator {
             case 4:
             {
                 const azimuth = random.nextFloat() * this.shapeModule.arcRadians;
-                const minimumRadius = this.shapeModule.radius * (1 - this.shapeModule.radiusThickness);
+                const minimumRadius = this.shapeRadius * (1 - this.shapeModule.radiusThickness);
 
                 const radius = Math.sqrt(
                     AnimatorRuntimeUtils.lerp(
                         minimumRadius * minimumRadius,
-                        this.shapeModule.radius * this.shapeModule.radius,
+                        this.shapeRadius * this.shapeRadius,
                         random.nextFloat()
                     )
                 );
@@ -650,8 +671,8 @@ export class AnimatorParticleSimulator {
                     z: 0
                 };
 
-                const radialFraction = this.shapeModule.radius > this.EPSILON
-                    ? radius / this.shapeModule.radius
+                const radialFraction = this.shapeRadius > this.EPSILON
+                    ? radius / this.shapeRadius
                     : 0;
 
                 const coneSine = Math.sin(this.shapeModule.angleRadians) * radialFraction;
@@ -666,6 +687,7 @@ export class AnimatorParticleSimulator {
             }
 
             case 5:
+            {
                 localPosition = {
                     x: (random.nextFloat() - 0.5) * this.shapeModule.scale.x,
                     y: (random.nextFloat() - 0.5) * this.shapeModule.scale.y,
@@ -674,6 +696,41 @@ export class AnimatorParticleSimulator {
 
                 localDirection = { x: 0, y: 0, z: 1 };
                 break;
+            }
+
+            case 12:
+            {
+                const width = Math.abs(this.shapeModule.scale.x);
+                const height = Math.abs(this.shapeModule.scale.y);
+                const depth = Math.abs(this.shapeModule.scale.z);
+
+                const xFaceArea = height * depth;
+                const yFaceArea = width * depth;
+                const zFaceArea = width * height;
+                const totalFaceArea = xFaceArea + yFaceArea + zFaceArea;
+
+                localPosition = {
+                    x: (random.nextFloat() - 0.5) * width,
+                    y: (random.nextFloat() - 0.5) * height,
+                    z: (random.nextFloat() - 0.5) * depth
+                };
+
+                if (totalFaceArea > this.EPSILON)
+                {
+                    const selectedFace = random.nextFloat() * totalFaceArea;
+                    const side = random.nextFloat() < 0.5 ? -0.5 : 0.5;
+
+                    if (selectedFace < xFaceArea)
+                        localPosition.x = side * width;
+                    else if (selectedFace < xFaceArea + yFaceArea)
+                        localPosition.y = side * height;
+                    else
+                        localPosition.z = side * depth;
+                }
+
+                localDirection = { x: 0, y: 0, z: 1 };
+                break;
+            }
         }
 
         const position = this.rotateEulerDegrees(localPosition, this.shapeModule.rotation);
@@ -822,7 +879,7 @@ export class AnimatorParticleSimulator {
         }
 
         const type = AnimatorRuntimeUtils.requireIntegerProperty(module, "type", context);
-        if (type !== 0 && type !== 4 && type !== 5)
+        if (type !== 0 && type !== 4 && type !== 5 && type !== 12)
             throw new Error(`${context} uses unsupported shape type ${type}.`);
 
         const placementMode = AnimatorRuntimeUtils.requireIntegerProperty(module, "placementMode", context);
@@ -1268,7 +1325,7 @@ export class AnimatorParticleSimulator {
         if (definition.moveWithTransform !== 0)
             throw new Error(`ParticleSystem "${definition.id}" does not use local simulation space.`);
 
-        if (definition.scalingMode !== 0)
+        if (definition.scalingMode !== 0 && definition.scalingMode !== 1)
             throw new Error(`ParticleSystem "${definition.id}" uses an unsupported scaling mode.`);
     }
 

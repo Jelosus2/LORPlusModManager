@@ -1,4 +1,5 @@
 import type { AnimatorEvaluatedPose, AnimatorLayerPose, AnimatorNumericPoseChannel, AnimatorObjectReferencePoseChannel } from "./AnimatorPoseEvaluator";
+import type { AnimatorParticleSimulator } from "./AnimatorParticleSimulator";
 import type { AnimatorMaterialPropertyValue } from "./AnimatorSceneState";
 
 import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
@@ -13,10 +14,13 @@ export type AnimatorPoseApplicationResult = Readonly<{
 export class AnimatorScenePoseApplier {
     private readonly EPSILON = 0.000001;
 
-    constructor(readonly state: AnimatorSceneState) {}
+    constructor(readonly state: AnimatorSceneState, private readonly particleSimulators: ReadonlyMap<string, AnimatorParticleSimulator>) {}
 
     apply(poses: readonly AnimatorEvaluatedPose[]): AnimatorPoseApplicationResult {
         this.state.reset();
+
+        for (const simulator of this.particleSimulators.values())
+            simulator.resetAnimationOverrides();
 
         const diagnostics: string[] = [];
         const diagnosticKeys = new Set<string>();
@@ -93,6 +97,10 @@ export class AnimatorScenePoseApplier {
                 case "materialReference":
                 case "spriteReference":
                     throw new Error("An object-reference binding was sampled as a numeric channel.");
+
+                case "particleShapeRadius":
+                    this.applyParticleShapeRadius(channel);
+                    break;
             }
         }
     }
@@ -420,6 +428,22 @@ export class AnimatorScenePoseApplier {
 
         this.applyVectorComponents(euler, channel, ["x", "y", "z"]);
         this.copyValues(destination, this.eulerZxyToQuaternion(euler));
+    }
+
+    private applyParticleShapeRadius(channel: AnimatorNumericPoseChannel) {
+        const property = channel.binding.property;
+        if (property.kind !== "particleShapeRadius")
+            throw new Error("The particle shape-radius channel is invalid.");
+
+        const sample = this.getScalarSample(channel);
+        if (!sample)
+            return;
+
+        const simulator = this.particleSimulators.get(property.particleSystemId);
+        if (!simulator)
+            throw new Error(`ParticleSystem "${property.particleSystemId}" has no simulator.`);
+
+        simulator.setShapeRadius(this.lerp(simulator.currentShapeRadius, sample.value, sample.weight));
     }
 
     private getScalarSample(channel: AnimatorNumericPoseChannel): Readonly<{ value: number; weight: number; }> | null {

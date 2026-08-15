@@ -447,6 +447,10 @@ export type ResolvedAnimatorProperty =
     | Readonly<{
         kind: "spriteReference";
         rendererId: string;
+    }>
+    | Readonly<{
+        kind: "particleShapeRadius";
+        particleSystemId: string;
     }>;
 
 export type ResolvedAnimatorBinding = Readonly<{
@@ -507,6 +511,7 @@ export class AnimatorBindingResolver {
     private readonly HASH_IS_ACTIVE = UnityCrc32.generateCrc("m_IsActive");
     private readonly HASH_ENABLED = UnityCrc32.generateCrc("m_Enabled");
     private readonly HASH_SORTING_ORDER = UnityCrc32.generateCrc("m_SortingOrder");
+    private readonly HASH_PARTICLE_SHAPE_RADIUS = UnityCrc32.generateCrc("ShapeModule.radius.value");
     private readonly SPRITE_COLOR_COMPONENTS = new Map<number, "r" | "g" | "b" | "a">([
         [UnityCrc32.generateCrc("m_Color.r"), "r"],
         [UnityCrc32.generateCrc("m_Color.g"), "g"],
@@ -525,6 +530,7 @@ export class AnimatorBindingResolver {
     private readonly skinnedRenderersByGameObjectId: Map<string, AnimatorRuntimeSkinnedMeshRenderer[]>;
     private readonly spriteRenderersByGameObjectId: Map<string, AnimatorRuntimeSpriteRenderer[]>;
     private readonly particleRenderersByGameObjectId: Map<string, AnimatorRuntimeParticleSystemRenderer[]>;
+    private readonly particleSystemsByGameObjectId: Map<string, AnimatorRuntimeParticleSystem[]>;
 
     constructor(private readonly scene: AnimatorRuntimeScene) {
         this.transformsByGameObjectId = this.indexTransformsByGameObject();
@@ -535,6 +541,7 @@ export class AnimatorBindingResolver {
         this.skinnedRenderersByGameObjectId = this.groupByGameObject(scene.skinnedMeshRenderers);
         this.spriteRenderersByGameObjectId = this.groupByGameObject(scene.spriteRenderers);
         this.particleRenderersByGameObjectId = this.groupByGameObject(scene.particleSystemRenderers);
+        this.particleSystemsByGameObjectId = this.groupByGameObject(scene.particleSystems);
     }
 
     resolve(animatorId: string, clip: AnimatorBindingClip): AnimatorBindingResolution {
@@ -564,7 +571,7 @@ export class AnimatorBindingResolver {
 
             try
             {
-                const target = this.requireTarget(targetsByHash, siblingTargetHashes, binding.pathHash, clip.name, binding.bindingIndex);
+                const target = this.requireTarget(targetsByHash, siblingTargetHashes, binding, clip.name);
 
                 bindings[binding.bindingIndex] = {
                     bindingIndex: binding.bindingIndex,
@@ -695,7 +702,7 @@ export class AnimatorBindingResolver {
         }
 
         if (binding.typeId === this.PARTICLE_SYSTEM_TYPE_ID || binding.customType === this.CUSTOM_PARTICLE_SYSTEM)
-            throw new BindingResolutionError("ParticleSystem animation fields are not supported yet.");
+            return this.resolveParticleSystemProperty(target.gameObjectId, binding);
 
         throw new BindingResolutionError(`Unsupported binding type ${binding.typeId}, custom type ${binding.customType}, attribute ${attribute}.`);
     }
@@ -947,6 +954,30 @@ export class AnimatorBindingResolver {
         throw new BindingResolutionError(`Unsupported animated object-reference type "${reference.type}".`);
     }
 
+    private resolveParticleSystemProperty(gameObjectId: string, binding: AnimatorBindingDefinition): ResolvedAnimatorProperty {
+        if (binding.typeId !== this.PARTICLE_SYSTEM_TYPE_ID || binding.customType !== this.CUSTOM_PARTICLE_SYSTEM || binding.isPPtrCurve)
+            throw new BindingResolutionError("The ParticleSystem binding uses an unsupported curve type.");
+
+        const attribute = binding.attributeHash >>> 0;
+        if (attribute !== this.HASH_PARTICLE_SHAPE_RADIUS)
+            throw new BindingResolutionError(`Unsupported ParticleSystem attribute ${attribute}.`);
+
+        const particleSystems = this.particleSystemsByGameObjectId.get(gameObjectId) ?? [];
+
+        if (particleSystems.length !== 1) {
+            throw new BindingResolutionError(
+                particleSystems.length === 0
+                    ? "The ParticleSystem binding has no target component."
+                    : "The ParticleSystem binding has an ambiguous target component."
+            );
+        }
+
+        return {
+            kind: "particleShapeRadius",
+            particleSystemId: particleSystems[0].id
+        };
+    }
+
     private requireRenderer(gameObjectId: string, typeId: number): RendererTarget {
         if (typeId === this.MESH_RENDERER_TYPE_ID)
         {
@@ -1095,15 +1126,29 @@ export class AnimatorBindingResolver {
     private requireTarget(
         targetsByHash: Map<number, AnimatorRuntimeTransform[]>,
         siblingTargetHashes: ReadonlySet<number>,
-        pathHash: number,
-        clipName: string,
-        bindingIndex: number
+        binding: AnimatorBindingDefinition,
+        clipName: string
     ): AnimatorRuntimeTransform {
-        const normalizedHash = pathHash >>> 0;
+        const bindingIndex = binding.bindingIndex;
+        const normalizedHash = binding.pathHash >>> 0;
         const matches = targetsByHash.get(normalizedHash) ?? [];
 
         if (matches.length === 0 && siblingTargetHashes.has(normalizedHash))
             throw new IgnoredBindingResolutionError("The binding belongs to another Animator using the same controller.");
+
+        if (matches.length === 0 && this.isIgnorableMissingSpriteColorBinding(binding))
+            throw new IgnoredBindingResolutionError("The binding targets a removed SpriteRenderer color property.");
+
+        if (
+            matches.length === 0 &&
+            binding.typeId === this.TRANSFORM_TYPE_ID &&
+            !binding.isPPtrCurve &&
+            [0, 4].includes(binding.customType) &&
+            [1, 2, 3, 4].includes(binding.attributeHash >>> 0)
+        )
+        {
+            throw new IgnoredBindingResolutionError("The Transform binding targets an object that no longer exists.");
+        }
 
         if (matches.length !== 1)
         {
@@ -1145,5 +1190,14 @@ export class AnimatorBindingResolver {
         }
 
         return result;
+    }
+
+    private isIgnorableMissingSpriteColorBinding(binding: AnimatorBindingDefinition): boolean {
+        return (
+            binding.typeId === this.SPRITE_RENDERER_TYPE_ID &&
+            binding.customType === 0 &&
+            !binding.isPPtrCurve &&
+            this.SPRITE_COLOR_COMPONENTS.has(binding.attributeHash >>> 0)
+        );
     }
 }

@@ -293,7 +293,7 @@ export class AnimatorPixiParticleView {
     }
 
     private updateSpriteTransform(sprite: Sprite, particle: AnimatorParticleSnapshot, texture: Texture, flipX: number, flipY: number) {
-        const world = this.hierarchy.requireWorldMatrix(this.renderer.transformId);
+        const world = this.hierarchy.requireParticleWorldMatrix(this.renderer.transformId, this.renderer.scalingMode)
         const horizontalScale = flipX * particle.size.x / texture.width;
         const verticalScale = -flipY * particle.size.y / texture.height;
 
@@ -371,7 +371,7 @@ export class AnimatorPixiParticleView {
         if (!mesh)
             throw new Error(`ParticleSystemRenderer "${this.renderer.id}" has no Mesh.`);
 
-        const world = this.hierarchy.requireWorldMatrix(this.renderer.transformId);
+        const world = this.hierarchy.requireParticleWorldMatrix(this.renderer.transformId, this.renderer.scalingMode);
 
         for (let vertexIndex = 0; vertexIndex < mesh.vertexCount; vertexIndex++)
         {

@@ -12,6 +12,8 @@ export class AnimatorTransformHierarchy {
     private readonly activeInHierarchy = new Map<string, boolean>();
     private readonly localMatrix = AnimatorMatrix4.createAnimatorMatrix4();
     private readonly worldRotations = new Map<string, number[]>();
+    private readonly localScalingParticleMatrices = new Map<string, AnimatorMatrix4Array>();
+    private readonly particleWorldPosition = [0, 0, 0];
     readonly rootTransformId: string;
 
     constructor(scene: AnimatorRuntimeScene) {
@@ -31,6 +33,7 @@ export class AnimatorTransformHierarchy {
             this.worldMatrices.set(transform.id, AnimatorMatrix4.createAnimatorMatrix4());
             this.worldRotations.set(transform.id, AnimatorQuaternion.createIdentity());
             this.activeInHierarchy.set(transform.id, false);
+            this.localScalingParticleMatrices.set(transform.id, AnimatorMatrix4.createAnimatorMatrix4());
         }
 
         const hierarchy = this.validateHierarchy();
@@ -68,6 +71,14 @@ export class AnimatorTransformHierarchy {
                 AnimatorQuaternion.normalizeInto(worldRotation, transformState.localRotation);
             }
 
+            const localScalingParticleMatrix = this.requireParticleWorldMatrix(transformId, 1);
+
+            this.particleWorldPosition[0] = worldMatrix[3];
+            this.particleWorldPosition[1] = worldMatrix[7];
+            this.particleWorldPosition[2] = worldMatrix[11];
+
+            AnimatorMatrix4.setAnimatorMatrix4FromTrs(localScalingParticleMatrix, this.particleWorldPosition, worldRotation, transformState.localScale);
+
             const ownActive = state.requireGameObject(transform.gameObjectId).active;
             const parentActive = transform.parentId
                 ? this.isActiveInHierarchy(transform.parentId)
@@ -103,6 +114,17 @@ export class AnimatorTransformHierarchy {
             throw new Error(`GameObject "${gameObjectId}" has no Transform.`);
 
         return transformId;
+    }
+
+    requireParticleWorldMatrix(transformId: string, scalingMode: 0 | 1): AnimatorMatrix4Array {
+        if (scalingMode === 0)
+            return this.requireWorldMatrix(transformId);
+
+        const matrix = this.localScalingParticleMatrices.get(transformId);
+        if (!matrix)
+            throw new Error(`Transform "${transformId}" has no evaluated local-scaling particle matrix.`);
+
+        return matrix;
     }
 
     isActiveInHierarchy(transformId: string): boolean {

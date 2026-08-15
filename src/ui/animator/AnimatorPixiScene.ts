@@ -133,7 +133,7 @@ export class AnimatorPixiScene {
             for (let offset = 0; offset < positions.length; offset += 2)
             {
                 const x = positions[offset];
-                const y = -positions[offset + 1];
+                const y = positions[offset + 1];
 
                 if (!Number.isFinite(x) || !Number.isFinite(y))
                     continue;

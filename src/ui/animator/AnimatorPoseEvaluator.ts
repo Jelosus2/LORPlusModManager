@@ -437,9 +437,7 @@ export class AnimatorPoseEvaluator {
         };
     }
 
-    private createBindingKey(
-        binding: ResolvedAnimatorBinding
-    ): string {
+    private createBindingKey(binding: ResolvedAnimatorBinding): string {
         const property = binding.property;
 
         switch (property.kind)
@@ -514,6 +512,12 @@ export class AnimatorPoseEvaluator {
                 return JSON.stringify([
                     property.kind,
                     property.rendererId
+                ]);
+
+            case "particleShapeRadius":
+                return JSON.stringify([
+                    property.kind,
+                    property.particleSystemId
                 ]);
         }
     }
