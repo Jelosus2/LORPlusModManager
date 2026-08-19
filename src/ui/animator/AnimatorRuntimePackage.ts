@@ -57,6 +57,7 @@ export class AnimatorRuntimePackage {
     private readonly particleInitializationDiagnostics: string[] = [];
     private readonly decoration1States = new Map<string, boolean>();
     private readonly decoration2States = new Map<string, boolean>();
+    private readonly particleActiveStates = new Map<string, boolean>();
     private rPlusEnabled = false;
     readonly state: AnimatorSceneState;
     readonly hierarchy: AnimatorTransformHierarchy;
@@ -214,11 +215,12 @@ export class AnimatorRuntimePackage {
             AnimatorRuntimeUtils.appendUniqueString(diagnostics, diagnosticKeys, diagnostic);
 
         this.hierarchy.update(this.state);
+        this.synchronizeParticleActivation();
 
         for (const diagnostic of this.puppet2dIkSolver.solve())
             AnimatorRuntimeUtils.appendUniqueString(diagnostics, diagnosticKeys, diagnostic);
 
-        for (const diagnostic of this.updateParticleGravity())
+        for (const diagnostic of this.updateParticleSimulationFrames())
             AnimatorRuntimeUtils.appendUniqueString(diagnostics, diagnosticKeys, diagnostic);
 
         this.meshDeformer.update();
@@ -231,6 +233,8 @@ export class AnimatorRuntimePackage {
     }
 
     reset(): AnimatorRuntimeFrameResult {
+        this.particleActiveStates.clear();
+
         for (const controller of this.controllerEvaluatorsByAnimatorId.values())
             controller.reset();
 
@@ -565,17 +569,39 @@ export class AnimatorRuntimePackage {
         }
     }
 
-    private updateParticleGravity(): readonly string[] {
+    private updateParticleSimulationFrames(): readonly string[] {
         for (const simulator of this.particleSimulatorsById.values())
         {
             const transformId = this.hierarchy.requireTransformIdForGameObject(simulator.gameObjectId);
+            const worldMatrix = this.hierarchy.requireParticleWorldMatrix(transformId, simulator.scalingMode);
             const worldRotation = this.hierarchy.requireWorldRotation(transformId);
             const gravity = this.rotateWorldVectorIntoLocal(worldRotation, 0, AnimatorRuntimePackage.WORLD_GRAVITY_Y, 0);
 
-            simulator.setLocalGravityAcceleration(gravity);
+            simulator.setEmitterFrame(worldMatrix, gravity);
         }
 
         return [];
+    }
+
+    private synchronizeParticleActivation() {
+        for (const simulator of this.particleSimulatorsById.values())
+        {
+            const active = this.hierarchy.isGameObjectActiveInHierarchy(simulator.gameObjectId);
+            const previouslyActive = this.particleActiveStates.get(simulator.particleSystemId);
+
+            this.particleActiveStates.set(simulator.particleSystemId, active);
+
+            if (!active)
+            {
+                if (previouslyActive !== false)
+                    simulator.stop(true);
+
+                continue;
+            }
+
+            if (previouslyActive === false && simulator.definition.playOnAwake)
+                simulator.reset();
+        }
     }
 
     private rotateWorldVectorIntoLocal(worldRotation: readonly number[], worldX: number, worldY: number, worldZ: number): { x: number; y: number; z: number; } {

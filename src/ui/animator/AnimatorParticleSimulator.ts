@@ -1,5 +1,6 @@
 import type { AnimatorParticleColor, AnimatorParticleCurveSample, AnimatorParticleGradientSample } from "./AnimatorParticleValues";
 import type { AnimatorRuntimeParticleSystem, AnimatorRuntimeParticleValue } from "./AnimatorBindingResolver";
+import type { AnimatorMatrix4Source } from "./AnimatorMatrix4";
 
 import { AnimatorParticleMinMaxCurve, AnimatorParticleMinMaxGradient, AnimatorParticleRandom, DEFAULT_ANIMATOR_PARTICLE_RANDOM_SEED } from "./AnimatorParticleValues";
 import { AnimatorRuntimeUtils, type AnimatorRuntimeRecord } from "./AnimatorRuntimeUtils";
@@ -24,6 +25,7 @@ export type AnimatorParticleSnapshot = Readonly<{
     initialColor: AnimatorParticleColor;
     color: AnimatorParticleColor;
     textureFrame: number;
+    simulationMatrix: Float64Array | null;
 }>;
 
 type RotationOverLifetimeModule = Readonly<{
@@ -77,6 +79,11 @@ type SizeOverLifetimeSamples = Readonly<{
     z: AnimatorParticleCurveSample | null;
 }>;
 
+type ParticleSimulationFrame = Readonly<{
+    matrix: Float64Array;
+    gravityAcceleration: AnimatorParticleVector3;
+}>;
+
 type MutableVector3 = {
     x: number;
     y: number;
@@ -104,6 +111,7 @@ type MutableParticle = {
     textureFrame: number;
     textureFrameOverLifetime: AnimatorParticleCurveSample | null;
     textureStartFrame: AnimatorParticleCurveSample | null;
+    worldSimulationFrame: ParticleSimulationFrame | null;
 };
 
 type ParticleObject = AnimatorRuntimeRecord<AnimatorRuntimeParticleValue>;
@@ -187,6 +195,8 @@ export class AnimatorParticleSimulator {
     private random!: AnimatorParticleRandom;
     private rateOverTimeSample!: AnimatorParticleCurveSample;
     private shapeRadius: number;
+    private emitterWorldFrame: ParticleSimulationFrame | null = null;
+    private initialBurstPending = false;
     private nextParticleId = 1;
     private delayRemaining = 0;
     private cycleTime = 0;
@@ -244,6 +254,10 @@ export class AnimatorParticleSimulator {
         return this.shapeRadius;
     }
 
+    get simulationSpace(): 0 | 1 {
+        return this.definition.moveWithTransform as 0 | 1;
+    }
+
     getParticles(): readonly AnimatorParticleSnapshot[] {
         return this.particles.map((particle) => Object.freeze({
             id: particle.id,
@@ -258,7 +272,8 @@ export class AnimatorParticleSimulator {
             size: Object.freeze({ ...particle.size }),
             initialColor: particle.initialColor,
             color: particle.color,
-            textureFrame: particle.textureFrame
+            textureFrame: particle.textureFrame,
+            simulationMatrix: particle.worldSimulationFrame?.matrix ?? null
         }));
     }
 
@@ -273,9 +288,8 @@ export class AnimatorParticleSimulator {
         this.rateOverTimeSample = this.emissionModule.rateOverTime.createSample(this.random);
         this.delayRemaining = Math.max(0, this.startDelay.createSample(this.random).evaluate(0));
         this.playing = this.definition.playOnAwake;
-
-        if (this.playing && this.delayRemaining <= this.EPSILON)
-            this.emitBurstsAtTime(0);
+        this.emitterWorldFrame = null;
+        this.initialBurstPending = this.playing && this.delayRemaining <= this.EPSILON;
     }
 
     resetAnimationOverrides() {
@@ -292,6 +306,7 @@ export class AnimatorParticleSimulator {
 
     stop(clearParticles = true) {
         this.playing = false;
+        this.initialBurstPending = false;
         this.cycleTime = 0;
         this.emissionRemainder = 0;
 
@@ -302,6 +317,13 @@ export class AnimatorParticleSimulator {
     advance(deltaSeconds: number) {
         if (!Number.isFinite(deltaSeconds) || deltaSeconds < 0)
             throw new Error("Particle simulation delta must be finite and non-negative.");
+
+        if (this.initialBurstPending)
+        {
+            this.requireWorldSimulationFrameIfNeeded();
+            this.emitBurstsAtTime(0);
+            this.initialBurstPending = false;
+        }
 
         let remaining = Math.min(deltaSeconds, this.MAXIMUM_ADVANCE_SECONDS) * this.definition.simulationSpeed;
 
@@ -335,6 +357,27 @@ export class AnimatorParticleSimulator {
         this.shapeRadius = Math.max(0, value);
     }
 
+    setEmitterFrame(worldMatrix: AnimatorMatrix4Source, localGravityAcceleration: AnimatorParticleVector3) {
+        if (worldMatrix.length !== 16 || Array.from(worldMatrix).some((component) => !Number.isFinite(component)))
+            throw new Error(`ParticleSystem "${this.definition.id}" received an invalid emitter matrix.`);
+
+        if (!Number.isFinite(localGravityAcceleration.x) || !Number.isFinite(localGravityAcceleration.y) || !Number.isFinite(localGravityAcceleration.z))
+            throw new Error(`ParticleSystem "${this.definition.id}" received invalid gravity.`);
+
+        this.setLocalGravityAcceleration(localGravityAcceleration);
+
+        this.emitterWorldFrame = this.simulationSpace === 1
+            ? Object.freeze({
+                matrix: new Float64Array(worldMatrix),
+                gravityAcceleration: Object.freeze({
+                    x: localGravityAcceleration.x,
+                    y: localGravityAcceleration.y,
+                    z: localGravityAcceleration.z
+                })
+            })
+            : null;
+    }
+
     private updateParticles(deltaSeconds: number) {
         for (let i = this.particles.length - 1; i >= 0; i--)
         {
@@ -360,10 +403,11 @@ export class AnimatorParticleSimulator {
             }
 
             const gravityModifier = particle.gravity.evaluate(normalizedAge);
+            const gravityAcceleration = particle.worldSimulationFrame?.gravityAcceleration ?? this.gravityAcceleration;
             const gravityVelocity = {
-                x: this.gravityAcceleration.x * gravityModifier * deltaSeconds,
-                y: this.gravityAcceleration.y * gravityModifier * deltaSeconds,
-                z: this.gravityAcceleration.z * gravityModifier * deltaSeconds
+                x: gravityAcceleration.x * gravityModifier * deltaSeconds,
+                y: gravityAcceleration.y * gravityModifier * deltaSeconds,
+                z: gravityAcceleration.z * gravityModifier * deltaSeconds
             };
 
             const noiseVelocity = this.sampleNoiseVelocity(particle, normalizedAge);
@@ -555,6 +599,7 @@ export class AnimatorParticleSimulator {
 
         const initialColor = this.initialModule.color.createSample(random).evaluate(0);
         const shape = this.sampleShape(random);
+        const worldSimulationFrame = this.requireWorldSimulationFrameIfNeeded();
 
         const particle: MutableParticle = {
             id: this.nextParticleId++,
@@ -603,7 +648,8 @@ export class AnimatorParticleSimulator {
             colorOverLifetime: this.colorOverLifetime?.createSample(random) ?? null,
             textureFrame: 0,
             textureFrameOverLifetime: this.textureSheetModule?.frameOverLifetime.createSample(random) ?? null,
-            textureStartFrame: this.textureSheetModule?.startFrame.createSample(random) ?? null
+            textureStartFrame: this.textureSheetModule?.startFrame.createSample(random) ?? null,
+            worldSimulationFrame
         };
 
         this.updateParticlePresentation(particle, 0);
@@ -1322,8 +1368,8 @@ export class AnimatorParticleSimulator {
         if (!Number.isFinite(definition.simulationSpeed) || definition.simulationSpeed < 0)
             throw new Error(`ParticleSystem "${definition.id}" has an invalid simulation speed.`);
 
-        if (definition.moveWithTransform !== 0)
-            throw new Error(`ParticleSystem "${definition.id}" does not use local simulation space.`);
+        if (definition.moveWithTransform !== 0 && definition.moveWithTransform !== 1)
+            throw new Error(`ParticleSystem "${definition.id}" uses unsupported custom simulation space.`);
 
         if (definition.scalingMode !== 0 && definition.scalingMode !== 1)
             throw new Error(`ParticleSystem "${definition.id}" uses an unsupported scaling mode.`);
@@ -1350,6 +1396,16 @@ export class AnimatorParticleSimulator {
             throw new Error(`${context}.${property} must be a boolean.`);
 
         return value;
+    }
+
+    private requireWorldSimulationFrameIfNeeded(): ParticleSimulationFrame | null {
+        if (this.simulationSpace === 0)
+            return null;
+
+        if (!this.emitterWorldFrame)
+            throw new Error(`ParticleSystem "${this.definition.id}" has no evaluated world-space emission frame.`);
+
+        return this.emitterWorldFrame;
     }
 
     private rotateEulerDegrees(vector: MutableVector3, rotation: AnimatorParticleVector3): MutableVector3 {

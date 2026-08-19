@@ -20,7 +20,14 @@ type AnimatorPixiMeshView = {
     projection: AnimatorProjectedMesh;
     materialSlot: number;
     submeshOrder: number;
+    sourceUv0: Float32Array;
+    textureTransform: number[];
 };
+
+type AnimatorResolvedMaterialTexture = Readonly<{
+    texture: Texture;
+    propertyName: string;
+}>;
 
 type AnimatorPixiSpriteView = {
     root: Container;
@@ -279,7 +286,7 @@ export class AnimatorPixiScene {
         for (const [submeshOrder, submesh] of mesh.submeshes.entries())
         {
             if (submesh.materialSlot >= renderer.materials.length)
-                throw new Error(`Mesh "${mesh.name}" submesh ${submeshOrder} references an invalid material slot.`);
+                continue;
 
             const geometry = new MeshGeometry({
                 positions: new Float32Array(projection.positions2d),
@@ -303,7 +310,9 @@ export class AnimatorPixiScene {
                 renderer,
                 projection,
                 materialSlot: submesh.materialSlot,
-                submeshOrder
+                submeshOrder,
+                sourceUv0: textureCoordinates,
+                textureTransform: [Number.NaN, Number.NaN, Number.NaN, Number.NaN]
             });
 
             this.root.addChild(display);
@@ -417,7 +426,8 @@ export class AnimatorPixiScene {
             const state = this.runtime.state.requireRenderer(view.renderer.id, rendererType);
             const materialId = state.materialIds[view.materialSlot] ?? null;
 
-            const texture = this.resolveMaterialTexture(view.renderer.id, rendererType, view.materialSlot, materialId);
+            const resolvedTexture = this.resolveMaterialTexture(view.renderer.id, rendererType, view.materialSlot, materialId);
+            const texture = resolvedTexture?.texture ?? null;
             const color = this.resolveRendererColor(view.renderer.id, rendererType, view.materialSlot);
 
             view.display.visible = view.projection.visible && texture !== null && color.alpha > 0;
@@ -426,8 +436,13 @@ export class AnimatorPixiScene {
             view.display.alpha = color.alpha;
             view.display.blendMode = this.resolveMaterialBlendMode(materialId);
 
-            if (texture && view.display.texture !== texture)
-                view.display.texture = texture;
+            if (resolvedTexture)
+            {
+                if (view.display.texture !== resolvedTexture.texture)
+                    view.display.texture = resolvedTexture.texture;
+
+                this.updateMeshTextureCoordinates(view, rendererType, resolvedTexture.propertyName);
+            }
 
             if (!view.projection.visible)
                 continue;
@@ -509,7 +524,7 @@ export class AnimatorPixiScene {
             this.runtime.hierarchy.isGameObjectActiveInHierarchy(view.renderer.gameObjectId) && color.alpha > 0;
 
         view.display.visible = visible;
-        view.display.zIndex = state.sortingOrder * this.sortingStride + view.renderer.sourceOrder * this.submeshStride;
+        view.display.zIndex = state.sortingOrder * this.sortingStride - 1;
         view.display.tint = color.tint;
         view.display.alpha = color.alpha;
 
@@ -531,6 +546,28 @@ export class AnimatorPixiScene {
 
         view.geometry.positions.set(view.projectedPositions);
         view.geometry.getBuffer("aPosition").update();
+    }
+
+    private updateMeshTextureCoordinates(view: AnimatorPixiMeshView, rendererType: AnimatorRendererType, texturePropertyName: string) {
+        const value = this.runtime.state.getMaterialPropertyValue(
+            view.renderer.id,
+            rendererType,
+            view.materialSlot,
+            `${texturePropertyName}_ST`,
+            "textureTransform"
+        );
+
+        const transform = Array.isArray(value) && value.length === 4
+            ? value
+            : [1, 1, 0, 0];
+
+        if (view.textureTransform.every((component, index) => component === transform[index]))
+            return;
+
+        AnimatorRuntimeUtils.writeTransformedTextureCoordinates(view.geometry.uvs, view.sourceUv0, transform);
+        view.geometry.getBuffer("aUV").update();
+
+        AnimatorRuntimeUtils.copyFiniteVector(view.textureTransform, transform, 4, `Renderer "${view.renderer.id}" texture transform`);
     }
 
     private rebuildSpriteGeometry(view: AnimatorPixiSpriteView) {
@@ -604,7 +641,12 @@ export class AnimatorPixiScene {
         ]);
     }
 
-    private resolveMaterialTexture(rendererId: string, rendererType: AnimatorRendererType, materialSlot: number, materialId: string | null): Texture | null {
+    private resolveMaterialTexture(
+        rendererId: string,
+        rendererType: AnimatorRendererType,
+        materialSlot: number,
+        materialId: string | null
+    ): AnimatorResolvedMaterialTexture | null {
         if (!materialId)
             return null;
 
@@ -620,9 +662,12 @@ export class AnimatorPixiScene {
             return null;
 
         const textureId = this.runtime.state.getMaterialTextureId(rendererId, rendererType, materialSlot, textureProperty.name);
-
-        return textureId
+        const texture = textureId
             ? this.texturesById.get(textureId) ?? null
+            : null;
+
+        return texture
+            ? { texture, propertyName: textureProperty.name }
             : null;
     }
 

@@ -86,7 +86,8 @@ export class AnimatorPuppet2DIkSolver {
         const cosine = (upperLength * upperLength - lowerLength * lowerLength + clampedDistance * clampedDistance) / (2 * clampedDistance * upperLength);
 
         const angle = Math.acos(cosine) * 180 / Math.PI;
-        const direction = handle.flip ? 1 : -1;
+        const handleState = this.state.requirePuppet2DIkHandle(handle.componentId);
+        const direction = handleState.flip ? 1 : -1;
         const topToControl = this.subtract(controlPosition, topPosition);
         const topLookRotation = AnimatorQuaternion.lookRotation(topToControl, handle.aimDirection);
 
@@ -102,7 +103,9 @@ export class AnimatorPuppet2DIkSolver {
             topWorldRotation = AnimatorQuaternion.multiplied(topLookRotation, AnimatorQuaternion.angleAxis(largerMiddleJoint ? -90 : 90, handle.upDirection));
         }
 
-        this.setWorldRotation(handle.topJointTransformId, topWorldRotation);
+        const mirroredPlanarJointSpace = this.usesMirroredPlanarJointSpace(handle);
+
+        this.setWorldRotation(handle.topJointTransformId, topWorldRotation, mirroredPlanarJointSpace);
         this.hierarchy.update(this.state);
 
         middlePosition = this.getWorldPosition(handle.middleJointTransformId);
@@ -116,12 +119,12 @@ export class AnimatorPuppet2DIkSolver {
             AnimatorQuaternion.angleAxis(90, handle.upDirection)
         );
 
-        this.setWorldRotation(handle.middleJointTransformId, middleWorldRotation);
+        this.setWorldRotation(handle.middleJointTransformId, middleWorldRotation, mirroredPlanarJointSpace);
         this.hierarchy.update(this.state);
 
         const bottomWorldRotation = AnimatorQuaternion.multiplied(this.hierarchy.requireWorldRotation(handle.controlTransformId), handle.offsetRotation);
 
-        this.setWorldRotation(handle.bottomJointTransformId, bottomWorldRotation);
+        this.setWorldRotation(handle.bottomJointTransformId, bottomWorldRotation, mirroredPlanarJointSpace);
 
         if (handle.scaleBottomJoint)
         {
@@ -180,7 +183,13 @@ export class AnimatorPuppet2DIkSolver {
         }
     }
 
-    private setWorldRotation(transformId: string, worldRotation: readonly number[]) {
+    private setWorldRotation(transformId: string, worldRotation: readonly number[], mirroredPlanarJointSpace: boolean) {
+        if (mirroredPlanarJointSpace)
+        {
+            this.setMirroredPlanarWorldRotation(transformId, worldRotation);
+            return;
+        }
+
         const transform = this.requireTransform(transformId);
         let localRotation = AnimatorQuaternion.normalized(worldRotation);
 
@@ -191,6 +200,39 @@ export class AnimatorPuppet2DIkSolver {
         }
 
         const destination = this.state.requireTransform(transformId).localRotation;
+        AnimatorRuntimeUtils.copyFiniteVector(destination, localRotation, destination.length, "Puppet2D IK vector");
+    }
+
+    private setMirroredPlanarWorldRotation(transformId: string, worldRotation: readonly number[]) {
+        const transform = this.requireTransform(transformId);
+        if (!transform.parentId)
+            throw new Error(`Mirrored Puppet2D IK Transform "${transformId}" has no parent.`);
+
+        const normalizedRotation = AnimatorQuaternion.normalized(worldRotation);
+        const x = normalizedRotation[0];
+        const y = normalizedRotation[1];
+        const z = normalizedRotation[2];
+        const w = normalizedRotation[3];
+
+        const worldDirectionX = 2 * (x * y - z * w);
+        const worldDirectionY = 1 - 2 * (x * x + z * z);
+
+        const parentWorld = this.hierarchy.requireWorldMatrix(transform.parentId);
+        const determinant = parentWorld[0] * parentWorld[5] - parentWorld[1] * parentWorld[4];
+
+        if (Math.abs(determinant) <= this.EPSILON)
+            throw new Error(`Mirrored Puppet2D IK Transform "${transformId}" has a singular parent transform.`);
+
+        const localDirectionX = (parentWorld[5] * worldDirectionX - parentWorld[1] * worldDirectionY) / determinant;
+        const localDirectionY = (-parentWorld[4] * worldDirectionX + parentWorld[0] * worldDirectionY) / determinant;
+
+        if (Math.hypot(localDirectionX, localDirectionY) <= this.EPSILON)
+            throw new Error(`Mirrored Puppet2D IK Transform "${transformId}" has an invalid local direction.`);
+
+        const localAngle = Math.atan2(-localDirectionX, localDirectionY) * 180 / Math.PI;
+        const localRotation = AnimatorQuaternion.angleAxis(localAngle, this.FORWARD);
+        const destination = this.state.requireTransform(transformId).localRotation;
+
         AnimatorRuntimeUtils.copyFiniteVector(destination, localRotation, destination.length, "Puppet2D IK vector");
     }
 
@@ -231,5 +273,10 @@ export class AnimatorPuppet2DIkSolver {
             throw new Error(`Puppet2D IK references missing Transform "${transformId}".`);
 
         return transform;
+    }
+
+    private usesMirroredPlanarJointSpace(handle: AnimatorRuntimePuppet2DIkHandle): boolean {
+        const initialTopScale = handle.scaleStart[0];
+        return initialTopScale[0] * initialTopScale[1] < 0;
     }
 }

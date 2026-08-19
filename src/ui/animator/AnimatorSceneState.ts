@@ -12,6 +12,10 @@ export type AnimatorGameObjectState = {
     active: boolean;
 };
 
+export type AnimatorPuppet2DIkHandleState = {
+    flip: boolean;
+};
+
 export type AnimatorMaterialPropertyValue =
     | number
     | number[];
@@ -68,6 +72,7 @@ export class AnimatorSceneState {
     private readonly meshesById: Map<string, AnimatorRuntimeMesh>;
     readonly transforms = new Map<string, AnimatorTransformState>();
     readonly gameObjects = new Map<string, AnimatorGameObjectState>();
+    readonly puppet2dIkHandles = new Map<string, AnimatorPuppet2DIkHandleState>();
     readonly meshRenderers = new Map<string, AnimatorMeshRendererState>();
     readonly skinnedMeshRenderers = new Map<string, AnimatorSkinnedMeshRendererState>();
     readonly spriteRenderers = new Map<string, AnimatorSpriteRendererState>();
@@ -91,6 +96,9 @@ export class AnimatorSceneState {
 
         for (const gameObject of this.scene.gameObjects)
             this.requireGameObject(gameObject.id).active = gameObject.active;
+
+        for (const handle of this.scene.puppet2dIkHandles)
+            this.requirePuppet2DIkHandle(handle.componentId).flip = handle.flip;
 
         for (const renderer of this.scene.meshRenderers)
         {
@@ -203,6 +211,14 @@ export class AnimatorSceneState {
         const state = this.particleSystemRenderers.get(id);
         if (!state)
             throw new Error(`ParticleSystemRenderer "${id}" does not exist in the scene state.`);
+
+        return state;
+    }
+
+    requirePuppet2DIkHandle(id: string): AnimatorPuppet2DIkHandleState {
+        const state = this.puppet2dIkHandles.get(id);
+        if (!state)
+            throw new Error(`Puppet2D IK handle "${id}" does not exist in the scene state.`);
 
         return state;
     }
@@ -363,6 +379,16 @@ export class AnimatorSceneState {
 
             this.gameObjects.set(gameObject.id, {
                 active: gameObject.active
+            });
+        }
+
+        for (const handle of this.scene.puppet2dIkHandles)
+        {
+            if (this.puppet2dIkHandles.has(handle.componentId))
+                throw new Error(`Puppet2D IK handle "${handle.componentId}" is duplicated.`);
+
+            this.puppet2dIkHandles.set(handle.componentId, {
+                flip: handle.flip
             });
         }
 

@@ -82,6 +82,27 @@ export class AnimatorRuntimeUtils {
         return result;
     }
 
+    static writeTransformedTextureCoordinates(
+        destination: Float32Array<ArrayBufferLike>,
+        source: Float32Array<ArrayBufferLike>,
+        transform: readonly number[]
+    ) {
+        if (destination.length !== source.length || source.length % 2 !== 0)
+            throw new Error("Texture-coordinate buffers are incompatible.");
+
+        const values = AnimatorRuntimeUtils.requireFiniteVector(transform, 4, "Texture transform");
+        const scaleX = values[0];
+        const scaleY = values[1];
+        const offsetX = values[2];
+        const offsetY = values[3];
+
+        for (let offset = 0; offset < source.length; offset += 2)
+        {
+            destination[offset] = source[offset] * scaleX + offsetX;
+            destination[offset + 1] = source[offset + 1] * scaleY + 1 - scaleY - offsetY;
+        }
+    }
+
     static requireMaterialSlot(renderer: Readonly<{ materialIds: readonly unknown[] }>, materialSlot: number) {
         if (!Number.isInteger(materialSlot) || materialSlot < 0 || materialSlot >= renderer.materialIds.length)
             throw new Error("An animation targets an invalid material slot.");

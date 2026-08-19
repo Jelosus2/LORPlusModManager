@@ -94,6 +94,15 @@ def decode_streamed_frames(streamed_clip: Any, maximum_curve_count: int) -> list
             "keys": keys
         })
 
+    if len(frames) == 1:
+        frame = frames[0]
+        time = frame["time"]
+
+        if curve_count == 0 and not frame["keys"] and math.isinf(time) and time > 0:
+            return frames
+
+        raise ValueError("The streamed animation is missing its sentinel frames.")
+
     if len(frames) < 2:
         raise ValueError("The streamed animation is missing its sentinel frames.")
 

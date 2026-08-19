@@ -519,6 +519,12 @@ export class AnimatorPoseEvaluator {
                     property.kind,
                     property.particleSystemId
                 ]);
+
+            case "puppet2dIkFlip":
+                return JSON.stringify([
+                    property.kind,
+                    property.componentId
+                ]);
         }
     }
 

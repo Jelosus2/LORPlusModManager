@@ -259,11 +259,9 @@ export class AnimatorControllerEvaluator {
 
         for (const layer of this.layers)
         {
-            layer.currentStateIndex = layer.machine.defaultStateIndex;
+            layer.currentStateIndex = this.resolveStableEntryStateIndex(layer.machine);
             layer.currentTime = 0;
             layer.transition = null;
-
-            this.settleImmediateTransitions(layer);
         }
     }
 
@@ -271,8 +269,28 @@ export class AnimatorControllerEvaluator {
         if (!Number.isFinite(deltaSeconds) || deltaSeconds < 0)
             throw new Error("Animator update time must be a non-negative finite number.");
 
+        const activeTriggerHashes = this.controller.parameters
+            .filter((parameter) => parameter.type === "trigger" && this.parameterValues.get(parameter.nameHash) === true)
+            .map((parameter) => parameter.nameHash);
+
+        const consumedTriggerHashes = new Set<number>();
+
         for (const layer of this.layers)
+        {
+            for (const triggerHash of activeTriggerHashes)
+                this.parameterValues.set(triggerHash, true);
+
             this.updateLayer(layer, deltaSeconds);
+
+            for (const triggerHash of activeTriggerHashes)
+            {
+                if (this.parameterValues.get(triggerHash) !== true)
+                    consumedTriggerHashes.add(triggerHash);
+            }
+        }
+
+        for (const triggerHash of activeTriggerHashes)
+            this.parameterValues.set(triggerHash, !consumedTriggerHashes.has(triggerHash));
 
         return this.getClipSamples();
     }
@@ -599,6 +617,36 @@ export class AnimatorControllerEvaluator {
 
         this.resolvedMotions.set(key, motion);
         return motion;
+    }
+
+    private resolveStableEntryStateIndex(machine: AnimatorStateMachineDefinition): number | null {
+        let stateIndex = machine.defaultStateIndex;
+        const visitedStates = new Set<number>();
+
+        while (stateIndex !== null)
+        {
+            if (visitedStates.has(stateIndex))
+                return stateIndex;
+
+            visitedStates.add(stateIndex);
+
+            const state = this.requireState(machine, stateIndex);
+            if (state.loop)
+                return stateIndex;
+
+            const completionTransition = state.transitions.find((transition) =>
+                transition.destinationStateIndex !== null &&
+                transition.hasExitTime &&
+                transition.conditions.length === 0
+            );
+
+            if (!completionTransition)
+                return stateIndex;
+
+            stateIndex = completionTransition.destinationStateIndex;
+        }
+
+        return null;
     }
 
     private appendStateSample(

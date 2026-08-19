@@ -1,6 +1,6 @@
 import type { AnimatorEvaluatedPose, AnimatorLayerPose, AnimatorNumericPoseChannel, AnimatorObjectReferencePoseChannel } from "./AnimatorPoseEvaluator";
+import type { AnimatorMaterialPropertyValue, AnimatorTransformState } from "./AnimatorSceneState";
 import type { AnimatorParticleSimulator } from "./AnimatorParticleSimulator";
-import type { AnimatorMaterialPropertyValue } from "./AnimatorSceneState";
 
 import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
 import { AnimatorQuaternion } from "./AnimatorQuaternion";
@@ -13,8 +13,18 @@ export type AnimatorPoseApplicationResult = Readonly<{
 
 export class AnimatorScenePoseApplier {
     private readonly EPSILON = 0.000001;
+    private readonly additiveReferenceTransforms: ReadonlyMap<string, AnimatorTransformState>;
 
-    constructor(readonly state: AnimatorSceneState, private readonly particleSimulators: ReadonlyMap<string, AnimatorParticleSimulator>) {}
+    constructor(readonly state: AnimatorSceneState, private readonly particleSimulators: ReadonlyMap<string, AnimatorParticleSimulator>) {
+        this.additiveReferenceTransforms = new Map([...state.transforms].map(([id, transform]) => [
+            id,
+            {
+                localPosition: [...transform.localPosition],
+                localRotation: [...transform.localRotation],
+                localScale: [...transform.localScale]
+            }
+        ]));
+    }
 
     apply(poses: readonly AnimatorEvaluatedPose[]): AnimatorPoseApplicationResult {
         this.state.reset();
@@ -29,13 +39,29 @@ export class AnimatorScenePoseApplier {
         {
             for (const layer of pose.layers)
             {
-                if (layer.blendingMode !== "override")
+                if (layer.blendingMode === "unsupported")
                 {
                     AnimatorRuntimeUtils.appendUniqueString(
                         diagnostics,
                         diagnosticKeys,
-                        `Animator "${pose.animatorId}" layer ${layer.layerIndex} uses the unsupported "${layer.blendingMode}" blending mode.`
+                        `Animator "${pose.animatorId}" layer ${layer.layerIndex} uses an unsupported blending mode`
                     );
+
+                    continue;
+                }
+
+                if (layer.blendingMode === "additive")
+                {
+                    this.applyAdditiveNumericChannels(pose.animatorId, layer, diagnostics, diagnosticKeys);
+
+                    if (layer.objectReferenceChannels.length > 0)
+                    {
+                        AnimatorRuntimeUtils.appendUniqueString(
+                            diagnostics,
+                            diagnosticKeys,
+                            `Animator "${pose.animatorId}" layer ${layer.layerIndex} contains unsupported additive object-reference animations.`
+                        );
+                    }
 
                     continue;
                 }
@@ -101,8 +127,150 @@ export class AnimatorScenePoseApplier {
                 case "particleShapeRadius":
                     this.applyParticleShapeRadius(channel);
                     break;
+
+                case "puppet2dIkFlip":
+                    this.applyPuppet2DIkFlip(channel);
+                    break;
             }
         }
+    }
+
+    private applyAdditiveNumericChannels(animatorId: string, layer: AnimatorLayerPose, diagnostics: string[], diagnosticKeys: Set<string>) {
+        for (const channel of layer.numericChannels)
+        {
+            if (channel.binding.property.kind === "transform")
+            {
+                this.applyAdditiveTransform(channel);
+                continue;
+            }
+
+            AnimatorRuntimeUtils.appendUniqueString(
+                diagnostics,
+                diagnosticKeys,
+                `Animator "${animatorId}" layer ${layer.layerIndex} contains unsupported additive non-Transform animations.`
+            );
+        }
+    }
+
+    private applyAdditiveTransform(channel: AnimatorNumericPoseChannel) {
+        const property = channel.binding.property;
+        if (property.kind !== "transform")
+            throw new Error("The additive Transform channel is invalid.");
+
+        const state = this.state.requireTransform(channel.binding.targetTransformId);
+        const reference = this.requireAdditiveReferenceTransform(channel.binding.targetTransformId);
+
+        switch (property.property)
+        {
+            case "position":
+                this.applyAdditiveVectorComponents(state.localPosition, reference.localPosition, channel, ["x", "y", "z"]);
+                break;
+
+            case "scale":
+                this.applyAdditiveVectorComponents(state.localScale, reference.localScale, channel, ["x", "y", "z"]);
+                break;
+
+            case "rotation":
+                this.applyAdditiveQuaternion(state.localRotation, reference.localRotation, channel);
+                break;
+
+            case "euler":
+                this.applyAdditiveEulerRotation(state.localRotation, reference.localRotation, channel);
+                break;
+        }
+    }
+
+    private applyAdditiveVectorComponents(destination: number[], reference: readonly number[], channel: AnimatorNumericPoseChannel, componentNames: readonly string[]) {
+        for (let i = 0; i < channel.values.length; i++)
+        {
+            const value = channel.values[i];
+            const weight = channel.componentWeights[i];
+
+            if (value === null || weight === undefined || weight <= this.EPSILON)
+                continue;
+
+            const componentName = channel.binding.components[i];
+            if (!componentName)
+                throw new Error("An additive vector binding component is missing.");
+
+            const destinationIndex = this.getComponentIndex(componentName, componentNames);
+            const delta = value - reference[destinationIndex];
+
+            destination[destinationIndex] += delta * AnimatorRuntimeUtils.clamp01(weight);
+        }
+    }
+
+    private applyAdditiveQuaternion(destination: number[], reference: readonly number[], channel: AnimatorNumericPoseChannel) {
+        if (destination.length !== 4 || reference.length !== 4 || channel.values.length !== 4)
+            throw new Error("An additive quaternion animation has an invalid size.");
+
+        const target = [...reference];
+        let populatedComponents = 0;
+        let minimumWeight = 1;
+
+        for (let i = 0; i < channel.values.length; i++)
+        {
+            const value = channel.values[i];
+            const weight = channel.componentWeights[i];
+
+            if (value === null || weight === undefined || weight <= this.EPSILON)
+                continue;
+
+            const componentName = channel.binding.components[i];
+            if (!componentName)
+                throw new Error("An additive quaternion component is missing.");
+
+            const targetIndex = this.getComponentIndex(componentName, ["x", "y", "z", "w"]);
+            target[targetIndex] = value;
+
+            minimumWeight = Math.min(minimumWeight, weight);
+            populatedComponents++;
+        }
+
+        if (populatedComponents === 0)
+            return;
+
+        this.applyAdditiveRotation(destination, reference, target, minimumWeight);
+    }
+
+    private applyAdditiveEulerRotation(destination: number[], reference: readonly number[], channel: AnimatorNumericPoseChannel) {
+        const targetEuler = this.quaternionToEulerZxy(reference);
+        let populatedComponents = 0;
+        let minimumWeight = 1;
+
+        for (let i = 0; i < channel.values.length; i++)
+        {
+            const value = channel.values[i];
+            const weight = channel.componentWeights[i];
+
+            if (value === null || weight === undefined || weight <= this.EPSILON)
+                continue;
+
+            const componentName = channel.binding.components[i];
+            if (!componentName)
+                throw new Error("An additive Euler component is missing.");
+
+            const targetIndex = this.getComponentIndex(componentName, ["x", "y", "z"]);
+            targetEuler[targetIndex] = value;
+
+            minimumWeight = Math.min(minimumWeight, weight);
+            populatedComponents++;
+        }
+
+        if (populatedComponents === 0)
+            return;
+
+        this.applyAdditiveRotation(destination, reference, this.eulerZxyToQuaternion(targetEuler), minimumWeight);
+    }
+
+    private applyAdditiveRotation(destination: number[], referenceValue: readonly number[], targetValue: readonly number[], weight: number) {
+        const reference = AnimatorQuaternion.normalized(referenceValue);
+        const target = AnimatorQuaternion.normalized(targetValue);
+
+        const delta = AnimatorQuaternion.multiplied(AnimatorQuaternion.inverted(reference), target);
+        const weightedDelta = this.slerpQuaternion(AnimatorQuaternion.createIdentity(), delta, weight);
+
+        this.copyValues(destination, AnimatorQuaternion.multiplied(destination, weightedDelta));
     }
 
     private applyObjectReferenceChannels(layer: AnimatorLayerPose) {
@@ -446,6 +614,19 @@ export class AnimatorScenePoseApplier {
         simulator.setShapeRadius(this.lerp(simulator.currentShapeRadius, sample.value, sample.weight));
     }
 
+    private applyPuppet2DIkFlip(channel: AnimatorNumericPoseChannel) {
+        const property = channel.binding.property;
+        if (property.kind !== "puppet2dIkFlip")
+            throw new Error("The Puppet2D IK flip channel is invalid.");
+
+        const sample = this.getScalarSample(channel);
+        if (!sample)
+            return;
+
+        const handle = this.state.requirePuppet2DIkHandle(property.componentId);
+        handle.flip = this.blendBoolean(handle.flip, sample.value, sample.weight);
+    }
+
     private getScalarSample(channel: AnimatorNumericPoseChannel): Readonly<{ value: number; weight: number; }> | null {
         const value = channel.values[0];
         const weight = channel.componentWeights[0];
@@ -583,5 +764,13 @@ export class AnimatorScenePoseApplier {
 
         for (let i = 0; i < source.length; i++)
             destination[i] = source[i];
+    }
+
+    private requireAdditiveReferenceTransform(id: string): AnimatorTransformState {
+        const transform = this.additiveReferenceTransforms.get(id);
+        if (!transform)
+            throw new Error(`Additive reference Transform "${id}" does not exist.`);
+
+        return transform;
     }
 }

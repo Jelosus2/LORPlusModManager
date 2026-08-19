@@ -1,9 +1,11 @@
+import type { AnimatorParticleMaterialColor, AnimatorLegacyParticleShaderMode } from "./AnimatorLegacyAdditiveParticleShader";
+import type { AnimatorParticleSnapshot, AnimatorParticleVector3 } from "./AnimatorParticleSimulator";
 import type { PreparedAnimatorParticleRenderer } from "./AnimatorParticleRendererModel";
 import type { AnimatorTransformHierarchy } from "./AnimatorTransformHierarchy";
-import type { AnimatorParticleSnapshot, AnimatorParticleVector3 } from "./AnimatorParticleSimulator";
 import type { AnimatorRuntimeMaterial } from "./AnimatorBindingResolver";
 
-import { Container, Matrix, MeshGeometry, Mesh, Rectangle, Sprite, Texture } from "pixi.js";
+import { AnimatorLegacyAdditiveParticleShader  } from "./AnimatorLegacyAdditiveParticleShader";
+import { Container, Matrix, MeshGeometry, Mesh, Rectangle, Texture } from "pixi.js";
 import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
 
 export type AnimatorParticleViewState = Readonly<{
@@ -12,12 +14,10 @@ export type AnimatorParticleViewState = Readonly<{
     textureTransform: readonly number[];
 }>;
 
-type ParticleMaterialColor = Readonly<{
-    red: number;
-    green: number;
-    blue: number;
-    alpha: number;
-}>;
+type ParticleBillboardView = {
+    display: Mesh<MeshGeometry>;
+    additiveShader: AnimatorLegacyAdditiveParticleShader | null;
+};
 
 type ParticleMeshView = {
     display: Mesh<MeshGeometry>;
@@ -25,17 +25,20 @@ type ParticleMeshView = {
     positions: Float32Array;
     sourceUv0: Float32Array;
     textureTransformRevision: number;
+    additiveShader: AnimatorLegacyAdditiveParticleShader | null;
 };
 
 export class AnimatorPixiParticleView {
-    private readonly spritesByParticleId = new Map<number, Sprite>();
-    private readonly availableSprites: Sprite[] = [];
+    private readonly billboardViewsByParticleId = new Map<number, ParticleBillboardView>();
+    private readonly availableBillboardViews: ParticleBillboardView[] = [];
+    private readonly billboardGeometry: MeshGeometry | null;
     private readonly frameTextures: readonly Texture[];
     private readonly ownsFrameTextures: boolean;
     private readonly particleMatrix = new Matrix();
-    private readonly materialColor: ParticleMaterialColor;
+    private readonly materialColor: AnimatorParticleMaterialColor;
     private readonly meshViewsByParticleId = new Map<number, ParticleMeshView>();
     private readonly availableMeshViews: ParticleMeshView[] = [];
+    private readonly legacyShaderMode: AnimatorLegacyParticleShaderMode | null;
     private textureScaleX = 1;
     private textureScaleY = 1;
     private textureOffsetX = 0;
@@ -53,6 +56,10 @@ export class AnimatorPixiParticleView {
         this.frameTextures = frames.textures;
         this.ownsFrameTextures = frames.ownsTextures;
         this.materialColor = this.resolveMaterialColor(renderer.material);
+        this.legacyShaderMode = AnimatorLegacyAdditiveParticleShader.resolveAnimatorLegacyParticleShaderMode(renderer.material);
+        this.billboardGeometry = renderer.renderMode === 4
+            ? null
+            : this.createBillboardGeometry();
     }
 
     update(state: AnimatorParticleViewState) {
@@ -84,7 +91,7 @@ export class AnimatorPixiParticleView {
 
         if (!active)
         {
-            this.releaseAllSprites();
+            this.releaseAllBillboardViews();
             this.releaseAllMeshViews();
             this.root.visible = false;
             return;
@@ -97,7 +104,7 @@ export class AnimatorPixiParticleView {
         if (this.renderer.renderMode === 4)
             this.synchronizeMeshViews(particles);
         else
-            this.synchronizeSprites(particles);
+            this.synchronizeBillboardViews(particles);
     }
 
     destroy() {
@@ -106,10 +113,10 @@ export class AnimatorPixiParticleView {
 
         this.destroyed = true;
 
+        this.destroyAllBillboardViews();
         this.destroyAllMeshViews();
 
-        this.spritesByParticleId.clear();
-        this.availableSprites.length = 0;
+        this.billboardGeometry?.destroy(true);
 
         this.root.parent?.removeChild(this.root);
         this.root.destroy({ children: true });
@@ -121,23 +128,21 @@ export class AnimatorPixiParticleView {
             texture.destroy(false);
     }
 
-    private synchronizeSprites(particles: readonly AnimatorParticleSnapshot[]) {
+    private synchronizeBillboardViews(particles: readonly AnimatorParticleSnapshot[]) {
         const activeIds = new Set<number>();
 
         for (const particle of particles)
         {
             activeIds.add(particle.id);
 
-            const sprite = this.spritesByParticleId.get(particle.id) ?? this.acquireSprite(particle.id);
-            this.updateSprite(sprite, particle);
+            const view = this.billboardViewsByParticleId.get(particle.id) ?? this.acquireBillboardView(particle.id);
+            this.updateBillboardView(view, particle);
         }
 
-        for (const [particleId, sprite] of this.spritesByParticleId)
+        for (const [particleId, view] of this.billboardViewsByParticleId.entries())
         {
-            if (activeIds.has(particleId))
-                continue;
-
-            this.releaseSprite(particleId, sprite);
+            if (!activeIds.has(particleId))
+                this.releaseBillboardView(particleId, view);
         }
     }
 
@@ -159,13 +164,13 @@ export class AnimatorPixiParticleView {
         }
     }
 
-    private acquireSprite(particleId: number): Sprite {
-        const sprite = this.availableSprites.pop() ?? this.createSprite();
+    private acquireBillboardView(particleId: number): ParticleBillboardView {
+        const view = this.availableBillboardViews.pop() ?? this.createBillboardView();
 
-        sprite.visible = true;
-        this.spritesByParticleId.set(particleId, sprite);
+        view.display.visible = true;
+        this.billboardViewsByParticleId.set(particleId, view);
 
-        return sprite;
+        return view;
     }
 
     private acquireMeshView(particleId: number): ParticleMeshView {
@@ -177,20 +182,69 @@ export class AnimatorPixiParticleView {
         return view;
     }
 
-    private createSprite(): Sprite {
-        const sprite = new Sprite({
-            texture: this.frameTextures[0],
-            anchor: {
-                x: 0.5 - this.renderer.pivot[0],
-                y: 0.5 + this.renderer.pivot[1]
-            }
+    private createBillboardView(): ParticleBillboardView {
+        if (!this.billboardGeometry)
+            throw new Error(`ParticleSystemRenderer "${this.renderer.id}" has no billboard geometry.`);
+
+        const texture = this.frameTextures[0];
+        const additiveShader = this.legacyShaderMode
+            ? new AnimatorLegacyAdditiveParticleShader(texture, this.materialColor, this.legacyShaderMode)
+            : null;
+
+        const display = new Mesh({
+            geometry: this.billboardGeometry,
+            texture,
+            shader: additiveShader
         });
 
-        sprite.blendMode = this.renderer.blendMode;
-        sprite.eventMode = "none";
-        this.root.addChild(sprite);
+        display.blendMode = this.legacyShaderMode === "soft-additive"
+            ? "screen"
+            : this.renderer.blendMode;
 
-        return sprite;
+        display.eventMode = "none";
+
+        this.root.addChild(display);
+
+        return {
+            display,
+            additiveShader
+        };
+    }
+
+    private createBillboardGeometry(): MeshGeometry {
+        const texture = this.frameTextures[0];
+        const pivotX = this.renderer.pivot[0];
+        const pivotY = this.renderer.pivot[1];
+
+        const left = (-0.5 + pivotX) * texture.width;
+        const top = (-0.5 - pivotY) * texture.height;
+        const right = left + texture.width;
+        const bottom = top + texture.height;
+
+        const geometry = new MeshGeometry({
+            positions: new Float32Array([
+                left, top,
+                right, top,
+                right, bottom,
+                left, bottom
+            ]),
+            uvs: new Float32Array([
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 1
+            ]),
+            indices: new Uint32Array([
+                0, 1, 2,
+                0, 2, 3
+            ]),
+            shrinkBuffersToFit: false
+        });
+
+        if (this.renderer.blendMode === "add")
+            geometry.batchMode = "no-batch";
+
+        return geometry;
     }
 
     private createMeshView(): ParticleMeshView {
@@ -214,12 +268,21 @@ export class AnimatorPixiParticleView {
 
         geometry.batchMode = "no-batch";
 
+        const texture = this.frameTextures[0];
+        const additiveShader = this.legacyShaderMode
+            ? new AnimatorLegacyAdditiveParticleShader(texture, this.materialColor, this.legacyShaderMode)
+            : null;
+
         const display = new Mesh({
             geometry,
-            texture: this.frameTextures[0]
+            texture,
+            shader: additiveShader
         });
 
-        display.blendMode = this.renderer.blendMode;
+        display.blendMode = this.legacyShaderMode === "soft-additive"
+            ? "screen"
+            : this.renderer.blendMode;
+
         display.eventMode = "none";
         this.root.addChild(display);
 
@@ -228,7 +291,8 @@ export class AnimatorPixiParticleView {
             geometry,
             positions,
             sourceUv0,
-            textureTransformRevision: -1
+            textureTransformRevision: -1,
+            additiveShader
         };
     }
 
@@ -253,57 +317,72 @@ export class AnimatorPixiParticleView {
 
         this.updateMeshGeometry(view, particle, flipX, flipY, flipZ);
 
-        view.display.tint =
-            (Math.round(red * 255) << 16) |
-            (Math.round(green * 255) << 8) |
-            Math.round(blue * 255);
+        if (view.additiveShader)
+        {
+            view.additiveShader.setParticleColor(particle.color);
+            view.display.tint = 0xffffff;
+            view.display.alpha = 1;
+        }
+        else
+        {
+            view.display.tint =
+                (Math.round(red * 255) << 16) |
+                (Math.round(green * 255) << 8) |
+                Math.round(blue * 255);
 
-        view.display.alpha = alpha;
+            view.display.alpha = alpha;
+        }
+
         view.display.visible = particle.size.x > 0 && particle.size.y > 0 && particle.size.z > 0 && alpha > 0;
     }
 
-    private updateSprite(sprite: Sprite, particle: AnimatorParticleSnapshot) {
+    private updateBillboardView(view: ParticleBillboardView, particle: AnimatorParticleSnapshot) {
         const texture = this.resolveFrameTexture(particle.textureFrame);
 
-        if (sprite.texture !== texture)
-            sprite.texture = texture;
+        if (view.display.texture !== texture)
+            view.display.texture = texture;
 
         const alpha = this.clamp01(particle.color.a * this.materialColor.alpha);
-        const red = this.clamp01(particle.color.r * this.materialColor.red);
-        const green = this.clamp01(particle.color.g * this.materialColor.green);
-        const blue = this.clamp01(particle.color.b * this.materialColor.blue);
+        const flipX = this.shouldFlip(particle.randomSeed, 0x68bc21eb, this.renderer.flip[0]) ? -1 : 1;
+        const flipY = this.shouldFlip(particle.randomSeed, 0x02e5be93, this.renderer.flip[1]) ? -1 : 1;
 
-        const flipX = this.shouldFlip(particle.randomSeed, 0x68bc21eb, this.renderer.flip[0])
-            ? -1
-            : 1;
+        this.updateSpriteTransform(view.display, particle, texture, flipX, flipY);
 
-        const flipY = this.shouldFlip(particle.randomSeed, 0x02e5be93, this.renderer.flip[1])
-            ? -1
-            : 1;
+        if (view.additiveShader)
+        {
+            view.additiveShader.setParticleColor(particle.color);
+            view.display.tint = 0xffffff;
+            view.display.alpha = 1;
+        }
+        else
+        {
+            const red = this.clamp01(particle.color.r * this.materialColor.red);
+            const green = this.clamp01(particle.color.g * this.materialColor.green);
+            const blue = this.clamp01(particle.color.b * this.materialColor.blue);
 
-        this.updateSpriteTransform(sprite, particle, texture, flipX, flipY);
+            view.display.tint =
+                (Math.round(red * 255) << 16) |
+                (Math.round(green * 255) << 8) |
+                Math.round(blue * 255);
 
-        sprite.tint =
-            (Math.round(red * 255) << 16) |
-            (Math.round(green * 255) << 8) |
-            Math.round(blue * 255);
+            view.display.alpha = alpha;
+        }
 
-        sprite.alpha = alpha;
-        sprite.visible = particle.size.x > 0 && particle.size.y > 0 && alpha > 0;
+        view.display.visible = particle.size.x > 0 && particle.size.y > 0 && alpha > 0;
     }
 
-    private updateSpriteTransform(sprite: Sprite, particle: AnimatorParticleSnapshot, texture: Texture, flipX: number, flipY: number) {
-        const world = this.hierarchy.requireParticleWorldMatrix(this.renderer.transformId, this.renderer.scalingMode)
+    private updateSpriteTransform(sprite: Mesh<MeshGeometry>, particle: AnimatorParticleSnapshot, texture: Texture, flipX: number, flipY: number) {
+        const world = this.resolveParticleWorldMatrix(particle);
         const horizontalScale = flipX * particle.size.x / texture.width;
         const verticalScale = -flipY * particle.size.y / texture.height;
 
-        const rotation = this.renderer.renderAlignment === 0
-            ? {
-                x: -particle.rotation.x,
-                y: particle.rotation.y,
-                z: -particle.rotation.z
-            }
-            : particle.rotation;
+        const rotation = {
+            x: this.renderer.renderAlignment === 0
+                ? -particle.rotation.x
+                : particle.rotation.x,
+            y: particle.rotation.y,
+            z: -particle.rotation.z
+        };
 
         const horizontal = this.rotateParticleAxis(1, 0, 0, rotation);
         const vertical = this.rotateParticleAxis(0, 1, 0, rotation);
@@ -371,7 +450,7 @@ export class AnimatorPixiParticleView {
         if (!mesh)
             throw new Error(`ParticleSystemRenderer "${this.renderer.id}" has no Mesh.`);
 
-        const world = this.hierarchy.requireParticleWorldMatrix(this.renderer.transformId, this.renderer.scalingMode);
+        const world = this.resolveParticleWorldMatrix(particle);
 
         for (let vertexIndex = 0; vertexIndex < mesh.vertexCount; vertexIndex++)
         {
@@ -401,13 +480,11 @@ export class AnimatorPixiParticleView {
         if (view.textureTransformRevision === this.textureTransformRevision)
             return;
 
-        const target = view.geometry.uvs;
-
-        for (let offset = 0; offset < view.sourceUv0.length; offset += 2)
-        {
-            target[offset] = view.sourceUv0[offset] * this.textureScaleX + this.textureOffsetX;
-            target[offset + 1] = view.sourceUv0[offset + 1] * this.textureScaleY + 1 - this.textureScaleY - this.textureOffsetY;
-        }
+        AnimatorRuntimeUtils.writeTransformedTextureCoordinates(
+            view.geometry.uvs,
+            view.sourceUv0,
+            [this.textureScaleX, this.textureScaleY, this.textureOffsetX, this.textureOffsetY]
+        );
 
         view.geometry.getBuffer("aUV").update();
         view.textureTransformRevision = this.textureTransformRevision;
@@ -442,13 +519,14 @@ export class AnimatorPixiParticleView {
         };
     }
 
-    private releaseSprite(particleId: number, sprite: Sprite) {
-        this.spritesByParticleId.delete(particleId);
 
-        sprite.visible = false;
-        sprite.alpha = 0;
+    private releaseBillboardView(particleId: number, view: ParticleBillboardView) {
+        this.billboardViewsByParticleId.delete(particleId);
 
-        this.availableSprites.push(sprite);
+        view.display.visible = false;
+        view.display.alpha = 0;
+
+        this.availableBillboardViews.push(view);
     }
 
     private releaseMeshView(particleId: number, view: ParticleMeshView) {
@@ -460,9 +538,9 @@ export class AnimatorPixiParticleView {
         this.availableMeshViews.push(view);
     }
 
-    private releaseAllSprites() {
-        for (const [particleId, sprite] of this.spritesByParticleId)
-            this.releaseSprite(particleId, sprite);
+    private releaseAllBillboardViews() {
+        for (const [particleId, view] of this.billboardViewsByParticleId)
+            this.releaseBillboardView(particleId, view);
     }
 
     private releaseAllMeshViews() {
@@ -483,7 +561,25 @@ export class AnimatorPixiParticleView {
         {
             view.display.parent?.removeChild(view.display);
             view.display.destroy();
+            view.additiveShader?.destroy(false);
             view.geometry.destroy(true);
+        }
+    }
+
+    private destroyAllBillboardViews() {
+        const views = [
+            ...this.billboardViewsByParticleId.values(),
+            ...this.availableBillboardViews
+        ];
+
+        this.billboardViewsByParticleId.clear();
+        this.availableBillboardViews.length = 0;
+
+        for (const view of views)
+        {
+            view.display.parent?.removeChild(view.display);
+            view.display.destroy();
+            view.additiveShader?.destroy(false);
         }
     }
 
@@ -527,7 +623,7 @@ export class AnimatorPixiParticleView {
         };
     }
 
-    private resolveMaterialColor(material: AnimatorRuntimeMaterial): ParticleMaterialColor {
+    private resolveMaterialColor(material: AnimatorRuntimeMaterial): AnimatorParticleMaterialColor {
         const color = {
             red: 1,
             green: 1,
@@ -547,15 +643,11 @@ export class AnimatorPixiParticleView {
             color.alpha *= value[3] ?? 1;
         }
 
-        if (this.renderer.blendMode === "add")
-        {
-            color.red *= 2;
-            color.green *= 2;
-            color.blue *= 2;
-            color.alpha *= 2;
-        }
-
         return Object.freeze(color);
+    }
+
+    private resolveParticleWorldMatrix(particle: AnimatorParticleSnapshot) {
+        return particle.simulationMatrix ?? this.hierarchy.requireParticleWorldMatrix(this.renderer.transformId, this.renderer.scalingMode);
     }
 
     private hasNonIdentityTextureTransform(): boolean {

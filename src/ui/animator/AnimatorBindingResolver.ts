@@ -95,6 +95,7 @@ export type AnimatorRuntimeMaterial = Readonly<{
     id: string;
     name: string;
     shaderId: string | null;
+    shaderName: string | null;
     renderQueue: number;
     blendMode: "normal" | "add";
     textureProperties: readonly AnimatorRuntimeTextureProperty[];
@@ -451,6 +452,10 @@ export type ResolvedAnimatorProperty =
     | Readonly<{
         kind: "particleShapeRadius";
         particleSystemId: string;
+    }>
+    | Readonly<{
+        kind: "puppet2dIkFlip";
+        componentId: string;
     }>;
 
 export type ResolvedAnimatorBinding = Readonly<{
@@ -512,6 +517,7 @@ export class AnimatorBindingResolver {
     private readonly HASH_ENABLED = UnityCrc32.generateCrc("m_Enabled");
     private readonly HASH_SORTING_ORDER = UnityCrc32.generateCrc("m_SortingOrder");
     private readonly HASH_PARTICLE_SHAPE_RADIUS = UnityCrc32.generateCrc("ShapeModule.radius.value");
+    private readonly HASH_PUPPET2D_FLIP = UnityCrc32.generateCrc("Flip");
     private readonly SPRITE_COLOR_COMPONENTS = new Map<number, "r" | "g" | "b" | "a">([
         [UnityCrc32.generateCrc("m_Color.r"), "r"],
         [UnityCrc32.generateCrc("m_Color.g"), "g"],
@@ -695,6 +701,9 @@ export class AnimatorBindingResolver {
 
         if (binding.typeId === this.MONO_BEHAVIOUR_TYPE_ID || binding.customType === this.CUSTOM_MONO_BEHAVIOUR)
         {
+            if (binding.script?.type === "MonoScript" && binding.script.className === "Puppet2D_IKHandle")
+                return this.resolvePuppet2DIkProperty(target, binding);
+
             if (binding.script?.type === "MonoScript" && binding.script.className === "DynamicBone")
                 throw new IgnoredBindingResolutionError("DynamicBone animation fields are intentionally ignored.");
 
@@ -789,17 +798,12 @@ export class AnimatorBindingResolver {
 
         if (matches.length === 0 && this.isStaleNumberedBlendShapeBinding(mesh, attribute))
             throw new IgnoredBindingResolutionError(`Blend shape ${attribute} references a stale numbered channel on Mesh "${mesh.name}".`);
-
-        if (matches.length !== 1)
-        {
-            throw new BindingResolutionError(
-                matches.length === 0
-                    ? `Blend shape ${attribute} could not be resolved on Mesh "${mesh.name}".`
-                    : `Blend shape ${attribute} is ambiguous on Mesh "${mesh.name}".`
-            );
-        }
+        if (matches.length === 0)
+            throw new BindingResolutionError(`Blend shape ${attribute} could not be resolved on Mesh "${mesh.name}".`);
 
         const match = matches[0];
+        if (matches.some(({ shape }) => shape.name !== match.shape.name))
+            throw new BindingResolutionError(`Blend shape ${attribute} is ambiguous on Mesh "${mesh.name}".`);
 
         return {
             kind: "blendShape",
@@ -978,6 +982,20 @@ export class AnimatorBindingResolver {
         };
     }
 
+    private resolvePuppet2DIkProperty(target: AnimatorRuntimeTransform, binding: AnimatorBindingDefinition): ResolvedAnimatorProperty {
+        if (binding.customType !== 0 || binding.isPPtrCurve || (binding.attributeHash >>> 0) !== this.HASH_PUPPET2D_FLIP)
+            throw new BindingResolutionError(`Unsupported Puppet2D_IKHandle attribute ${binding.attributeHash >>> 0}.`);
+
+        const matches = this.scene.puppet2dIkHandles.filter((handle) => handle.controlTransformId === target.id);
+        if (matches.length !== 1)
+            throw new BindingResolutionError("The Puppet2D IK handle target could not be resolved uniquely.");
+
+        return {
+            kind: "puppet2dIkFlip",
+            componentId: matches[0]!.componentId
+        };
+    }
+
     private requireRenderer(gameObjectId: string, typeId: number): RendererTarget {
         if (typeId === this.MESH_RENDERER_TYPE_ID)
         {
@@ -1139,6 +1157,12 @@ export class AnimatorBindingResolver {
         if (matches.length === 0 && this.isIgnorableMissingSpriteColorBinding(binding))
             throw new IgnoredBindingResolutionError("The binding targets a removed SpriteRenderer color property.");
 
+        if (matches.length === 0 && this.isIgnorableMissingRendererMaterialBinding(binding))
+            throw new IgnoredBindingResolutionError("The material-property binding targets a renderer that no longer exists.");
+
+        if (matches.length === 0 && this.isIgnorableMissingGameObjectActivationBinding(binding))
+            throw new IgnoredBindingResolutionError("The activation binding targets a GameObject that no longer exists.");
+
         if (
             matches.length === 0 &&
             binding.typeId === this.TRANSFORM_TYPE_ID &&
@@ -1198,6 +1222,28 @@ export class AnimatorBindingResolver {
             binding.customType === 0 &&
             !binding.isPPtrCurve &&
             this.SPRITE_COLOR_COMPONENTS.has(binding.attributeHash >>> 0)
+        );
+    }
+
+    private isIgnorableMissingRendererMaterialBinding(binding: AnimatorBindingDefinition): boolean {
+        return (
+            binding.customType === this.CUSTOM_RENDERER_MATERIAL_PROPERTY &&
+            !binding.isPPtrCurve &&
+            [
+                this.MESH_RENDERER_TYPE_ID,
+                this.SKINNED_MESH_RENDERER_TYPE_ID,
+                this.PARTICLE_SYSTEM_RENDERER_TYPE_ID,
+                this.SPRITE_RENDERER_TYPE_ID
+            ].includes(binding.typeId)
+        );
+    }
+
+    private isIgnorableMissingGameObjectActivationBinding(binding: AnimatorBindingDefinition): boolean {
+        return (
+            binding.typeId === this.GAME_OBJECT_TYPE_ID &&
+            binding.customType === 0 &&
+            !binding.isPPtrCurve &&
+            (binding.attributeHash >>> 0) === this.HASH_IS_ACTIVE
         );
     }
 }

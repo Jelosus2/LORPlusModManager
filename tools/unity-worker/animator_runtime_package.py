@@ -11,7 +11,7 @@ import math
 import re
 
 
-FORMAT_VERSION = 15
+FORMAT_VERSION = 17
 
 GEOMETRY_FILE_NAME = "geometry.bin"
 ANIMATION_FILE_NAME = "animations.bin"

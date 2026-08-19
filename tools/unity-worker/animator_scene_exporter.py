@@ -569,6 +569,7 @@ def export_material(material_reader: Any) -> dict:
         "id": str(material_reader.path_id),
         "name": material.m_Name,
         "shaderId": object_id(material.m_Shader),
+        "shaderName": shader_name,
         "renderQueue": int(material.m_CustomRenderQueue),
         "textureProperties": texture_properties,
         "floatProperties": float_properties,
@@ -1641,6 +1642,17 @@ def export_scene(environment: Any, writer: GeometryWriter, locator: str, texture
         export_sprite(reader, writer, texture_sizes_by_id)
         for reader in sprite_readers
     ]
+
+    exported_sprite_ids = {
+        sprite["id"]
+        for sprite in sprites
+    }
+
+    for renderer in sprite_renderers:
+        sprite_id = renderer["spriteId"]
+
+        if sprite_id is not None and sprite_id not in exported_sprite_ids:
+            renderer["spriteId"] = None
     
     interactions = export_animator_interactions(environment, hierarchy, component_readers)
     puppet2d_ik_handles = export_puppet2d_ik_handles(hierarchy, component_readers)

@@ -165,7 +165,7 @@ export class AnimatorDeformedSkinnedMesh implements AnimatorProjectedMesh {
         {
             const boneTransformId = this.renderer.boneTransformIds[boneIndex];
             if (!boneTransformId)
-                throw new Error(`SkinnedMeshRenderer "${this.renderer.id}" is missing bone ${boneIndex}.`);
+                continue;
 
             const boneWorldMatrix = this.hierarchy.requireWorldMatrix(boneTransformId);
             const bindPose = this.renderer.bindPoses[boneIndex];
@@ -294,12 +294,15 @@ export class AnimatorDeformedSkinnedMesh implements AnimatorProjectedMesh {
     }
 
     private validateBlendShapeFrames(shape: PreparedAnimatorBlendShape) {
-        let previousWeight = 0;
+        let previousWeight: number | null = null;
 
-        for (let frameIndex = 0; frameIndex < shape.frames.length; frameIndex++)
+        for (const frame of shape.frames)
         {
-            const frame = shape.frames[frameIndex];
-            if (!Number.isFinite(frame.weight) || frame.weight <= previousWeight)
+            if (!Number.isFinite(frame.weight) || frame.weight <= this.FRAME_EPSILON)
+                throw new Error(`Blend shape "${shape.name}" has an invalid frame weight.`);
+
+            const isEmptyFrame = frame.indices === null && frame.positions === null && frame.normals === null && frame.tangents === null;
+            if (previousWeight !== null && frame.weight <= previousWeight && !isEmptyFrame)
                 throw new Error(`Blend shape "${shape.name}" has invalid or unordered frame weights.`);
 
             previousWeight = frame.weight;

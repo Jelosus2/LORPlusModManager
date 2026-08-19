@@ -91,7 +91,7 @@ export class AnimatorRendererModel {
 
             this.requireUniqueRendererId(renderer.id, rendererIds);
 
-            skinnedMeshRenderers.push(this.prepareSkinnedMeshRenderer(renderer, rendererSourceOrder));
+            skinnedMeshRenderers.push(this.prepareSkinnedMeshRenderer(renderer, rendererSourceOrder, scene.skinnedMeshRenderers));
         }
 
         this.skinnedMeshRenderers = skinnedMeshRenderers;
@@ -126,13 +126,22 @@ export class AnimatorRendererModel {
         };
     }
 
-    private prepareSkinnedMeshRenderer(renderer: AnimatorRuntimeSkinnedMeshRenderer, sourceOrder: number): PreparedAnimatorSkinnedRenderer {
+    private prepareSkinnedMeshRenderer(
+        renderer: AnimatorRuntimeSkinnedMeshRenderer,
+        sourceOrder: number,
+        allRenderers: readonly AnimatorRuntimeSkinnedMeshRenderer[]
+    ): PreparedAnimatorSkinnedRenderer {
         const transformId = this.hierarchy.requireTransformIdForGameObject(renderer.gameObjectId);
+
         const mesh = renderer.meshId
             ? this.geometry.requireMesh(renderer.meshId)
             : null;
 
-        for (const boneTransformId of renderer.boneTransformIds)
+        const boneTransformIds = mesh
+            ? this.resolveBoneTransformIds(renderer, mesh, allRenderers)
+            : [...renderer.boneTransformIds];
+
+        for (const boneTransformId of boneTransformIds)
         {
             if (boneTransformId)
                 this.hierarchy.requireWorldMatrix(boneTransformId);
@@ -142,11 +151,11 @@ export class AnimatorRendererModel {
             this.hierarchy.requireWorldMatrix(renderer.rootBoneTransformId);
 
         const bindPoses = mesh
-            ? this.prepareBindPoses(renderer, mesh)
+            ? this.prepareBindPoses(mesh)
             : [];
 
         if (mesh)
-            this.validateSkinning(renderer, mesh, bindPoses);
+            this.validateSkinning(renderer, mesh, boneTransformIds, bindPoses);
 
         return {
             kind: "SkinnedMeshRenderer",
@@ -156,7 +165,7 @@ export class AnimatorRendererModel {
             sourceOrder,
             mesh,
             materials: this.prepareMaterials(renderer.materialIds),
-            boneTransformIds: [...renderer.boneTransformIds],
+            boneTransformIds,
             rootBoneTransformId: renderer.rootBoneTransformId,
             bindPoses
         };
@@ -179,7 +188,7 @@ export class AnimatorRendererModel {
         };
     }
 
-    private prepareBindPoses(renderer: AnimatorRuntimeSkinnedMeshRenderer, mesh: PreparedAnimatorMesh): readonly Float32Array[] {
+    private prepareBindPoses(mesh: PreparedAnimatorMesh): readonly Float32Array[] {
         if (!mesh.bindPoses)
             return [];
 
@@ -187,13 +196,6 @@ export class AnimatorRendererModel {
             throw new Error(`Mesh "${mesh.name}" has an invalid bind-pose array.`);
 
         const bindPoseCount = mesh.bindPoses.length / 16;
-        if (bindPoseCount !== renderer.boneTransformIds.length)
-        {
-            throw new Error(
-                `SkinnedMeshRenderer "${renderer.id}" has ${renderer.boneTransformIds.length} bones but its Mesh has ${bindPoseCount} bind poses.`
-            );
-        }
-
         const result: Float32Array[] = [];
 
         for (let i = 0; i < bindPoseCount; i++)
@@ -202,7 +204,12 @@ export class AnimatorRendererModel {
         return result;
     }
 
-    private validateSkinning(renderer: AnimatorRuntimeSkinnedMeshRenderer, mesh: PreparedAnimatorMesh, bindPoses: readonly Float32Array[]) {
+    private validateSkinning(
+        renderer: AnimatorRuntimeSkinnedMeshRenderer,
+        mesh: PreparedAnimatorMesh,
+        boneTransformIds: readonly (string | null)[],
+        bindPoses: readonly Float32Array[]
+    ) {
         const boneIndices = mesh.boneIndices;
         const boneWeights = mesh.boneWeights;
 
@@ -226,10 +233,10 @@ export class AnimatorRendererModel {
                 hasWeightedVertex = true;
 
                 const boneIndex = boneIndices[offset];
-                if (boneIndex >= renderer.boneTransformIds.length)
+                if (boneIndex >= boneTransformIds.length)
                     throw new Error(`Mesh "${mesh.name}" vertex ${vertexIndex} references out-of-range bone ${boneIndex}.`);
 
-                const boneTransformId = renderer.boneTransformIds[boneIndex];
+                const boneTransformId = boneTransformIds[boneIndex];
                 if (!boneTransformId)
                     throw new Error(`Mesh "${mesh.name}" vertex ${vertexIndex} references a missing bone Transform.`);
             }
@@ -237,6 +244,71 @@ export class AnimatorRendererModel {
 
         if (hasWeightedVertex && bindPoses.length === 0)
             throw new Error(`SkinnedMeshRenderer "${renderer.id}" has weighted geometry but no bind poses.`);
+    }
+
+    private resolveBoneTransformIds(
+        renderer: AnimatorRuntimeSkinnedMeshRenderer,
+        mesh: PreparedAnimatorMesh,
+        allRenderers: readonly AnimatorRuntimeSkinnedMeshRenderer[]
+    ): readonly (string | null)[] {
+        if (!mesh.bindPoses)
+            return [...renderer.boneTransformIds];
+
+        const bindPoseCount = mesh.bindPoses.length / 16;
+        let paletteToMatch = renderer.boneTransformIds;
+
+        if (paletteToMatch.length === bindPoseCount && this.hasCompleteWeightedBonePalette(mesh, paletteToMatch))
+            return [...paletteToMatch];
+
+        if (paletteToMatch.length > bindPoseCount)
+        {
+            const boneIndices = mesh.boneIndices;
+            const boneWeights = mesh.boneWeights;
+            let referencesExtraBone = false;
+
+            if (boneIndices && boneWeights)
+            {
+                for (let offset = 0; offset < boneWeights.length; offset++)
+                {
+                    if (boneWeights[offset] > this.WEIGHT_EPSILON && boneIndices[offset] >= bindPoseCount)
+                    {
+                        referencesExtraBone = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!referencesExtraBone)
+            {
+                paletteToMatch = paletteToMatch.slice(0, bindPoseCount);
+
+                if (this.hasCompleteWeightedBonePalette(mesh, paletteToMatch))
+                    return [...paletteToMatch];
+            }
+        }
+
+        const compatiblePalettes = allRenderers
+            .filter((candidate) =>
+                candidate.id !== renderer.id &&
+                candidate.meshId === renderer.meshId &&
+                candidate.boneTransformIds.length === bindPoseCount &&
+                this.hasCompleteWeightedBonePalette(mesh, candidate.boneTransformIds) &&
+                this.isCompatibleBonePalette(paletteToMatch, candidate.boneTransformIds)
+            )
+            .map((candidate) => candidate.boneTransformIds);
+
+        const uniquePalettes = new Map<string, readonly (string | null)[]>();
+
+        for (const palette of compatiblePalettes)
+            uniquePalettes.set(JSON.stringify(palette), palette);
+
+        if (uniquePalettes.size === 1)
+            return [...uniquePalettes.values().next().value!];
+
+        if (paletteToMatch.length === bindPoseCount)
+            throw new Error(`SkinnedMeshRenderer "${renderer.id}" has unresolved weighted bone Transforms and no unique compatible palette.`);
+
+        throw new Error(`SkinnedMeshRenderer "${renderer.id}" has ${renderer.boneTransformIds.length} bones but its Mesh has ${bindPoseCount} bind poses.`);
     }
 
     private prepareMaterials(materialIds: readonly (string | null)[]): readonly PreparedAnimatorMaterialSlot[] {
@@ -269,5 +341,48 @@ export class AnimatorRendererModel {
 
     private isRenderableSkinnedMeshRenderer(renderer: AnimatorRuntimeSkinnedMeshRenderer): boolean {
         return renderer.meshId !== null && renderer.materialIds.some((materialId) => materialId !== null);
+    }
+
+    private hasCompleteWeightedBonePalette(mesh: PreparedAnimatorMesh, palette: readonly (string | null)[]): boolean {
+        const boneIndices = mesh.boneIndices;
+        const boneWeights = mesh.boneWeights;
+
+        if (!boneIndices || !boneWeights)
+            return true;
+
+        for (let offset = 0; offset < boneWeights.length; offset++)
+        {
+            if (boneWeights[offset] <= this.WEIGHT_EPSILON)
+                continue;
+
+            const boneIndex = boneIndices[offset];
+
+            if (boneIndex >= palette.length || palette[boneIndex] === null)
+                return false;
+        }
+
+        return true;
+    }
+
+    private isCompatibleBonePalette(incomplete: readonly (string | null)[], candidate: readonly (string | null)[]): boolean {
+        if (incomplete.length !== candidate.length)
+            return this.isOrderedBonePaletteSubset(incomplete, candidate);
+
+        return incomplete.every((boneTransformId, index) => boneTransformId === null || boneTransformId === candidate[index]);
+    }
+
+    private isOrderedBonePaletteSubset(subset: readonly (string | null)[], completePalette: readonly (string | null)[]): boolean {
+        let subsetIndex = 0;
+
+        for (const boneTransformId of completePalette)
+        {
+            if (boneTransformId === subset[subsetIndex])
+                subsetIndex++;
+
+            if (subsetIndex === subset.length)
+                return true;
+        }
+
+        return subsetIndex === subset.length;
     }
 }
