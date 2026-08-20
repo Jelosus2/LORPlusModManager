@@ -664,14 +664,13 @@ export class AnimatorControllerEvaluator {
             return;
 
         const duration = motion.clip.duration;
-        if (duration <= this.EPSILON)
-            return;
+        const hasDuration = duration > this.EPSILON;
 
-        const timeWithOffset = stateTime + (state.cycleOffset + motion.node.cycleOffset) * duration;
-
-        const clipTime = state.loop
-            ? this.positiveModulo(timeWithOffset, duration)
-            : Math.min(duration, Math.max(0, timeWithOffset));
+        const clipTime = hasDuration
+            ? state.loop
+                ? this.positiveModulo(stateTime + (state.cycleOffset + motion.node.cycleOffset) * duration, duration)
+                : Math.min(duration, Math.max(0, stateTime + (state.cycleOffset + motion.node.cycleOffset) * duration))
+            : 0;
 
         destination.push({
             controllerId: this.controller.id,
@@ -682,7 +681,9 @@ export class AnimatorControllerEvaluator {
             clipId: motion.clip.pathId,
             clipName: motion.clip.name,
             clipTime,
-            normalizedTime: stateTime / duration,
+            normalizedTime: hasDuration
+                ? stateTime / duration
+                : 0,
             weight: stateWeight * layer.definition.defaultWeight,
             layerWeight: layer.definition.defaultWeight,
             blendingMode: layer.definition.blendingMode

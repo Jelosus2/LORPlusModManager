@@ -248,58 +248,25 @@ export class AnimatorSceneState {
 
         AnimatorRuntimeUtils.requireMaterialSlot(renderer, materialSlot);
 
-        const override = renderer.materialPropertyOverrides
-            .get(materialSlot)
-            ?.get(propertyName);
-
+        const override = renderer.materialPropertyOverrides.get(materialSlot)?.get(propertyName);
         if (override !== undefined)
             return this.cloneMaterialValue(override);
 
-        const materialId = renderer.materialIds[materialSlot];
-        if (!materialId)
-            return null;
+        return this.readBaseMaterialPropertyValue(renderer, materialSlot, propertyName, propertyType);
+    }
 
-        const material = this.materialsById.get(materialId);
-        if (!material)
-            return null;
+    getBaseMaterialPropertyValue(
+        rendererId: string,
+        rendererType: AnimatorRendererType,
+        materialSlot: number,
+        propertyName: string,
+        propertyType: AnimatorMaterialPropertyType
+    ): AnimatorMaterialPropertyValue | null {
+        const renderer = this.requireRenderer(rendererId, rendererType);
 
-        switch (propertyType)
-        {
-            case "float":
-                return material.floatProperties.find((property) => property.name === propertyName)?.value ?? null;
+        AnimatorRuntimeUtils.requireMaterialSlot(renderer, materialSlot);
 
-            case "integer":
-                return material.intProperties.find((property) => property.name === propertyName)?.value ?? null;
-
-            case "vector": {
-                const value = material.colorProperties.find((property) => property.name === propertyName)?.value;
-
-                return value
-                    ? [...AnimatorRuntimeUtils.requireFiniteVector(value, 4, `Material "${material.id}" property "${propertyName}"`)]
-                    : null;
-            }
-
-            case "textureTransform": {
-                if (!propertyName.endsWith("_ST"))
-                    return null;
-
-                const texturePropertyName = propertyName.slice(0, -3);
-                const property = material.textureProperties.find((candidate) =>  candidate.name === texturePropertyName);
-
-                if (!property)
-                    return null;
-
-                const scale = [...AnimatorRuntimeUtils.requireFiniteVector(property.scale, 2, `Material "${material.id}" property "${propertyName}" scale`)];
-                const offset = [...AnimatorRuntimeUtils.requireFiniteVector(property.offset, 2, `Material "${material.id}" property "${propertyName}" offset`)];
-
-                return [
-                    scale[0],
-                    scale[1],
-                    offset[0],
-                    offset[1]
-                ];
-            }
-        }
+        return this.readBaseMaterialPropertyValue(renderer, materialSlot, propertyName, propertyType);
     }
 
     setMaterialPropertyOverride(
@@ -478,6 +445,56 @@ export class AnimatorSceneState {
             result[i] = serializedWeights[i];
 
         return result;
+    }
+
+    private readBaseMaterialPropertyValue(
+        renderer: AnimatorRendererState,
+        materialSlot: number,
+        propertyName: string,
+        propertyType: AnimatorMaterialPropertyType
+    ): AnimatorMaterialPropertyValue | null {
+        const materialId = renderer.materialIds[materialSlot];
+        if (!materialId)
+            return null;
+
+        const material = this.materialsById.get(materialId);
+        if (!material)
+            return null;
+
+        switch (propertyType)
+        {
+            case "float":
+                return material.floatProperties.find((property) => property.name === propertyName)?.value ?? null;
+
+            case "integer":
+                return material.intProperties.find((property) => property.name === propertyName)?.value ?? null;
+
+            case "vector":
+            {
+                const value = material.colorProperties.find((property) => property.name === propertyName)?.value;
+
+                return value
+                    ? [...AnimatorRuntimeUtils.requireFiniteVector(value, 4, `Material "${material.id}" property "${propertyName}"`)]
+                    : null;
+            }
+
+            case "textureTransform":
+            {
+                if (!propertyName.endsWith("_ST"))
+                    return null;
+
+                const texturePropertyName = propertyName.slice(0, -3);
+                const property = material.textureProperties.find((candidate) => candidate.name === texturePropertyName);
+
+                if (!property)
+                    return null;
+
+                const scale = AnimatorRuntimeUtils.requireFiniteVector(property.scale, 2, `Material "${material.id}" property "${propertyName}" scale`);
+                const offset = AnimatorRuntimeUtils.requireFiniteVector(property.offset, 2, `Material "${material.id}" property "${propertyName}" offset`);
+
+                return [scale[0], scale[1], offset[0], offset[1]];
+            }
+        }
     }
 
     private copyNullableStrings(destination: (string | null)[], source: readonly (string | null)[]) {

@@ -122,6 +122,14 @@ export type AnimatorRuntimePuppet2DIkHandle = Readonly<{
     offsetRotation: readonly number[];
 }>;
 
+export type AnimatorRuntimePuppet2DSplineControl = Readonly<{
+    componentId: string;
+    componentTransformId: string;
+    controlTransformIds: readonly string[];
+    samples: number;
+    boneTransformIds: readonly string[];
+}>;
+
 export type AnimatorRuntimeParticleValue =
     | null
     | boolean
@@ -250,6 +258,7 @@ export type AnimatorRuntimeScene = Readonly<{
     spriteRenderers: readonly AnimatorRuntimeSpriteRenderer[];
     interactions: AnimatorRuntimeInteractions;
     puppet2dIkHandles: readonly AnimatorRuntimePuppet2DIkHandle[];
+    puppet2dSplineControls: readonly AnimatorRuntimePuppet2DSplineControl[];
     particleSystems: readonly AnimatorRuntimeParticleSystem[];
     particleSystemRenderers: readonly AnimatorRuntimeParticleSystemRenderer[];
 }>;
@@ -278,6 +287,12 @@ export type AnimatorBindingClip = Readonly<{
     name: string;
     bindings: readonly AnimatorBindingDefinition[];
     pptrCurveMapping: readonly AnimatorObjectReference[];
+}>;
+
+export type AnimatorBindingInitialNumericValue = Readonly<{
+    bindingIndex: number;
+    componentIndex: number;
+    value: number;
 }>;
 
 export type ResolvedAnimatorObjectReference =
@@ -498,6 +513,7 @@ class BindingResolutionError extends Error {}
 class IgnoredBindingResolutionError extends BindingResolutionError {}
 
 export class AnimatorBindingResolver {
+    private readonly MATERIAL_VALUE_EPSILON = 0.0001;
     private readonly GAME_OBJECT_TYPE_ID = 1;
     private readonly TRANSFORM_TYPE_ID = 4;
     private readonly MESH_RENDERER_TYPE_ID = 23;
@@ -532,6 +548,7 @@ export class AnimatorBindingResolver {
     private readonly meshesById: Map<string, AnimatorRuntimeMesh>;
     private readonly materialsById: Map<string, AnimatorRuntimeMaterial>;
     private readonly spritesById: Map<string, AnimatorRuntimeSprite>;
+    private readonly transformsById: Map<string, AnimatorRuntimeTransform>;
     private readonly meshRenderersByGameObjectId: Map<string, AnimatorRuntimeMeshRenderer[]>;
     private readonly skinnedRenderersByGameObjectId: Map<string, AnimatorRuntimeSkinnedMeshRenderer[]>;
     private readonly spriteRenderersByGameObjectId: Map<string, AnimatorRuntimeSpriteRenderer[]>;
@@ -539,6 +556,7 @@ export class AnimatorBindingResolver {
     private readonly particleSystemsByGameObjectId: Map<string, AnimatorRuntimeParticleSystem[]>;
 
     constructor(private readonly scene: AnimatorRuntimeScene) {
+        this.transformsById = AnimatorRuntimeUtils.indexUniqueById(scene.transforms, "Transform");
         this.transformsByGameObjectId = this.indexTransformsByGameObject();
         this.meshesById = AnimatorRuntimeUtils.indexUniqueById(scene.meshes, "Mesh");
         this.materialsById = AnimatorRuntimeUtils.indexUniqueById(scene.materials, "Material");
@@ -550,10 +568,18 @@ export class AnimatorBindingResolver {
         this.particleSystemsByGameObjectId = this.groupByGameObject(scene.particleSystems);
     }
 
-    resolve(animatorId: string, clip: AnimatorBindingClip): AnimatorBindingResolution {
+    resolve(animatorId: string, clip: AnimatorBindingClip, initialNumericValues: readonly AnimatorBindingInitialNumericValue[] = []): AnimatorBindingResolution {
         const animator = this.scene.animators.find((candidate) => candidate.id === animatorId);
         if (!animator)
             throw new Error(`Animator "${animatorId}" does not exist in the runtime scene.`);
+
+        const initialValuesByBinding = new Map<number, number>();
+
+        for (const value of initialNumericValues)
+        {
+            if (value.componentIndex === 0)
+                initialValuesByBinding.set(value.bindingIndex, value.value);
+        }
 
         const targetsByHash = this.buildPathIndex(animator);
         const siblingTargetHashes = this.buildSiblingResolvedPathHashes(animator);
@@ -586,7 +612,7 @@ export class AnimatorBindingResolver {
                     components: binding.components,
                     targetTransformId: target.id,
                     targetGameObjectId: target.gameObjectId,
-                    property: this.resolveProperty(target, binding)
+                    property: this.resolveProperty(target, binding, initialValuesByBinding.get(binding.bindingIndex) ?? null)
                 };
             }
             catch (error)
@@ -637,7 +663,7 @@ export class AnimatorBindingResolver {
         };
     }
 
-    private resolveProperty(target: AnimatorRuntimeTransform, binding: AnimatorBindingDefinition): ResolvedAnimatorProperty {
+    private resolveProperty(target: AnimatorRuntimeTransform, binding: AnimatorBindingDefinition, initialValue: number | null): ResolvedAnimatorProperty {
         const attribute = binding.attributeHash >>> 0;
 
         if (binding.typeId === this.TRANSFORM_TYPE_ID)
@@ -668,7 +694,7 @@ export class AnimatorBindingResolver {
             return this.resolveMaterialReference(target.gameObjectId, binding);
 
         if (binding.customType === this.CUSTOM_RENDERER_MATERIAL_PROPERTY)
-            return this.resolveMaterialProperty(target.gameObjectId, binding);
+            return this.resolveMaterialProperty(target.gameObjectId, binding, initialValue);
 
         if (binding.customType === this.CUSTOM_SPRITE_REFERENCE)
             return this.resolveSpriteReference(target.gameObjectId, binding);
@@ -844,7 +870,7 @@ export class AnimatorBindingResolver {
         };
     }
 
-    private resolveMaterialProperty(gameObjectId: string, binding: AnimatorBindingDefinition): ResolvedAnimatorProperty {
+    private resolveMaterialProperty(gameObjectId: string, binding: AnimatorBindingDefinition, initialValue: number | null): ResolvedAnimatorProperty {
         if (binding.isPPtrCurve)
             throw new BindingResolutionError("The material property unexpectedly uses an object-reference curve.");
 
@@ -918,6 +944,37 @@ export class AnimatorBindingResolver {
                     : (["x", "y", "z", "w"] as const)
             )[(attribute >>> 28) & 3];
 
+        let materialSlots = [...candidate.materialSlots].sort((left, right) => left - right);
+
+        if (isScalar && initialValue !== null && Number.isFinite(initialValue) && materialSlots.length > 1)
+        {
+            const matchingSlots = materialSlots.filter((materialSlot) => {
+                const materialId = renderer.materialIds[materialSlot];
+                const material = materialId
+                    ? this.materialsById.get(materialId)
+                    : null;
+
+                if (!material)
+                    return false;
+
+                const baseProperty =
+                    candidate.propertyType === "float"
+                        ? material.floatProperties.find((property) => property.name === candidate.propertyName)
+                        : candidate.propertyType === "integer"
+                            ? material.intProperties.find((property) => property.name === candidate.propertyName)
+                            : null;
+
+                return (
+                    baseProperty !== null &&
+                    baseProperty !== undefined &&
+                    Math.abs(baseProperty.value - initialValue) <= this.MATERIAL_VALUE_EPSILON
+                );
+            });
+
+            if (matchingSlots.length > 0)
+                materialSlots = matchingSlots;
+        }
+
         return {
             kind: "materialProperty",
             rendererId: renderer.rendererId,
@@ -925,7 +982,7 @@ export class AnimatorBindingResolver {
             propertyName: candidate.propertyName,
             propertyType: candidate.propertyType,
             component: resolvedComponent,
-            materialSlots: [...candidate.materialSlots].sort((left, right) => left - right)
+            materialSlots
         };
     }
 
@@ -1093,20 +1150,36 @@ export class AnimatorBindingResolver {
         if (!animatorTransform)
             throw new Error(`Animator "${animator.id}" has no Transform.`);
 
-        const animatorPath = animatorTransform.relativePath;
-        const descendantPrefix = animatorPath ? `${animatorPath}/` : "";
-        const result = new Map<number, AnimatorRuntimeTransform[]>();
+        const descendantPrefix = animatorTransform.relativePath
+            ? `${animatorTransform.relativePath}/`
+            : "";
 
-        for (const transform of this.scene.transforms)
+        const result = new Map<number, AnimatorRuntimeTransform[]>();
+        const pending: AnimatorRuntimeTransform[] = [animatorTransform];
+        const visited = new Set<string>();
+
+        while (pending.length > 0)
         {
+            const transform = pending.pop()!;
+
+            if (visited.has(transform.id))
+                throw new Error(`Animator "${animator.id}" Transform hierarchy contains a cycle or duplicate reference at Transform "${transform.id}".`);
+
+            visited.add(transform.id);
+
             let localPath: string;
 
             if (transform.id === animatorTransform.id)
+            {
                 localPath = "";
-            else if (transform.relativePath.startsWith(descendantPrefix))
-                localPath = transform.relativePath.slice(descendantPrefix.length);
+            }
             else
-                continue;
+            {
+                if (!transform.relativePath.startsWith(descendantPrefix))
+                    throw new Error(`Transform "${transform.id}" is not below Animator "${animator.id}" in the exported hierarchy.`);
+
+                localPath = transform.relativePath.slice(descendantPrefix.length);
+            }
 
             const hash = UnityCrc32.generateCrc(localPath);
             const existing = result.get(hash);
@@ -1115,6 +1188,19 @@ export class AnimatorBindingResolver {
                 existing.push(transform);
             else
                 result.set(hash, [transform]);
+
+            for (const childId of transform.children)
+            {
+                const child = this.transformsById.get(childId);
+
+                if (!child)
+                    throw new Error(`Transform "${transform.id}" references missing child Transform "${childId}".`);
+
+                if (child.parentId !== transform.id)
+                    throw new Error(`Transform "${child.id}" does not identify Transform "${transform.id}" as its parent.`);
+
+                pending.push(child);
+            }
         }
 
         return result;

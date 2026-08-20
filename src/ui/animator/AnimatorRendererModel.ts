@@ -57,6 +57,7 @@ export type PreparedAnimatorRenderer =
 export class AnimatorRendererModel {
     private readonly WEIGHT_EPSILON = 0.000001;
     private readonly materialsById: Map<string, AnimatorRuntimeMaterial>;
+    private readonly initiallyInactiveGameObjectIds: ReadonlySet<string>;
     readonly meshRenderers: readonly PreparedAnimatorMeshRenderer[];
     readonly skinnedMeshRenderers: readonly PreparedAnimatorSkinnedRenderer[];
     readonly spriteRenderers: readonly PreparedAnimatorSpriteRenderer[];
@@ -68,6 +69,7 @@ export class AnimatorRendererModel {
         private readonly hierarchy: AnimatorTransformHierarchy
     ) {
         this.materialsById = AnimatorRuntimeUtils.indexUniqueById(scene.materials, "Material");
+        this.initiallyInactiveGameObjectIds = new Set(scene.gameObjects.filter((gameObject) => !gameObject.active).map((gameObject) => gameObject.id));
 
         const rendererIds = new Set<string>();
         let sourceOrder = 0;
@@ -85,8 +87,11 @@ export class AnimatorRendererModel {
         for (const renderer of scene.skinnedMeshRenderers)
         {
             const rendererSourceOrder = sourceOrder++;
-
             if (!this.isRenderableSkinnedMeshRenderer(renderer))
+                continue;
+
+            const mesh = this.geometry.requireMesh(renderer.meshId!);
+            if (this.isInactiveAmbiguousPaletteDuplicate(renderer, mesh, scene.skinnedMeshRenderers))
                 continue;
 
             this.requireUniqueRendererId(renderer.id, rendererIds);
@@ -341,6 +346,51 @@ export class AnimatorRendererModel {
 
     private isRenderableSkinnedMeshRenderer(renderer: AnimatorRuntimeSkinnedMeshRenderer): boolean {
         return renderer.meshId !== null && renderer.materialIds.some((materialId) => materialId !== null);
+    }
+
+    private isInactiveAmbiguousPaletteDuplicate(
+        renderer: AnimatorRuntimeSkinnedMeshRenderer,
+        mesh: PreparedAnimatorMesh,
+        allRenderers: readonly AnimatorRuntimeSkinnedMeshRenderer[]
+    ): boolean {
+        if (
+            !this.initiallyInactiveGameObjectIds.has(renderer.gameObjectId) ||
+            renderer.boneTransformIds.length !== 0 ||
+            renderer.rootBoneTransformId !== null
+        )
+        {
+            return false;
+        }
+
+        const bindPoses = mesh.bindPoses;
+        const boneWeights = mesh.boneWeights;
+
+        if (!bindPoses || bindPoses.length === 0 || bindPoses.length % 16 !== 0 || !boneWeights)
+            return false;
+
+        const hasWeightedGeometry = boneWeights.some((weight) => weight > this.WEIGHT_EPSILON);
+        if (!hasWeightedGeometry)
+            return false;
+
+        const bindPoseCount = bindPoses.length / 16;
+        const uniquePalettes = new Set<string>();
+
+        for (const candidate of allRenderers)
+        {
+            if (
+                candidate.id === renderer.id ||
+                candidate.meshId !== renderer.meshId ||
+                candidate.boneTransformIds.length !== bindPoseCount ||
+                !this.hasCompleteWeightedBonePalette(mesh, candidate.boneTransformIds)
+            )
+            {
+                continue;
+            }
+
+            uniquePalettes.add(JSON.stringify(candidate.boneTransformIds));
+        }
+
+        return uniquePalettes.size > 1;
     }
 
     private hasCompleteWeightedBonePalette(mesh: PreparedAnimatorMesh, palette: readonly (string | null)[]): boolean {

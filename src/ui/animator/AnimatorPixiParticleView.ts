@@ -302,9 +302,6 @@ export class AnimatorPixiParticleView {
         if (view.display.texture !== texture)
             view.display.texture = texture;
 
-        if (this.hasNonIdentityTextureTransform())
-            texture.source.addressMode = "repeat";
-
         this.updateMeshTextureCoordinates(view);
 
         const alpha = this.clamp01(particle.color.a * this.materialColor.alpha);
@@ -648,15 +645,6 @@ export class AnimatorPixiParticleView {
 
     private resolveParticleWorldMatrix(particle: AnimatorParticleSnapshot) {
         return particle.simulationMatrix ?? this.hierarchy.requireParticleWorldMatrix(this.renderer.transformId, this.renderer.scalingMode);
-    }
-
-    private hasNonIdentityTextureTransform(): boolean {
-        return (
-            this.textureScaleX !== 1 ||
-            this.textureScaleY !== 1 ||
-            this.textureOffsetX !== 0 ||
-            this.textureOffsetY !== 0
-        );
     }
 
     private shouldFlip(seed: number, salt: number, probability: number): boolean {

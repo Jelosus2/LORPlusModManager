@@ -58,7 +58,7 @@ type AnimatorRuntimeMetadata = Readonly<{
     bundleName: string;
     versionHash: string;
     locator: string;
-    runtimeFormatVersion: 17;
+    runtimeFormatVersion: 19;
     files: readonly UnityAnimatorRuntimeFile[];
 }>;
 
@@ -73,7 +73,7 @@ export class UnityPreviewAssetCacheService {
     private readonly MAXIMUM_REQUESTS = 64;
     private readonly MAXIMUM_ASSET_NAME_LENGTH = 256;
     private readonly MAXIMUM_METADATA_SIZE = 16 * 1024;
-    private readonly ANIMATOR_RUNTIME_FORMAT_VERSION = 17;
+    private readonly ANIMATOR_RUNTIME_FORMAT_VERSION = 19;
     private readonly MAXIMUM_RUNTIME_METADATA_SIZE = 2 * 1024 * 1024;
     private readonly MAXIMUM_RUNTIME_PACKAGE_SIZE = 2 * 1024 ** 3;
     private readonly worker = new UnityWorkerClient();

@@ -144,6 +144,9 @@ export class AnimatorScenePoseApplier {
                 continue;
             }
 
+            if (channel.binding.property.kind === "materialProperty" && this.isNoOpAdditiveScalarMaterialProperty(channel))
+                continue;
+
             AnimatorRuntimeUtils.appendUniqueString(
                 diagnostics,
                 diagnosticKeys,
@@ -772,5 +775,42 @@ export class AnimatorScenePoseApplier {
             throw new Error(`Additive reference Transform "${id}" does not exist.`);
 
         return transform;
+    }
+
+    private isNoOpAdditiveScalarMaterialProperty(channel: AnimatorNumericPoseChannel): boolean {
+        const property = channel.binding.property;
+
+        if (property.kind !== "materialProperty")
+            return false;
+        if (property.propertyType !== "float" && property.propertyType !== "integer")
+            return false;
+
+        const sample = this.getScalarSample(channel);
+        if (!sample)
+            return true;
+
+        let comparedMaterial = false;
+
+        for (const materialSlot of property.materialSlots)
+        {
+            const reference = this.state.getBaseMaterialPropertyValue(
+                property.rendererId,
+                property.rendererType,
+                materialSlot,
+                property.propertyName,
+                property.propertyType
+            );
+
+            if (typeof reference !== "number")
+                return false;
+
+            comparedMaterial = true;
+
+            const weightedDelta = (sample.value - reference) * AnimatorRuntimeUtils.clamp01(sample.weight);
+            if (Math.abs(weightedDelta) > this.EPSILON)
+                return false;
+        }
+
+        return comparedMaterial;
     }
 }

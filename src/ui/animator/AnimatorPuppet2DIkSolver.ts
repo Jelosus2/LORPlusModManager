@@ -2,6 +2,7 @@ import type { AnimatorRuntimePuppet2DIkHandle, AnimatorRuntimeScene, AnimatorRun
 import type { AnimatorTransformHierarchy } from "./AnimatorTransformHierarchy";
 import type { AnimatorSceneState } from "./AnimatorSceneState";
 
+import { AnimatorTransformSpace } from "./AnimatorTransformSpace";
 import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
 import { AnimatorQuaternion } from "./AnimatorQuaternion";
 
@@ -49,10 +50,10 @@ export class AnimatorPuppet2DIkSolver {
             this.hierarchy.update(this.state);
         }
 
-        let topPosition = this.getWorldPosition(handle.topJointTransformId);
-        let middlePosition = this.getWorldPosition(handle.middleJointTransformId);
-        let bottomPosition = this.getWorldPosition(handle.bottomJointTransformId);
-        const controlPosition = this.getWorldPosition(handle.controlTransformId);
+        let topPosition = AnimatorTransformSpace.getWorldPosition(this.hierarchy, handle.topJointTransformId);
+        let middlePosition = AnimatorTransformSpace.getWorldPosition(this.hierarchy, handle.middleJointTransformId);
+        let bottomPosition = AnimatorTransformSpace.getWorldPosition(this.hierarchy, handle.bottomJointTransformId);
+        const controlPosition = AnimatorTransformSpace.getWorldPosition(this.hierarchy, handle.controlTransformId);
 
         const upperLength = this.distance(topPosition, middlePosition);
         const lowerLength = this.distance(middlePosition, bottomPosition);
@@ -76,9 +77,9 @@ export class AnimatorPuppet2DIkSolver {
 
             this.hierarchy.update(this.state);
 
-            topPosition = this.getWorldPosition(handle.topJointTransformId);
-            middlePosition = this.getWorldPosition(handle.middleJointTransformId);
-            bottomPosition = this.getWorldPosition(handle.bottomJointTransformId);
+            topPosition = AnimatorTransformSpace.getWorldPosition(this.hierarchy, handle.topJointTransformId);
+            middlePosition = AnimatorTransformSpace.getWorldPosition(this.hierarchy, handle.middleJointTransformId);
+            bottomPosition = AnimatorTransformSpace.getWorldPosition(this.hierarchy, handle.bottomJointTransformId);
             targetDistance = this.distance(topPosition, controlPosition);
         }
 
@@ -108,7 +109,7 @@ export class AnimatorPuppet2DIkSolver {
         this.setWorldRotation(handle.topJointTransformId, topWorldRotation, mirroredPlanarJointSpace);
         this.hierarchy.update(this.state);
 
-        middlePosition = this.getWorldPosition(handle.middleJointTransformId);
+        middlePosition = AnimatorTransformSpace.getWorldPosition(this.hierarchy, handle.middleJointTransformId);
         const middleToControl = this.subtract(controlPosition, middlePosition);
 
         if (Math.hypot(...middleToControl) <= this.EPSILON)
@@ -234,16 +235,6 @@ export class AnimatorPuppet2DIkSolver {
         const destination = this.state.requireTransform(transformId).localRotation;
 
         AnimatorRuntimeUtils.copyFiniteVector(destination, localRotation, destination.length, "Puppet2D IK vector");
-    }
-
-    private getWorldPosition(transformId: string): number[] {
-        const matrix = this.hierarchy.requireWorldMatrix(transformId);
-
-        return [
-            matrix[3],
-            matrix[7],
-            matrix[11]
-        ];
     }
 
     private subtract(left: readonly number[], right: readonly number[]): number[] {

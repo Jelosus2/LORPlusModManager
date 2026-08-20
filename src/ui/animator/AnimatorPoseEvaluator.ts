@@ -136,7 +136,9 @@ export class AnimatorPoseEvaluator {
         if (existing)
             return existing;
 
-        const resolution = this.bindingResolver.resolve(animatorId, clip);
+        const initialSample = this.animationSampler.sampleClip(clip, 0);
+        const resolution = this.bindingResolver.resolve(animatorId, clip, initialSample.numericValues);
+
         this.resolutions.set(key, resolution);
 
         return resolution;

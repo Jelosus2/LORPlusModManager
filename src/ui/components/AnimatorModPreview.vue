@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { AnimatorCharacterSkin, PreparedPreviewAsset } from "../../shared/characters.ts";
+import type { AnimatorRuntimeTextureWrapMode } from "@/animator/AnimatorRuntimePackage";
 import type { AnimatorPixiFaceAsset } from "@/animator/AnimatorPixiScene";
+import type { Texture, Ticker, WRAP_MODE } from "pixi.js";
 import type { InstalledMod } from "../../shared/mod";
-import type { Texture, Ticker } from "pixi.js";
 
 import ResetStateIcon from "./icons/ResetStateIcon.vue";
 import ResetViewIcon from "./icons/ResetViewIcon.vue";
@@ -336,7 +337,14 @@ async function loadRuntimeTextures(loadedPackage: AnimatorRuntimePackage, genera
             ? getModAssetUrl(props.mod.id, modAssetName)
             : loadedPackage.requireTextureUrl(texture.id);
 
-        Assets.add({ alias, src: url });
+        Assets.add({
+            alias,
+            src: url,
+            data: {
+                addressModeU: getPixiWrapMode(texture.wrapModeU),
+                addressModeV: getPixiWrapMode(texture.wrapModeV)
+            }
+        });
 
         registeredAliases.push(alias);
         aliasesByTextureId.set(texture.id, alias);
@@ -561,6 +569,19 @@ function resetCharacterState() {
     }
     catch (error) {
         failAnimatorPreview(error);
+    }
+}
+
+function getPixiWrapMode(mode: AnimatorRuntimeTextureWrapMode): WRAP_MODE {
+    switch (mode)
+    {
+        case 0:
+            return "repeat";
+        case 1:
+            return "clamp-to-edge";
+        case 2:
+        case 3:
+            return "mirror-repeat";
     }
 }
 

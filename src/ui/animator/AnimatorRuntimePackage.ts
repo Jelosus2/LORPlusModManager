@@ -5,6 +5,7 @@ import type { AnimatorAnimationManifest } from "./AnimatorAnimationSampler";
 import type { AnimatorGeometryManifest } from "./AnimatorGeometryReader";
 
 import { AnimatorParticleRendererModel } from "./AnimatorParticleRendererModel";
+import { AnimatorPuppet2DSplineSolver } from "./AnimatorPuppet2DSplineSolver";
 import { AnimatorControllerEvaluator } from "./AnimatorControllerEvaluator";
 import { AnimatorTransformHierarchy } from "./AnimatorTransformHierarchy";
 import { AnimatorParticleSimulator } from "./AnimatorParticleSimulator";
@@ -20,6 +21,8 @@ import { AnimatorMeshDeformer } from "./AnimatorMeshDeformer";
 import { AnimatorRuntimeUtils } from "./AnimatorRuntimeUtils";
 import { AnimatorSceneState } from "./AnimatorSceneState";
 
+export type AnimatorRuntimeTextureWrapMode = 0 | 1 | 2 | 3;
+
 export type AnimatorRuntimeTexture = Readonly<{
     id: string;
     name: string;
@@ -28,6 +31,8 @@ export type AnimatorRuntimeTexture = Readonly<{
     sha256: string;
     width: number;
     height: number;
+    wrapModeU: AnimatorRuntimeTextureWrapMode;
+    wrapModeV: AnimatorRuntimeTextureWrapMode;
 }>;
 
 export type AnimatorRuntimeManifest = Readonly<{
@@ -53,6 +58,7 @@ export class AnimatorRuntimePackage {
     private readonly poseEvaluator: AnimatorPoseEvaluator;
     private readonly poseApplier: AnimatorScenePoseApplier;
     private readonly puppet2dIkSolver: AnimatorPuppet2DIkSolver;
+    private readonly puppet2dSplineSolver: AnimatorPuppet2DSplineSolver;
     private readonly particleSimulatorsById = new Map<string, AnimatorParticleSimulator>();
     private readonly particleInitializationDiagnostics: string[] = [];
     private readonly decoration1States = new Map<string, boolean>();
@@ -91,6 +97,7 @@ export class AnimatorRuntimePackage {
         this.poseEvaluator = new AnimatorPoseEvaluator(manifest.scene, this.animationSampler);
         this.poseApplier = new AnimatorScenePoseApplier(this.state, this.particleSimulatorsById);
         this.puppet2dIkSolver = new AnimatorPuppet2DIkSolver(manifest.scene, this.state, this.hierarchy);
+        this.puppet2dSplineSolver = new AnimatorPuppet2DSplineSolver(manifest.scene, this.state, this.hierarchy);
 
         this.indexTextures();
         this.initializeControllers();
@@ -216,6 +223,9 @@ export class AnimatorRuntimePackage {
 
         this.hierarchy.update(this.state);
         this.synchronizeParticleActivation();
+
+        for (const diagnostic of this.puppet2dSplineSolver.solve())
+            AnimatorRuntimeUtils.appendUniqueString(diagnostics, diagnosticKeys, diagnostic);
 
         for (const diagnostic of this.puppet2dIkSolver.solve())
             AnimatorRuntimeUtils.appendUniqueString(diagnostics, diagnosticKeys, diagnostic);
@@ -532,21 +542,41 @@ export class AnimatorRuntimePackage {
 
     private indexTextures() {
         const textureIds = new Set<string>();
-        const textureFiles = new Set<string>();
+        const textureFiles = new Map<string, Readonly<{ sha256: string; width: number; height: number; }>>();
 
         for (const texture of this.manifest.textures)
         {
             if (textureIds.has(texture.id))
                 throw new Error(`Texture "${texture.id}" is duplicated.`);
-            if (textureFiles.has(texture.file))
-                throw new Error(`Animator texture file "${texture.file}" is duplicated.`);
             if (!/^[0-9a-f]{64}$/i.test(texture.sha256) || texture.file !== `textures/${texture.sha256.toLowerCase()}.png`)
                 throw new Error(`Texture "${texture.name}" has an invalid package path.`);
             if (!Number.isSafeInteger(texture.width) || !Number.isSafeInteger(texture.height) || texture.width <= 0 || texture.height <= 0)
                 throw new Error(`Texture "${texture.name}" has invalid dimensions.`);
 
+            const existingFile = textureFiles.get(texture.file);
+
+            if (
+                existingFile &&
+                (
+                    existingFile.sha256 !== texture.sha256.toLowerCase() ||
+                    existingFile.width !== texture.width ||
+                    existingFile.height !== texture.height
+                )
+            )
+            {
+                throw new Error(`Animator texture file "${texture.file}" has conflicting metadata.`);
+            }
+
             textureIds.add(texture.id);
-            textureFiles.add(texture.file);
+
+            if (!existingFile)
+            {
+                textureFiles.set(texture.file, {
+                    sha256: texture.sha256.toLowerCase(),
+                    width: texture.width,
+                    height: texture.height
+                });
+            }
 
             this.textureUrlsById.set(texture.id, `${this.runtimeRootUrl}/${texture.file}`);
         }
@@ -564,8 +594,9 @@ export class AnimatorRuntimePackage {
         {
             if (sprite.textureId && !textureIds.has(sprite.textureId))
                 throw new Error(`Sprite "${sprite.name}" references missing texture "${sprite.textureId}".`);
+
             if (sprite.alphaTextureId && !textureIds.has(sprite.alphaTextureId))
-                throw new Error(`Sprite "${sprite.name}" references missing alpha texture "${sprite.alphaTextureId}".`);
+                throw new Error( `Sprite "${sprite.name}" references missing alpha texture "${sprite.alphaTextureId}".`);
         }
     }
 
@@ -679,6 +710,8 @@ export class AnimatorRuntimePackage {
         const sha256 = AnimatorRuntimePackage.requireString(texture.sha256, `Animator texture ${index} checksum`);
         const width = AnimatorRuntimePackage.requireSafeInteger(texture.width, `Animator texture ${index} width`);
         const height = AnimatorRuntimePackage.requireSafeInteger(texture.height, `Animator texture ${index} height`);
+        const wrapModeU = AnimatorRuntimePackage.parseTextureWrapMode(texture.wrapModeU, `Animator texture ${index} U wrap mode`);
+        const wrapModeV = AnimatorRuntimePackage.parseTextureWrapMode(texture.wrapModeV, `Animator texture ${index} V wrap mode`);
 
         return {
             id,
@@ -687,8 +720,18 @@ export class AnimatorRuntimePackage {
             file,
             sha256,
             width,
-            height
+            height,
+            wrapModeU,
+            wrapModeV
         };
+    }
+
+    private static parseTextureWrapMode(value: unknown, context: string): AnimatorRuntimeTextureWrapMode {
+        const mode = AnimatorRuntimePackage.requireSafeInteger(value, context);
+        if (mode !== 0 && mode !== 1 && mode !== 2 && mode !== 3)
+            throw new Error(`${context} is unsupported.`);
+
+        return mode;
     }
 
     private static async fetchText(url: string, signal?: AbortSignal): Promise<string> {

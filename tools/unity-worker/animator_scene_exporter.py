@@ -22,6 +22,9 @@ MAXIMUM_TEXTURE_FILE_SIZE = 128 * 1024 * 1024
 MAXIMUM_SPRITES = 4_096
 MAXIMUM_PUPPET2D_IK_HANDLES = 256
 MAXIMUM_PARTICLE_SYSTEMS = 2_048
+MAXIMUM_PUPPET2D_SPLINE_CONTROLS = 256
+MAXIMUM_PUPPET2D_SPLINE_POINTS = 4096
+UNITY_TEXTURE_WRAP_MODES = {0, 1, 2, 3}
 
 PARTICLE_SYSTEM_MODULE_NAMES = (
     "InitialModule",
@@ -218,6 +221,24 @@ def get_mono_behaviour_class_name(reader: Any) -> str | None:
     class_name = script.m_ClassName
 
     return class_name if isinstance(class_name, str) and class_name else None
+
+
+def texture_wrap_mode(texture: Any, axis: str) -> int:
+    settings = texture.m_TextureSettings
+    mode = getattr(settings, f"m_Wrap{axis}", None)
+
+    if mode is None:
+        mode = getattr(settings, "m_WrapMode", None)
+
+    if mode is None:
+        mode = 0
+
+    mode = int(mode)
+
+    if mode not in UNITY_TEXTURE_WRAP_MODES:
+        raise ValueError(f'Texture2D "{texture.m_Name}" has an invalid {axis} wrap mode.')
+
+    return mode
 
 
 def normalize_skinning(handler: MeshHandler) -> tuple[list[int], list[float]]:
@@ -506,6 +527,9 @@ def export_texture(texture_reader: Any, texture_directory: Path) -> dict:
         else f"{texture.m_Name}.png"
     )
 
+    wrap_mode_u = texture_wrap_mode(texture, "U")
+    wrap_mode_v = texture_wrap_mode(texture, "V")
+
     return {
         "id": str(texture_reader.path_id),
         "name": texture.m_Name,
@@ -513,7 +537,9 @@ def export_texture(texture_reader: Any, texture_directory: Path) -> dict:
         "file": relative_path,
         "sha256": digest,
         "width": width,
-        "height": height
+        "height": height,
+        "wrapModeU": wrap_mode_u,
+        "wrapModeV": wrap_mode_v
     }
 
 
@@ -1420,6 +1446,90 @@ def export_puppet2d_ik_handles(hierarchy: dict, component_readers: dict[int, Any
     return handles
 
 
+def export_puppet2d_spline_controls(hierarchy: dict, component_readers: dict[int, Any]) -> list[dict]:
+    transforms_by_id = {
+        transform["id"]: transform
+        for transform in hierarchy["transforms"]
+    }
+    transform_ids_by_game_object_id = {
+        transform["gameObjectId"]: transform["id"]
+        for transform in hierarchy["transforms"]
+    }
+
+    controls: list[dict] = []
+
+    for reader in component_readers.values():
+        if reader.type.name != "MonoBehaviour":
+            continue
+
+        if get_mono_behaviour_class_name(reader) != "Puppet2D_SplineControl":
+            continue
+
+        component_id = str(reader.path_id)
+        context = f'Puppet2D spline control "{component_id}"'
+        tree = reader.read_typetree()
+
+        if not isinstance(tree, dict):
+            raise ValueError(f"{context} has invalid serialized data.")
+
+        game_object_id = typetree_object_id(tree.get("m_GameObject"), f"{context} GameObject", required=True)
+        component_transform_id = transform_ids_by_game_object_id.get(game_object_id)
+
+        if component_transform_id is None:
+            raise ValueError(f"{context} has no Transform in the Animator hierarchy.")
+
+        control_transform_ids = typetree_object_ids(tree.get("_splineCTRLS"), f"{context} controls")
+
+        if len(control_transform_ids) < 4:
+            raise ValueError(f"{context} has fewer than four spline controls.")
+
+        for transform_id in control_transform_ids:
+            if transform_id not in transforms_by_id:
+                raise ValueError(f'{context} references control Transform "{transform_id}" outside the Animator hierarchy.')
+
+        samples = int(tree.get("numberBones", 0))
+
+        if samples <= 0:
+            raise ValueError(f"{context} has an invalid sample count.")
+
+        bone_game_object_ids = typetree_object_ids(tree.get("bones"), f"{context} output bones")
+        bone_transform_ids: list[str] = []
+
+        for bone_game_object_id in bone_game_object_ids:
+            transform_id = transform_ids_by_game_object_id.get(bone_game_object_id)
+
+            if transform_id is None:
+                raise ValueError(f'{context} output GameObject "{bone_game_object_id}" has no Transform in the Animator hierarchy.')
+
+            bone_transform_ids.append(transform_id)
+
+        expected_count = (len(control_transform_ids) - 3) * samples + 1
+
+        if expected_count != len(bone_transform_ids):
+            raise ValueError(f"{context} produces {expected_count} spline points but references {len(bone_transform_ids)} output bones.")
+
+        if expected_count > MAXIMUM_PUPPET2D_SPLINE_POINTS:
+            raise ValueError(f"{context} produces too many spline points.")
+
+        if len(set(bone_transform_ids)) != len(bone_transform_ids):
+            raise ValueError(f"{context} contains duplicate output bones.")
+
+        controls.append({
+            "componentId": component_id,
+            "componentTransformId": component_transform_id,
+            "controlTransformIds": control_transform_ids,
+            "samples": samples,
+            "boneTransformIds": bone_transform_ids
+        })
+
+    if len(controls) > MAXIMUM_PUPPET2D_SPLINE_CONTROLS:
+        raise ValueError("The Animator runtime contains too many Puppet2D spline controls.")
+
+    controls.sort(key=lambda control: int(control["componentId"]))
+
+    return controls
+
+
 def export_particle_system(particle_reader: Any) -> dict:
     tree = particle_reader.read_typetree()
     component_id = str(particle_reader.path_id)
@@ -1656,6 +1766,7 @@ def export_scene(environment: Any, writer: GeometryWriter, locator: str, texture
     
     interactions = export_animator_interactions(environment, hierarchy, component_readers)
     puppet2d_ik_handles = export_puppet2d_ik_handles(hierarchy, component_readers)
+    puppet2d_spline_controls = export_puppet2d_spline_controls(hierarchy, component_readers)
 
     if len(particle_systems) > MAXIMUM_PARTICLE_SYSTEMS:
         raise ValueError("The Animator runtime contains too many particle systems.")
@@ -1688,6 +1799,7 @@ def export_scene(environment: Any, writer: GeometryWriter, locator: str, texture
         "spriteRenderers": sprite_renderers,
         "interactions": interactions,
         "puppet2dIkHandles": puppet2d_ik_handles,
+        "puppet2dSplineControls": puppet2d_spline_controls,
         "particleSystems": particle_systems,
         "particleSystemRenderers": particle_renderers
     }, textures

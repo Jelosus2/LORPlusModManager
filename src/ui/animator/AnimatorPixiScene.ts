@@ -283,15 +283,32 @@ export class AnimatorPixiScene {
 
         const textureCoordinates = AnimatorRuntimeUtils.createTextureCoordinates(mesh.uv0);
 
-        for (const [submeshOrder, submesh] of mesh.submeshes.entries())
-        {
-            if (submesh.materialSlot >= renderer.materials.length)
-                continue;
+        const drawCalls = mesh.submeshes
+            .filter((submesh) => submesh.materialSlot < renderer.materials.length)
+            .map((submesh) => ({
+                submesh,
+                materialSlot: submesh.materialSlot
+            }));
 
+        if (mesh.submeshes.length > 0)
+        {
+            const lastSubmesh = mesh.submeshes[mesh.submeshes.length - 1];
+
+            for (let materialSlot = mesh.submeshes.length; materialSlot < renderer.materials.length; materialSlot++)
+            {
+                drawCalls.push({
+                    submesh: lastSubmesh,
+                    materialSlot
+                });
+            }
+        }
+
+        for (const [submeshOrder, drawCall] of drawCalls.entries())
+        {
             const geometry = new MeshGeometry({
                 positions: new Float32Array(projection.positions2d),
                 uvs: new Float32Array(textureCoordinates),
-                indices: new Uint32Array(submesh.indices),
+                indices: new Uint32Array(drawCall.submesh.indices),
                 shrinkBuffersToFit: false
             });
 
@@ -309,7 +326,7 @@ export class AnimatorPixiScene {
                 geometry,
                 renderer,
                 projection,
-                materialSlot: submesh.materialSlot,
+                materialSlot: drawCall.materialSlot,
                 submeshOrder,
                 sourceUv0: textureCoordinates,
                 textureTransform: [Number.NaN, Number.NaN, Number.NaN, Number.NaN]
