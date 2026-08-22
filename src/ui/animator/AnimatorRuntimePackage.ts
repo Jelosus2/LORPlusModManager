@@ -484,8 +484,14 @@ export class AnimatorRuntimePackage {
     private applyDecorationPresentation() {
         for (const view of this.manifest.scene.interactions.partsViews)
         {
-            this.applyPartGroup(view.part1, this.decoration1States.get(view.componentId) ?? view.part1.defaultEnabled);
-            this.applyPartGroup(view.part2, this.decoration2States.get(view.componentId) ?? view.part2.defaultEnabled);
+            const decoration1Enabled = this.decoration1States.get(view.componentId) ?? view.part1.defaultEnabled;
+            const decoration2Enabled = this.decoration2States.get(view.componentId) ?? view.part2.defaultEnabled;
+
+            if (decoration1Enabled !== view.part1.defaultEnabled)
+                this.applyPartGroup(view.part1, decoration1Enabled);
+
+            if (decoration2Enabled !== view.part2.defaultEnabled)
+                this.applyPartGroup(view.part2, decoration2Enabled);
         }
     }
 

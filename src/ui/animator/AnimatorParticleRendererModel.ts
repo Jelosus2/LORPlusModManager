@@ -26,7 +26,7 @@ export type PreparedAnimatorParticleRenderer = Readonly<{
     pivot: readonly number[];
     flip: readonly number[];
     renderAlignment: number;
-    blendMode: "normal" | "add";
+    blendMode: AnimatorRuntimeMaterial["blendMode"];
 }>;
 
 export class AnimatorParticleRendererModel {
@@ -70,6 +70,9 @@ export class AnimatorParticleRendererModel {
             }
 
             referencedParticleSystemIds.add(definition.id);
+
+            if (renderer.renderMode === 5)
+                continue;
 
             const simulator = simulatorsById.get(definition.id);
             if (!simulator)
@@ -176,7 +179,7 @@ export class AnimatorParticleRendererModel {
         }
 
         const blendMode = material.blendMode;
-        if (blendMode !== "normal" && blendMode !== "add")
+        if (blendMode !== "normal" && blendMode !== "add" && blendMode !== "multiply")
             throw new Error(`Material "${material.name}" has an unsupported blend mode.`);
 
         AnimatorRuntimeUtils.requireFiniteVector(renderer.pivot, 3, "Particle renderer pivot");

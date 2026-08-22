@@ -97,7 +97,7 @@ export type AnimatorRuntimeMaterial = Readonly<{
     shaderId: string | null;
     shaderName: string | null;
     renderQueue: number;
-    blendMode: "normal" | "add";
+    blendMode: "normal" | "add" | "multiply";
     textureProperties: readonly AnimatorRuntimeTextureProperty[];
     floatProperties: readonly AnimatorRuntimeFloatProperty[];
     intProperties: readonly AnimatorRuntimeIntegerProperty[];

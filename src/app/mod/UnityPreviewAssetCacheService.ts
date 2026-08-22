@@ -58,7 +58,7 @@ type AnimatorRuntimeMetadata = Readonly<{
     bundleName: string;
     versionHash: string;
     locator: string;
-    runtimeFormatVersion: 19;
+    runtimeFormatVersion: 20;
     files: readonly UnityAnimatorRuntimeFile[];
 }>;
 
@@ -73,7 +73,7 @@ export class UnityPreviewAssetCacheService {
     private readonly MAXIMUM_REQUESTS = 64;
     private readonly MAXIMUM_ASSET_NAME_LENGTH = 256;
     private readonly MAXIMUM_METADATA_SIZE = 16 * 1024;
-    private readonly ANIMATOR_RUNTIME_FORMAT_VERSION = 19;
+    private readonly ANIMATOR_RUNTIME_FORMAT_VERSION = 20;
     private readonly MAXIMUM_RUNTIME_METADATA_SIZE = 2 * 1024 * 1024;
     private readonly MAXIMUM_RUNTIME_PACKAGE_SIZE = 2 * 1024 ** 3;
     private readonly worker = new UnityWorkerClient();
@@ -348,7 +348,13 @@ export class UnityPreviewAssetCacheService {
 
         try
         {
-            const runtime = await this.worker.prepareAnimatorRuntime(candidate.filePath, candidate.bundleName, stagingPath, locator);
+            const runtime = await this.worker.prepareAnimatorRuntime(
+                candidate.filePath,
+                candidate.bundleName,
+                stagingPath,
+                locator,
+                candidate.unityDefaultResourcesPath
+            );
 
             if (runtime.bundleName !== candidate.bundleName || runtime.locator !== locator || runtime.formatVersion !== this.ANIMATOR_RUNTIME_FORMAT_VERSION)
                 throw new Error("The Unity worker prepared the wrong Animator runtime package.");

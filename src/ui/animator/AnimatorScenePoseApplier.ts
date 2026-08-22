@@ -518,7 +518,12 @@ export class AnimatorScenePoseApplier {
         throw new Error("A numeric binding was sampled as an object-reference channel.");
     }
 
-    private applyVectorComponents(destination: number[], channel: AnimatorNumericPoseChannel, componentNames: readonly string[]) {
+    private applyVectorComponents(
+        destination: number[],
+        channel: AnimatorNumericPoseChannel,
+        componentNames: readonly string[],
+        interpolation: "linear" | "angle" = "linear"
+    ) {
         for (let i = 0; i < channel.values.length; i++)
         {
             const value = channel.values[i];
@@ -532,8 +537,11 @@ export class AnimatorScenePoseApplier {
                 throw new Error("A vector binding component is missing.");
 
             const destinationIndex = this.getComponentIndex(componentName, componentNames);
+            const currentValue = destination[destinationIndex];
 
-            destination[destinationIndex] = this.lerp(destination[destinationIndex], value, weight);
+            destination[destinationIndex] = interpolation === "angle"
+                ? this.lerpAngleDegrees(currentValue, value, weight)
+                : this.lerp(currentValue, value, weight);
         }
     }
 
@@ -597,7 +605,7 @@ export class AnimatorScenePoseApplier {
     private applyEulerRotation(destination: number[], channel: AnimatorNumericPoseChannel) {
         const euler = this.quaternionToEulerZxy(destination);
 
-        this.applyVectorComponents(euler, channel, ["x", "y", "z"]);
+        this.applyVectorComponents(euler, channel, ["x", "y", "z"], "angle");
         this.copyValues(destination, this.eulerZxyToQuaternion(euler));
     }
 
@@ -649,6 +657,11 @@ export class AnimatorScenePoseApplier {
 
     private lerp(start: number, end: number, weight: number): number {
         return AnimatorRuntimeUtils.lerp(start, end, AnimatorRuntimeUtils.clamp01(weight));
+    }
+
+    private lerpAngleDegrees(start: number, end: number, weight: number): number {
+        const delta = ((end - start + 180) % 360 + 360) % 360 - 180;
+        return start + delta * AnimatorRuntimeUtils.clamp01(weight);
     }
 
     private slerpQuaternion(startValue: readonly number[], endValue: readonly number[], weight: number): number[] {

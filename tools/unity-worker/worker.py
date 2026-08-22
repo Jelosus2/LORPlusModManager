@@ -539,6 +539,18 @@ def main() -> int:
             elif command == "prepare-animator-runtime":
                 destination = require_path(request, "destination", must_exist=False)
                 environment = load_unity_environment(bundle_path)
+
+                if request.get("unityDefaultResourcesPath") is not None:
+                    unity_default_resources_path = require_path(request, "unityDefaultResourcesPath", must_exist=True)
+
+                    if not unity_default_resources_path.is_file():
+                        raise ValueError("unityDefaultResourcesPath must be a file.")
+
+                    dependency = environment.load_file(str(unity_default_resources_path), name="unity default resources", is_dependency=True)
+
+                    if dependency is None:
+                        raise ValueError("The Unity default resources file could not be loaded.")
+
                 result = prepare_animator_runtime_package(environment, request.get("bundleName"), destination, request.get("locator"))
             else:
                 raise ValueError("Unsupported worker command.")

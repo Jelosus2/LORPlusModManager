@@ -209,22 +209,37 @@ export class AnimatorPixiScene {
             return;
         }
 
+        const wasEnabled = view.selectedAsset !== null;
+
         if (assetName === null)
         {
             view.selectedAsset = null;
-            this.updateFaceView();
-            return;
+        }
+        else
+        {
+            const asset = view.assetsByName.get(assetName);
+            if (!asset)
+                throw new Error(`Animator face "${assetName}" is not prepared.`);
+
+            view.selectedAsset = asset;
+            view.display.texture = asset.texture;
+
+            this.configureFaceGeometry(view, asset.geometry);
         }
 
-        const asset = view.assetsByName.get(assetName);
-        if (!asset)
-            throw new Error(`Animator face "${assetName}" is not prepared.`);
+        const isEnabled = view.selectedAsset !== null;
 
-        view.selectedAsset = asset;
-        view.display.texture = asset.texture;
+        if (wasEnabled !== isEnabled)
+        {
+            const triggerName = isEnabled
+                ? "Face_On"
+                : "Face_Off";
 
-        this.configureFaceGeometry(view, asset.geometry);
-        this.updateFaceView();
+            if (this.runtime.triggerParameter(triggerName) > 0)
+                this.runtime.advance(0);
+        }
+
+        this.updateViews();
     }
 
     destroy() {

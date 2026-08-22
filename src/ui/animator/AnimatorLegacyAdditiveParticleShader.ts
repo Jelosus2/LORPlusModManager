@@ -57,7 +57,9 @@ const PROGRAM = GlProgram.from({
                 : vec3(0.0);
 
             vec4 unityFragment = clamp(vec4(textureColor, sampled.a) * uParticleColor * uMaterialColor * uColorMultiplier, 0.0, 1.0);
-            finalColor = vec4(unityFragment.rgb * unityFragment.a, unityFragment.a) * vColor;
+            float additiveCoverage = clamp(max(textureColor.r, max(textureColor.g, textureColor.b)), 0.0, 1.0);
+
+            finalColor = vec4(unityFragment.rgb * unityFragment.a, unityFragment.a * additiveCoverage) * vColor;
         }
     `
 });

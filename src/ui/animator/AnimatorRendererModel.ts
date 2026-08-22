@@ -265,6 +265,10 @@ export class AnimatorRendererModel {
         if (paletteToMatch.length === bindPoseCount && this.hasCompleteWeightedBonePalette(mesh, paletteToMatch))
             return [...paletteToMatch];
 
+        const expandedSingleBonePalette = this.tryExpandSingleBonePalette(mesh, paletteToMatch, bindPoseCount);
+        if (expandedSingleBonePalette && this.hasCompleteWeightedBonePalette(mesh, expandedSingleBonePalette))
+            return expandedSingleBonePalette;
+
         if (paletteToMatch.length > bindPoseCount)
         {
             const boneIndices = mesh.boneIndices;
@@ -335,6 +339,44 @@ export class AnimatorRendererModel {
                 material
             };
         });
+    }
+
+    private tryExpandSingleBonePalette(mesh: PreparedAnimatorMesh, palette: readonly (string | null)[], bindPoseCount: number): readonly (string | null)[] | null {
+        if (palette.length !== 1 || bindPoseCount <= 1)
+            return null;
+
+        const boneTransformId = palette[0];
+        const boneIndices = mesh.boneIndices;
+        const boneWeights = mesh.boneWeights;
+
+        if (!boneTransformId || !boneIndices || !boneWeights)
+            return null;
+
+        let referencedBoneIndex: number | null = null;
+
+        for (let offset = 0; offset < boneWeights.length; offset++)
+        {
+            if (boneWeights[offset] <= this.WEIGHT_EPSILON)
+                continue;
+
+            const boneIndex = boneIndices[offset];
+
+            if (boneIndex >= bindPoseCount)
+                return null;
+
+            if (referencedBoneIndex === null)
+                referencedBoneIndex = boneIndex;
+            else if (referencedBoneIndex !== boneIndex)
+                return null;
+        }
+
+        if (referencedBoneIndex === null)
+            return null;
+
+        const expandedPalette = new Array<string | null>(bindPoseCount).fill(null);
+        expandedPalette[referencedBoneIndex] = boneTransformId;
+
+        return expandedPalette;
     }
 
     private requireUniqueRendererId(rendererId: string, rendererIds: Set<string>) {

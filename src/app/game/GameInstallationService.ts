@@ -1,6 +1,7 @@
 import { UserFacingError } from "#utils/ErrorUtils.js";
 import { GameRegistry } from "./GameRegistry.js";
 import { TypeCheck } from "#utils/TypeCheck.js";
+import { Paths } from "#utils/Paths.js";
 import path from "node:path";
 import fse from "fs-extra";
 
@@ -43,5 +44,34 @@ export class GameInstallationService {
             throw new UserFacingError(`${executableFileName} is not a file.`);
 
         return installationPath;
+    }
+
+    async findUnityDefaultResourcesPath(gameLocation: string): Promise<string | null> {
+        const executableFileName = await GameRegistry.getExecutableFileName() ?? "LAST ORIGIN R+.exe";
+        const resourcePath = path.join(gameLocation, `${path.parse(executableFileName).name}_Data`, "Resources", "unity default resources");
+
+        try
+        {
+            const stats = await fse.lstat(resourcePath);
+
+            if (!stats.isFile() || stats.isSymbolicLink())
+                return null;
+
+            const [resolvedGameLocation, resolvedResourcePath] = await Promise.all([
+                fse.realpath(gameLocation),
+                fse.realpath(resourcePath)
+            ]);
+
+            return Paths.isSubpath(resolvedGameLocation, resolvedResourcePath)
+                ? resolvedResourcePath
+                : null;
+        }
+        catch (error)
+        {
+            if (TypeCheck.isNodeError(error) && ["ENOENT", "ENOTDIR"].includes(error.code ?? ""))
+                return null;
+
+            throw error;
+        }
     }
 }

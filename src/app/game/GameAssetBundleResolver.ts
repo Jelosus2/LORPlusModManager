@@ -11,6 +11,7 @@ export type ResolvedGameAssetBundle = Readonly<{
     versionHash: string;
     filePath: string;
     lastUsedAt: number;
+    unityDefaultResourcesPath: string | null;
 }>;
 
 export class GameAssetBundleResolver {
@@ -42,6 +43,7 @@ export class GameAssetBundleResolver {
         if (!Paths.isSafeGameAssetBundleName(bundleName))
             throw new UserFacingError("The requested game asset bundle name is invalid.");
 
+        const unityDefaultResourcesPath = await this.installationService.findUnityDefaultResourcesPath(gameLocation);
         const bundleRoot = Paths.getGameAssetBundleCachePath(gameLocation, bundleName);
         let entries: fse.Dirent[];
 
@@ -89,7 +91,8 @@ export class GameAssetBundleResolver {
                 bundleName,
                 versionHash: entry.name,
                 filePath: dataPath,
-                lastUsedAt: Math.max(dataStats.mtimeMs, infoModifiedAt)
+                lastUsedAt: Math.max(dataStats.mtimeMs, infoModifiedAt),
+                unityDefaultResourcesPath
             }));
         }
 

@@ -340,7 +340,7 @@ def resolve_shader_name(shader_pointer: Any) -> str | None:
     return None
 
 
-def resolve_material_blend_mode(float_properties: list[dict], shader_name: str | None) -> Literal["normal", "add"]:
+def resolve_material_blend_mode(float_properties: list[dict], shader_name: str | None) -> Literal["normal", "add", "multiply"]:
     values = {
         str(property_value["name"]): float(property_value["value"])
         for property_value in float_properties
@@ -353,6 +353,9 @@ def resolve_material_blend_mode(float_properties: list[dict], shader_name: str |
 
     if explicit_mode == 1.0 or (source == 1.0 and destination == 1.0) or "particles/additive" in normalized_shader:
         return "add"
+
+    if source == 2.0 and destination == 10.0:
+        return "multiply"
 
     return "normal"
 

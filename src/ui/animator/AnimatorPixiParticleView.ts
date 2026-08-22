@@ -640,6 +640,19 @@ export class AnimatorPixiParticleView {
             color.alpha *= value[3] ?? 1;
         }
 
+        const sourceBlend = material.floatProperties.find((property) => property.name === "_Src")?.value;
+        const destinationBlend = material.floatProperties.find((property) => property.name === "_Dst")?.value;
+        const hasParticleTint = material.colorProperties.some((property) => property.name === "_TintColor");
+        const usesPremultipliedParticleTint = material.blendMode === "normal" && sourceBlend === 1 && destinationBlend === 10 && hasParticleTint;
+
+        if (usesPremultipliedParticleTint)
+        {
+            color.red *= 2;
+            color.green *= 2;
+            color.blue *= 2;
+            color.alpha *= 2;
+        }
+
         return Object.freeze(color);
     }
 

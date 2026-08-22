@@ -101,6 +101,7 @@ type WorkerRequest =
         bundleName: string;
         destination: string;
         locator: string;
+        unityDefaultResourcesPath: string | null;
     };
 
 export class UnityWorkerError extends Error {
@@ -191,19 +192,26 @@ export class UnityWorkerClient {
         };
     }
 
-    async prepareAnimatorRuntime(bundlePath: string, bundleName: string, destination: string, locator: string): Promise<UnityAnimatorRuntimePackage> {
+    async prepareAnimatorRuntime(
+        bundlePath: string,
+        bundleName: string,
+        destination: string,
+        locator: string,
+        unityDefaultResourcesPath: string | null
+    ): Promise<UnityAnimatorRuntimePackage> {
         const response = await this.execute({
             protocolVersion: this.PROTOCOL_VERSION,
             command: "prepare-animator-runtime",
             bundlePath,
             bundleName,
             destination,
-            locator
+            locator,
+            unityDefaultResourcesPath
         }, this.EXTRACTION_TIMEOUT);
 
         if (
             response.bundleName !== bundleName ||
-            response.formatVersion !== 19 ||
+            response.formatVersion !== 20 ||
             response.locator !== locator ||
             !TypeCheck.isValidArray(response.files, 1024) ||
             response.files.length === 0 ||
