@@ -125,6 +125,27 @@ export class AnimatorPoseEvaluator {
         };
     }
 
+    getGameObjectActivationTargets(animatorId: string, clipIds: readonly string[]): ReadonlySet<string> {
+        const result = new Set<string>();
+
+        for (const clipId of new Set(clipIds))
+        {
+            const clip = this.animationSampler.getClip(clipId);
+            if (!clip)
+                throw new Error(`AnimationClip "${clipId}" does not exist.`);
+
+            const resolution = this.getResolution(animatorId, clip);
+
+            for (const binding of resolution.bindings)
+            {
+                if (binding?.property.kind === "gameObjectActive")
+                    result.add(binding.targetGameObjectId);
+            }
+        }
+
+        return result;
+    }
+
     clearResolutionCache() {
         this.resolutions.clear();
     }

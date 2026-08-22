@@ -1,5 +1,5 @@
+import type { AnimatorRuntimeScene, AnimatorRuntimeBackgroundPartGroup, AnimatorRuntimePartGroup } from "./AnimatorBindingResolver";
 import type { AnimatorControllerDefinition, AnimatorParameterIdentifier } from "./AnimatorControllerEvaluator";
-import type { AnimatorRuntimeScene, AnimatorRuntimeBackgroundPartGroup } from "./AnimatorBindingResolver";
 import type { AnimatorModPreviewPreparation } from "../../shared/characters";
 import type { AnimatorAnimationManifest } from "./AnimatorAnimationSampler";
 import type { AnimatorGeometryManifest } from "./AnimatorGeometryReader";
@@ -64,6 +64,7 @@ export class AnimatorRuntimePackage {
     private readonly decoration1States = new Map<string, boolean>();
     private readonly decoration2States = new Map<string, boolean>();
     private readonly particleActiveStates = new Map<string, boolean>();
+    private readonly animationControlledGameObjectIds: ReadonlySet<string>;
     private rPlusEnabled = false;
     readonly state: AnimatorSceneState;
     readonly hierarchy: AnimatorTransformHierarchy;
@@ -100,7 +101,7 @@ export class AnimatorRuntimePackage {
         this.puppet2dSplineSolver = new AnimatorPuppet2DSplineSolver(manifest.scene, this.state, this.hierarchy);
 
         this.indexTextures();
-        this.initializeControllers();
+        this.animationControlledGameObjectIds = this.initializeControllers();
         this.initializeParticleSimulators();
 
         this.particleRenderers = new AnimatorParticleRendererModel(manifest.scene, this.particleSimulatorsById, this.hierarchy, this.preparedGeometry);
@@ -213,9 +214,9 @@ export class AnimatorRuntimePackage {
                 AnimatorRuntimeUtils.appendUniqueString(diagnostics, diagnosticKeys, diagnostic.message);
         }
 
-        const applicationResult = this.poseApplier.apply(poses);
+        const applicationResult = this.poseApplier.apply(poses, () => this.applyDecorationBaseline());
+        this.applyDecorationSuppression();
         this.applyRPlusPresentation();
-        this.applyDecorationPresentation();
         this.applyBackgroundPresentation();
 
         for (const diagnostic of applicationResult.diagnostics)
@@ -330,13 +331,12 @@ export class AnimatorRuntimePackage {
         return this.advance(0);
     }
 
-    private initializeControllers() {
+    private initializeControllers(): ReadonlySet<string> {
         const controllersById = new Map<string, AnimatorControllerDefinition>();
+        const animationControlledGameObjectIds = new Set<string>();
 
         for (const controller of this.manifest.controllers)
         {
-            if (!controller.id)
-                throw new Error("An Animator controller has no ID.");
             if (controllersById.has(controller.id))
                 throw new Error(`Animator controller "${controller.id}" is duplicated.`);
 
@@ -353,7 +353,22 @@ export class AnimatorRuntimePackage {
                 throw new Error(`Animator "${animator.id}" references missing controller "${animator.controllerId}".`);
 
             this.controllerEvaluatorsByAnimatorId.set(animator.id, new AnimatorControllerEvaluator(controller, this.manifest.animations.clips));
+
+            const clipIds: string[] = [];
+
+            for (const clip of controller.clips)
+            {
+                if (clip.id)
+                    clipIds.push(clip.id);
+            }
+
+            const controlledIds = this.poseEvaluator.getGameObjectActivationTargets(animator.id, clipIds);
+
+            for (const objectId of controlledIds)
+                animationControlledGameObjectIds.add(objectId);
         }
+
+        return animationControlledGameObjectIds;
     }
 
     private applyRPlusPresentation() {
@@ -481,18 +496,51 @@ export class AnimatorRuntimePackage {
         }
     }
 
-    private applyDecorationPresentation() {
+    private applyDecorationBaseline() {
         for (const view of this.manifest.scene.interactions.partsViews)
         {
             const decoration1Enabled = this.decoration1States.get(view.componentId) ?? view.part1.defaultEnabled;
             const decoration2Enabled = this.decoration2States.get(view.componentId) ?? view.part2.defaultEnabled;
 
-            if (decoration1Enabled !== view.part1.defaultEnabled)
-                this.applyPartGroup(view.part1, decoration1Enabled);
-
-            if (decoration2Enabled !== view.part2.defaultEnabled)
-                this.applyPartGroup(view.part2, decoration2Enabled);
+            this.applyPartGroupBaseline(view.part1, decoration1Enabled);
+            this.applyPartGroupBaseline(view.part2, decoration2Enabled);
         }
+    }
+
+    private applyPartGroupBaseline(group: AnimatorRuntimePartGroup, enabled: boolean) {
+        for (const objectId of group.enableObjectIds)
+            this.applyPartGroupBaselineState(objectId, enabled);
+
+        for (const objectId of group.disableObjectIds)
+            this.applyPartGroupBaselineState(objectId, !enabled);
+    }
+
+    private applyPartGroupBaselineState(objectId: string, active: boolean) {
+        if (active && this.animationControlledGameObjectIds.has(objectId))
+            return;
+
+        this.state.requireGameObject(objectId).active = active;
+    }
+
+    private applyDecorationSuppression() {
+        for (const view of this.manifest.scene.interactions.partsViews)
+        {
+            const decoration1Enabled = this.decoration1States.get(view.componentId) ?? view.part1.defaultEnabled;
+
+            const decoration2Enabled = this.decoration2States.get(view.componentId) ?? view.part2.defaultEnabled;
+
+            this.suppressDisabledPartGroupObjects(view.part1, decoration1Enabled);
+            this.suppressDisabledPartGroupObjects(view.part2, decoration2Enabled);
+        }
+    }
+
+    private suppressDisabledPartGroupObjects(group: AnimatorRuntimePartGroup, enabled: boolean) {
+        const inactiveObjectIds = enabled
+            ? group.disableObjectIds
+            : group.enableObjectIds;
+
+        for (const objectId of inactiveObjectIds)
+            this.state.requireGameObject(objectId).active = false;
     }
 
     private applyBackgroundPresentation() {

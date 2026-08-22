@@ -146,7 +146,7 @@ type EmissionModule = Readonly<{
     bursts: readonly EmissionBurst[];
 }>;
 
-type ParticleShapeType = 0 | 4 | 5 | 12;
+type ParticleShapeType = 0 | 4 | 5 | 10 | 12;
 
 type ParticleShapeModule = Readonly<{
     enabled: boolean;
@@ -744,6 +744,33 @@ export class AnimatorParticleSimulator {
                 break;
             }
 
+            case 10:
+            {
+                const azimuth = random.nextFloat() * this.shapeModule.arcRadians;
+                const minimumRadius = this.shapeRadius * (1 - this.shapeModule.radiusThickness);
+
+                const radius = Math.sqrt(
+                    AnimatorRuntimeUtils.lerp(minimumRadius * minimumRadius, this.shapeRadius * this.shapeRadius, random.nextFloat())
+                );
+
+                const cosine = Math.cos(azimuth);
+                const sine = Math.sin(azimuth);
+
+                localPosition = {
+                    x: cosine * radius * this.shapeModule.scale.x,
+                    y: sine * radius * this.shapeModule.scale.y,
+                    z: 0
+                };
+
+                localDirection = {
+                    x: cosine,
+                    y: sine,
+                    z: 0
+                };
+
+                break;
+            }
+
             case 12:
             {
                 const width = Math.abs(this.shapeModule.scale.x);
@@ -925,7 +952,7 @@ export class AnimatorParticleSimulator {
         }
 
         const type = AnimatorRuntimeUtils.requireIntegerProperty(module, "type", context);
-        if (type !== 0 && type !== 4 && type !== 5 && type !== 12)
+        if (type !== 0 && type !== 4 && type !== 5 && type !== 10 && type !== 12)
             throw new Error(`${context} uses unsupported shape type ${type}.`);
 
         const placementMode = AnimatorRuntimeUtils.requireIntegerProperty(module, "placementMode", context);

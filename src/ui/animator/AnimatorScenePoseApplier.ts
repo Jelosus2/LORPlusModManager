@@ -14,6 +14,7 @@ export type AnimatorPoseApplicationResult = Readonly<{
 export class AnimatorScenePoseApplier {
     private readonly EPSILON = 0.000001;
     private readonly additiveReferenceTransforms: ReadonlyMap<string, AnimatorTransformState>;
+    private readonly additiveReferenceBlendShapeWeights: ReadonlyMap<string, readonly number[]>;
 
     constructor(readonly state: AnimatorSceneState, private readonly particleSimulators: ReadonlyMap<string, AnimatorParticleSimulator>) {
         this.additiveReferenceTransforms = new Map([...state.transforms].map(([id, transform]) => [
@@ -24,10 +25,16 @@ export class AnimatorScenePoseApplier {
                 localScale: [...transform.localScale]
             }
         ]));
+
+        this.additiveReferenceBlendShapeWeights = new Map([...state.skinnedMeshRenderers].map(([id, renderer]) => [
+            id,
+            Object.freeze([...renderer.blendShapeWeights])
+        ]));
     }
 
-    apply(poses: readonly AnimatorEvaluatedPose[]): AnimatorPoseApplicationResult {
+    apply(poses: readonly AnimatorEvaluatedPose[], configureBaseState: () => void): AnimatorPoseApplicationResult {
         this.state.reset();
+        configureBaseState();
 
         for (const simulator of this.particleSimulators.values())
             simulator.resetAnimationOverrides();
@@ -144,8 +151,17 @@ export class AnimatorScenePoseApplier {
                 continue;
             }
 
-            if (channel.binding.property.kind === "materialProperty" && this.isNoOpAdditiveScalarMaterialProperty(channel))
+            if (channel.binding.property.kind === "blendShape")
+            {
+                this.applyAdditiveBlendShape(channel);
                 continue;
+            }
+
+            if (channel.binding.property.kind === "materialProperty")
+            {
+                this.applyMaterialProperty(channel, diagnostics, diagnosticKeys, "additive");
+                continue;
+            }
 
             AnimatorRuntimeUtils.appendUniqueString(
                 diagnostics,
@@ -181,6 +197,33 @@ export class AnimatorScenePoseApplier {
                 this.applyAdditiveEulerRotation(state.localRotation, reference.localRotation, channel);
                 break;
         }
+    }
+
+    private applyAdditiveBlendShape(channel: AnimatorNumericPoseChannel) {
+        const property = channel.binding.property;
+        if (property.kind !== "blendShape")
+            throw new Error("The additive blend-shape channel is invalid.");
+
+        const sample = this.getScalarSample(channel);
+        if (!sample)
+            return;
+
+        const renderer = this.state.requireSkinnedMeshRenderer(property.rendererId);
+
+        if (property.blendShapeIndex < 0 || property.blendShapeIndex >= renderer.blendShapeWeights.length)
+            throw new Error(`Blend shape "${property.blendShapeName}" has an invalid index.`);
+
+        const referenceWeights = this.additiveReferenceBlendShapeWeights.get(property.rendererId);
+        if (!referenceWeights)
+            throw new Error(`Additive reference weights for renderer "${property.rendererId}" do not exist.`);
+
+        const referenceWeight = referenceWeights[property.blendShapeIndex];
+        if (referenceWeight === undefined)
+            throw new Error(`Blend shape "${property.blendShapeName}" has no additive reference weight.`);
+
+        const delta = sample.value - referenceWeight;
+
+        renderer.blendShapeWeights[property.blendShapeIndex] += delta * AnimatorRuntimeUtils.clamp01(sample.weight);
     }
 
     private applyAdditiveVectorComponents(destination: number[], reference: readonly number[], channel: AnimatorNumericPoseChannel, componentNames: readonly string[]) {
@@ -412,7 +455,12 @@ export class AnimatorScenePoseApplier {
         );
     }
 
-    private applyMaterialProperty(channel: AnimatorNumericPoseChannel, diagnostics: string[], diagnosticKeys: Set<string>) {
+    private applyMaterialProperty(
+        channel: AnimatorNumericPoseChannel,
+        diagnostics: string[],
+        diagnosticKeys: Set<string>,
+        mode: "override" | "additive" = "override"
+    ) {
         const property = channel.binding.property;
         if (property.kind !== "materialProperty")
             throw new Error("The material-property channel is invalid.");
@@ -438,7 +486,28 @@ export class AnimatorScenePoseApplier {
                 continue;
             }
 
-            const result = this.blendMaterialProperty(current, channel);
+            const additiveReference = mode === "additive"
+                ? this.state.getBaseMaterialPropertyValue(
+                    property.rendererId,
+                    property.rendererType,
+                    materialSlot,
+                    property.propertyName,
+                    property.propertyType
+                )
+                : undefined;
+
+            if (additiveReference === null)
+            {
+                AnimatorRuntimeUtils.appendUniqueString(
+                    diagnostics,
+                    diagnosticKeys,
+                    `The additive reference for material property "${property.propertyName}" is unavailable on renderer "${property.rendererId}" slot ${materialSlot}.`
+                );
+
+                continue;
+            }
+
+            const result = this.blendMaterialProperty(current, channel, additiveReference);
             if (result === null)
                 continue;
 
@@ -446,20 +515,31 @@ export class AnimatorScenePoseApplier {
         }
     }
 
-    private blendMaterialProperty(current: AnimatorMaterialPropertyValue, channel: AnimatorNumericPoseChannel): AnimatorMaterialPropertyValue | null {
+    private blendMaterialProperty(
+        current: AnimatorMaterialPropertyValue,
+        channel: AnimatorNumericPoseChannel,
+        additiveReference?: AnimatorMaterialPropertyValue
+    ): AnimatorMaterialPropertyValue | null {
         const property = channel.binding.property;
         if (property.kind !== "materialProperty")
             throw new Error("The material-property channel is invalid.");
+
+        const sample = this.getScalarSample(channel);
+        if (!sample)
+            return null;
+
+        const weight = AnimatorRuntimeUtils.clamp01(sample.weight);
 
         if (property.propertyType === "float" || property.propertyType === "integer") {
             if (typeof current !== "number")
                 throw new Error("A scalar material property has a vector value.");
 
-            const sample = this.getScalarSample(channel);
-            if (!sample)
-                return null;
+            if (additiveReference !== undefined && typeof additiveReference !== "number")
+                throw new Error("A scalar material property has a vector additive reference.");
 
-            const value = this.lerp(current, sample.value, sample.weight);
+            const value = additiveReference === undefined
+                ? this.lerp(current, sample.value, weight)
+                : current + (sample.value - additiveReference) * weight;
 
             return property.propertyType === "integer"
                 ? Math.round(value)
@@ -471,6 +551,16 @@ export class AnimatorScenePoseApplier {
         if (!property.component)
             throw new Error("A vector material binding has no component.");
 
+        let referenceVector: number[] | null = null;
+
+        if (additiveReference !== undefined)
+        {
+            if (!Array.isArray(additiveReference) || additiveReference.length !== 4)
+                throw new Error("A vector material property has an invalid additive reference.");
+
+            referenceVector = additiveReference;
+        }
+
         const componentIndex = this.getComponentIndex(
             property.component,
             property.propertyType === "vector"
@@ -478,13 +568,12 @@ export class AnimatorScenePoseApplier {
                 : ["x", "y", "z", "w"]
         );
 
-        const sample = this.getScalarSample(channel);
-        if (!sample)
-            return null;
-
         const result = [...current];
 
-        result[componentIndex] = this.lerp(result[componentIndex], sample.value, sample.weight);
+        result[componentIndex] = referenceVector === null
+            ? this.lerp(result[componentIndex], sample.value, sample.weight)
+            : result[componentIndex] + (sample.value - referenceVector[componentIndex]) * weight;
+
         return result;
     }
 
@@ -788,42 +877,5 @@ export class AnimatorScenePoseApplier {
             throw new Error(`Additive reference Transform "${id}" does not exist.`);
 
         return transform;
-    }
-
-    private isNoOpAdditiveScalarMaterialProperty(channel: AnimatorNumericPoseChannel): boolean {
-        const property = channel.binding.property;
-
-        if (property.kind !== "materialProperty")
-            return false;
-        if (property.propertyType !== "float" && property.propertyType !== "integer")
-            return false;
-
-        const sample = this.getScalarSample(channel);
-        if (!sample)
-            return true;
-
-        let comparedMaterial = false;
-
-        for (const materialSlot of property.materialSlots)
-        {
-            const reference = this.state.getBaseMaterialPropertyValue(
-                property.rendererId,
-                property.rendererType,
-                materialSlot,
-                property.propertyName,
-                property.propertyType
-            );
-
-            if (typeof reference !== "number")
-                return false;
-
-            comparedMaterial = true;
-
-            const weightedDelta = (sample.value - reference) * AnimatorRuntimeUtils.clamp01(sample.weight);
-            if (Math.abs(weightedDelta) > this.EPSILON)
-                return false;
-        }
-
-        return comparedMaterial;
     }
 }
