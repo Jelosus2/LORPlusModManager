@@ -15,6 +15,7 @@ export class AnimatorScenePoseApplier {
     private readonly EPSILON = 0.000001;
     private readonly additiveReferenceTransforms: ReadonlyMap<string, AnimatorTransformState>;
     private readonly additiveReferenceBlendShapeWeights: ReadonlyMap<string, readonly number[]>;
+    private readonly additiveReferenceSpriteRendererColors: ReadonlyMap<string, readonly number[]>;
 
     constructor(readonly state: AnimatorSceneState, private readonly particleSimulators: ReadonlyMap<string, AnimatorParticleSimulator>) {
         this.additiveReferenceTransforms = new Map([...state.transforms].map(([id, transform]) => [
@@ -29,6 +30,11 @@ export class AnimatorScenePoseApplier {
         this.additiveReferenceBlendShapeWeights = new Map([...state.skinnedMeshRenderers].map(([id, renderer]) => [
             id,
             Object.freeze([...renderer.blendShapeWeights])
+        ]));
+
+        this.additiveReferenceSpriteRendererColors = new Map([...state.spriteRenderers].map(([id, renderer]) => [
+            id,
+            Object.freeze([...renderer.color])
         ]));
     }
 
@@ -154,6 +160,12 @@ export class AnimatorScenePoseApplier {
             if (channel.binding.property.kind === "blendShape")
             {
                 this.applyAdditiveBlendShape(channel);
+                continue;
+            }
+
+            if (channel.binding.property.kind === "spriteRendererColor")
+            {
+                this.applyAdditiveSpriteRendererColor(channel);
                 continue;
             }
 
@@ -401,6 +413,30 @@ export class AnimatorScenePoseApplier {
         const componentIndex = this.getComponentIndex(property.component, ["r", "g", "b", "a"]);
 
         renderer.color[componentIndex] = this.lerp(renderer.color[componentIndex], sample.value, sample.weight);
+    }
+
+    private applyAdditiveSpriteRendererColor(channel: AnimatorNumericPoseChannel) {
+        const property = channel.binding.property;
+        if (property.kind !== "spriteRendererColor")
+            throw new Error("The additive SpriteRenderer color channel is invalid.");
+
+        const sample = this.getScalarSample(channel);
+        if (!sample)
+            return;
+
+        const renderer = this.state.requireSpriteRenderer(property.rendererId);
+        const referenceColor = this.additiveReferenceSpriteRendererColors.get(property.rendererId);
+
+        if (!referenceColor)
+            throw new Error(`Additive reference color for SpriteRenderer "${property.rendererId}" does not exist.`);
+
+        const componentIndex = this.getComponentIndex(property.component, ["r", "g", "b", "a"]);
+        const referenceValue = referenceColor[componentIndex];
+
+        if (referenceValue === undefined)
+            throw new Error(`SpriteRenderer "${property.rendererId}" has no additive reference for component "${property.component}".`)
+
+        renderer.color[componentIndex] += (sample.value - referenceValue) * AnimatorRuntimeUtils.clamp01(sample.weight);
     }
 
     private applySpriteRendererFlip(channel: AnimatorNumericPoseChannel) {

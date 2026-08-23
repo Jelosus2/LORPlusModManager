@@ -653,6 +653,10 @@ export class AnimatorPixiParticleView {
             color.alpha *= 2;
         }
 
+        const additionalAlpha = material.floatProperties.find((property) => property.name === "_AdditionalAlpha")?.value;
+        if (additionalAlpha !== undefined && Number.isFinite(additionalAlpha))
+            color.alpha *= this.clamp01(additionalAlpha);
+
         return Object.freeze(color);
     }
 

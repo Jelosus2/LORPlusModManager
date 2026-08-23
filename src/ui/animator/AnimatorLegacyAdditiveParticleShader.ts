@@ -11,6 +11,7 @@ export type AnimatorParticleMaterialColor = Readonly<{
 
 export type AnimatorLegacyParticleShaderMode =
     | "additive"
+    | "additional-alpha-additive"
     | "soft-additive";
 
 const PROGRAM = GlProgram.from({
@@ -73,6 +74,7 @@ export class AnimatorLegacyAdditiveParticleShader extends Shader {
         const textureMatrix = new Matrix().copyFrom(texture.textureMatrix.mapCoord);
         const particleColor = new Float32Array([1, 1, 1, 1]);
         const usesSoftAdditive = mode === "soft-additive";
+        const usesLegacyDoubleColor = mode === "additive";
 
         super({
             glProgram: PROGRAM,
@@ -96,7 +98,7 @@ export class AnimatorLegacyAdditiveParticleShader extends Shader {
                         type: "vec4<f32>"
                     },
                     uColorMultiplier: {
-                        value: usesSoftAdditive ? 1 : 2,
+                        value: usesLegacyDoubleColor ? 2 : 1,
                         type: "f32"
                     }
                 }
@@ -126,11 +128,18 @@ export class AnimatorLegacyAdditiveParticleShader extends Shader {
     }
 
     static resolveAnimatorLegacyParticleShaderMode(material: AnimatorRuntimeMaterial): AnimatorLegacyParticleShaderMode | null {
-        const shaderName = material.shaderName?.trim().toLowerCase();
+        const shaderName = material.shaderName?.trim().toLowerCase() ?? "";
 
         if (shaderName === "legacy shaders/particles/additive (soft)")
             return "soft-additive";
-        if (material.blendMode === "add")
+
+        const hasAdditionalAlpha = material.floatProperties.some((property) => property.name === "_AdditionalAlpha");
+        const usesLastOneAdditionalAlphaShader = shaderName.startsWith("lastone/lo_sprite_loby_cha_full3dmeshbase_additional_alpha");
+
+        if (material.blendMode === "add" && (hasAdditionalAlpha || usesLastOneAdditionalAlphaShader))
+            return "additional-alpha-additive";
+
+        if (shaderName === "legacy shaders/particles/additive" || material.blendMode === "add")
             return "additive";
 
         return null;

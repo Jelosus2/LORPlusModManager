@@ -91,7 +91,7 @@ export class AnimatorRendererModel {
                 continue;
 
             const mesh = this.geometry.requireMesh(renderer.meshId!);
-            if (this.isInactiveAmbiguousPaletteDuplicate(renderer, mesh, scene.skinnedMeshRenderers))
+            if (this.isUnrecoverableInitiallyInactiveRenderer(renderer, mesh, scene.skinnedMeshRenderers))
                 continue;
 
             this.requireUniqueRendererId(renderer.id, rendererIds);
@@ -390,15 +390,15 @@ export class AnimatorRendererModel {
         return renderer.meshId !== null && renderer.materialIds.some((materialId) => materialId !== null);
     }
 
-    private isInactiveAmbiguousPaletteDuplicate(
+    private isUnrecoverableInitiallyInactiveRenderer(
         renderer: AnimatorRuntimeSkinnedMeshRenderer,
         mesh: PreparedAnimatorMesh,
         allRenderers: readonly AnimatorRuntimeSkinnedMeshRenderer[]
     ): boolean {
         if (
             !this.initiallyInactiveGameObjectIds.has(renderer.gameObjectId) ||
-            renderer.boneTransformIds.length !== 0 ||
-            renderer.rootBoneTransformId !== null
+            renderer.rootBoneTransformId !== null ||
+            renderer.boneTransformIds.some((boneTransformId) => boneTransformId !== null)
         )
         {
             return false;
@@ -415,7 +415,7 @@ export class AnimatorRendererModel {
             return false;
 
         const bindPoseCount = bindPoses.length / 16;
-        const uniquePalettes = new Set<string>();
+        const uniqueCompatiblePalettes = new Set<string>();
 
         for (const candidate of allRenderers)
         {
@@ -423,16 +423,17 @@ export class AnimatorRendererModel {
                 candidate.id === renderer.id ||
                 candidate.meshId !== renderer.meshId ||
                 candidate.boneTransformIds.length !== bindPoseCount ||
-                !this.hasCompleteWeightedBonePalette(mesh, candidate.boneTransformIds)
+                !this.hasCompleteWeightedBonePalette(mesh, candidate.boneTransformIds) ||
+                !this.isCompatibleBonePalette(renderer.boneTransformIds, candidate.boneTransformIds)
             )
             {
                 continue;
             }
 
-            uniquePalettes.add(JSON.stringify(candidate.boneTransformIds));
+            uniqueCompatiblePalettes.add(JSON.stringify(candidate.boneTransformIds));
         }
 
-        return uniquePalettes.size > 1;
+        return uniqueCompatiblePalettes.size !== 1;
     }
 
     private hasCompleteWeightedBonePalette(mesh: PreparedAnimatorMesh, palette: readonly (string | null)[]): boolean {
