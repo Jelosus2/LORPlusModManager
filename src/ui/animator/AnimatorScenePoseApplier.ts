@@ -84,6 +84,14 @@ export class AnimatorScenePoseApplier {
             }
         }
 
+        for (const renderer of this.state.skinnedMeshRenderers.values())
+        {
+            for (let i = 0; i < renderer.blendShapeWeights.length; i++)
+            {
+                renderer.blendShapeWeights[i] = Math.min(100, Math.max(0, renderer.blendShapeWeights[i]));
+            }
+        }
+
         return {
             state: this.state,
             diagnostics
@@ -139,6 +147,10 @@ export class AnimatorScenePoseApplier {
 
                 case "particleShapeRadius":
                     this.applyParticleShapeRadius(channel);
+                    break;
+
+                case "particleLooping":
+                    this.applyParticleLooping(channel);
                     break;
 
                 case "puppet2dIkFlip":
@@ -748,6 +760,22 @@ export class AnimatorScenePoseApplier {
             throw new Error(`ParticleSystem "${property.particleSystemId}" has no simulator.`);
 
         simulator.setShapeRadius(this.lerp(simulator.currentShapeRadius, sample.value, sample.weight));
+    }
+
+    private applyParticleLooping(channel: AnimatorNumericPoseChannel) {
+        const property = channel.binding.property;
+        if (property.kind !== "particleLooping")
+            throw new Error("The particle-looping channel is invalid.");
+
+        const sample = this.getScalarSample(channel);
+        if (!sample)
+            return;
+
+        const simulator = this.particleSimulators.get(property.particleSystemId);
+        if (!simulator)
+            throw new Error(`ParticleSystem "${property.particleSystemId}" has no simulator.`);
+
+        simulator.setLooping(this.blendBoolean(simulator.currentLooping, sample.value, sample.weight));
     }
 
     private applyPuppet2DIkFlip(channel: AnimatorNumericPoseChannel) {

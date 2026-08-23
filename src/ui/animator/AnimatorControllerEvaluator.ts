@@ -154,10 +154,7 @@ export class AnimatorControllerEvaluator {
     private readonly resolvedMotions = new Map<string, ResolvedMotion | null>();
     private readonly layers: LayerState[];
 
-    constructor(
-        private readonly controller: AnimatorControllerDefinition,
-        animationClips: readonly AnimatorAnimationClipDefinition[]
-    ) {
+    constructor(private readonly controller: AnimatorControllerDefinition, animationClips: readonly AnimatorAnimationClipDefinition[]) {
         for (const clip of animationClips)
             this.clipsById.set(clip.pathId, clip);
 

@@ -471,6 +471,10 @@ export type ResolvedAnimatorProperty =
     | Readonly<{
         kind: "puppet2dIkFlip";
         componentId: string;
+    }>
+    | Readonly<{
+        kind: "particleLooping";
+        particleSystemId: string;
     }>;
 
 export type ResolvedAnimatorBinding = Readonly<{
@@ -534,6 +538,7 @@ export class AnimatorBindingResolver {
     private readonly HASH_SORTING_ORDER = UnityCrc32.generateCrc("m_SortingOrder");
     private readonly HASH_PARTICLE_SHAPE_RADIUS = UnityCrc32.generateCrc("ShapeModule.radius.value");
     private readonly HASH_PUPPET2D_FLIP = UnityCrc32.generateCrc("Flip");
+    private readonly HASH_PARTICLE_LOOPING = UnityCrc32.generateCrc("looping");
     private readonly SPRITE_COLOR_COMPONENTS = new Map<number, "r" | "g" | "b" | "a">([
         [UnityCrc32.generateCrc("m_Color.r"), "r"],
         [UnityCrc32.generateCrc("m_Color.g"), "g"],
@@ -1019,10 +1024,6 @@ export class AnimatorBindingResolver {
         if (binding.typeId !== this.PARTICLE_SYSTEM_TYPE_ID || binding.customType !== this.CUSTOM_PARTICLE_SYSTEM || binding.isPPtrCurve)
             throw new BindingResolutionError("The ParticleSystem binding uses an unsupported curve type.");
 
-        const attribute = binding.attributeHash >>> 0;
-        if (attribute !== this.HASH_PARTICLE_SHAPE_RADIUS)
-            throw new BindingResolutionError(`Unsupported ParticleSystem attribute ${attribute}.`);
-
         const particleSystems = this.particleSystemsByGameObjectId.get(gameObjectId) ?? [];
 
         if (particleSystems.length !== 1) {
@@ -1033,10 +1034,26 @@ export class AnimatorBindingResolver {
             );
         }
 
-        return {
-            kind: "particleShapeRadius",
-            particleSystemId: particleSystems[0].id
-        };
+        const particleSystemId = particleSystems[0].id;
+        const attribute = binding.attributeHash >>> 0;
+
+        if (attribute === this.HASH_PARTICLE_SHAPE_RADIUS)
+        {
+            return {
+                kind: "particleShapeRadius",
+                particleSystemId
+            };
+        }
+
+        if (attribute === this.HASH_PARTICLE_LOOPING)
+        {
+            return {
+                kind: "particleLooping",
+                particleSystemId
+            };
+        }
+
+        throw new BindingResolutionError(`Unsupported ParticleSystem attribute ${attribute}.`);
     }
 
     private resolvePuppet2DIkProperty(target: AnimatorRuntimeTransform, binding: AnimatorBindingDefinition): ResolvedAnimatorProperty {

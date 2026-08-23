@@ -195,6 +195,7 @@ export class AnimatorParticleSimulator {
     private random!: AnimatorParticleRandom;
     private rateOverTimeSample!: AnimatorParticleCurveSample;
     private shapeRadius: number;
+    private looping: boolean;
     private emitterWorldFrame: ParticleSimulationFrame | null = null;
     private initialBurstPending = false;
     private nextParticleId = 1;
@@ -219,6 +220,7 @@ export class AnimatorParticleSimulator {
         this.noiseSeed = (this.createRandomSeed() ^ 0x9e3779b9) >>> 0;
         this.colorOverLifetime = this.parseColorOverLifetimeModule(definition);
         this.textureSheetModule = this.parseTextureSheetModule(definition);
+        this.looping = definition.looping;
 
         this.reset();
     }
@@ -258,6 +260,10 @@ export class AnimatorParticleSimulator {
         return this.definition.moveWithTransform as 0 | 1;
     }
 
+    get currentLooping(): boolean {
+        return this.looping;
+    }
+
     getParticles(): readonly AnimatorParticleSnapshot[] {
         return this.particles.map((particle) => Object.freeze({
             id: particle.id,
@@ -290,9 +296,11 @@ export class AnimatorParticleSimulator {
         this.playing = this.definition.playOnAwake;
         this.emitterWorldFrame = null;
         this.initialBurstPending = this.playing && this.delayRemaining <= this.EPSILON;
+        this.looping = this.definition.looping;
     }
 
     resetAnimationOverrides() {
+        this.looping = this.definition.looping;
         this.shapeRadius = this.shapeModule.radius;
     }
 
@@ -376,6 +384,10 @@ export class AnimatorParticleSimulator {
                 })
             })
             : null;
+    }
+
+    setLooping(value: boolean) {
+        this.looping = value;
     }
 
     private updateParticles(deltaSeconds: number) {
@@ -485,7 +497,7 @@ export class AnimatorParticleSimulator {
             if (this.cycleTime < this.definition.length - this.EPSILON)
                 continue;
 
-            if (!this.definition.looping)
+            if (!this.looping)
             {
                 this.playing = false;
                 break;
