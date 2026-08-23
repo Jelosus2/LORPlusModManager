@@ -483,7 +483,7 @@ export type ResolvedAnimatorBinding = Readonly<{
     scalarCount: number;
     components: readonly string[];
     targetTransformId: string;
-    targetGameObjectId: string;
+    targetGameObjectIds: readonly string[];
     property: ResolvedAnimatorProperty;
 }>;
 
@@ -608,7 +608,8 @@ export class AnimatorBindingResolver {
 
             try
             {
-                const target = this.requireTarget(targetsByHash, siblingTargetHashes, binding, clip.name);
+                const targets = this.requireTargets(targetsByHash, siblingTargetHashes, binding, clip.name);
+                const target = targets[0];
 
                 bindings[binding.bindingIndex] = {
                     bindingIndex: binding.bindingIndex,
@@ -616,7 +617,7 @@ export class AnimatorBindingResolver {
                     scalarCount: binding.scalarCount,
                     components: binding.components,
                     targetTransformId: target.id,
-                    targetGameObjectId: target.gameObjectId,
+                    targetGameObjectIds: targets.map((candidate) => candidate.gameObjectId).sort(),
                     property: this.resolveProperty(target, binding, initialValuesByBinding.get(binding.bindingIndex) ?? null)
                 };
             }
@@ -1244,12 +1245,12 @@ export class AnimatorBindingResolver {
         return result;
     }
 
-    private requireTarget(
+    private requireTargets(
         targetsByHash: Map<number, AnimatorRuntimeTransform[]>,
         siblingTargetHashes: ReadonlySet<number>,
         binding: AnimatorBindingDefinition,
         clipName: string
-    ): AnimatorRuntimeTransform {
+    ): readonly AnimatorRuntimeTransform[] {
         const bindingIndex = binding.bindingIndex;
         const normalizedHash = binding.pathHash >>> 0;
         const matches = targetsByHash.get(normalizedHash) ?? [];
@@ -1263,7 +1264,7 @@ export class AnimatorBindingResolver {
         if (matches.length === 0 && this.isIgnorableMissingRendererMaterialBinding(binding))
             throw new IgnoredBindingResolutionError("The material-property binding targets a renderer that no longer exists.");
 
-        if (matches.length === 0 && this.isIgnorableMissingGameObjectActivationBinding(binding))
+        if (matches.length === 0 && this.isGameObjectActivationBinding(binding))
             throw new IgnoredBindingResolutionError("The activation binding targets a GameObject that no longer exists.");
 
         if (
@@ -1277,6 +1278,14 @@ export class AnimatorBindingResolver {
             throw new IgnoredBindingResolutionError("The Transform binding targets an object that no longer exists.");
         }
 
+        const isExactDuplicateActivationPath =
+            matches.length > 1 &&
+            this.isGameObjectActivationBinding(binding) &&
+            matches.every((candidate) => candidate.relativePath === matches[0].relativePath);
+
+        if (isExactDuplicateActivationPath)
+            return matches;
+
         if (matches.length !== 1)
         {
             throw new BindingResolutionError(
@@ -1286,7 +1295,7 @@ export class AnimatorBindingResolver {
             );
         }
 
-        return matches[0];
+        return matches;
     }
 
     private indexTransformsByGameObject(): Map<string, AnimatorRuntimeTransform> {
@@ -1341,7 +1350,7 @@ export class AnimatorBindingResolver {
         );
     }
 
-    private isIgnorableMissingGameObjectActivationBinding(binding: AnimatorBindingDefinition): boolean {
+    private isGameObjectActivationBinding(binding: AnimatorBindingDefinition): boolean {
         return (
             binding.typeId === this.GAME_OBJECT_TYPE_ID &&
             binding.customType === 0 &&

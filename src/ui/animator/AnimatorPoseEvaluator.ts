@@ -139,7 +139,10 @@ export class AnimatorPoseEvaluator {
             for (const binding of resolution.bindings)
             {
                 if (binding?.property.kind === "gameObjectActive")
-                    result.add(binding.targetGameObjectId);
+                {
+                    for (const gameObjectId of binding.targetGameObjectIds)
+                        result.add(gameObjectId);
+                }
             }
         }
 
@@ -468,7 +471,7 @@ export class AnimatorPoseEvaluator {
             case "gameObjectActive":
                 return JSON.stringify([
                     property.kind,
-                    binding.targetGameObjectId
+                    binding.targetGameObjectIds
                 ]);
 
             case "transform":

@@ -99,8 +99,20 @@ export class AnimatorScenePoseApplier {
     }
 
     private applyNumericChannels(layer: AnimatorLayerPose, diagnostics: string[], diagnosticKeys: Set<string>) {
+        const mixedRotationPairs = this.collectMixedRotationChannelPairs(layer.numericChannels);
+        const pairedChannels = new Set<AnimatorNumericPoseChannel>();
+
+        for (const pair of mixedRotationPairs)
+        {
+            pairedChannels.add(pair.quaternion);
+            pairedChannels.add(pair.euler);
+        }
+
         for (const channel of layer.numericChannels)
         {
+            if (pairedChannels.has(channel))
+                continue;
+
             const property = channel.binding.property;
 
             switch (property.kind)
@@ -158,6 +170,46 @@ export class AnimatorScenePoseApplier {
                     break;
             }
         }
+
+        for (const pair of mixedRotationPairs)
+            this.applyMixedRotationChannels(pair.quaternion, pair.euler);
+    }
+
+    private collectMixedRotationChannelPairs(
+        channels: readonly AnimatorNumericPoseChannel[]
+    ): readonly Readonly<{
+        quaternion: AnimatorNumericPoseChannel;
+        euler: AnimatorNumericPoseChannel;
+    }>[] {
+        const quaternionChannels = new Map<string, AnimatorNumericPoseChannel>();
+        const eulerChannels = new Map<string, AnimatorNumericPoseChannel>();
+
+        for (const channel of channels)
+        {
+            const property = channel.binding.property;
+            if (property.kind !== "transform")
+                continue;
+
+            if (property.property === "rotation")
+                quaternionChannels.set(channel.binding.targetTransformId, channel);
+            else if (property.property === "euler")
+                eulerChannels.set(channel.binding.targetTransformId, channel);
+        }
+
+        const pairs: Array<{
+            quaternion: AnimatorNumericPoseChannel;
+            euler: AnimatorNumericPoseChannel;
+        }> = [];
+
+        for (const [transformId, quaternion] of quaternionChannels.entries())
+        {
+            const euler = eulerChannels.get(transformId);
+
+            if (euler)
+                pairs.push({ quaternion, euler });
+        }
+
+        return pairs;
     }
 
     private applyAdditiveNumericChannels(animatorId: string, layer: AnimatorLayerPose, diagnostics: string[], diagnosticKeys: Set<string>) {
@@ -358,8 +410,11 @@ export class AnimatorScenePoseApplier {
         if (!sample)
             return;
 
-        const state = this.state.requireGameObject(channel.binding.targetGameObjectId);
-        state.active = this.blendBoolean(state.active, sample.value, sample.weight);
+        for (const gameObjectId of channel.binding.targetGameObjectIds)
+        {
+            const state = this.state.requireGameObject(gameObjectId);
+            state.active = this.blendBoolean(state.active, sample.value, sample.weight);
+        }
     }
 
     private applyTransform(channel: AnimatorNumericPoseChannel) {
@@ -791,6 +846,41 @@ export class AnimatorScenePoseApplier {
         handle.flip = this.blendBoolean(handle.flip, sample.value, sample.weight);
     }
 
+    private applyMixedRotationChannels(quaternionChannel: AnimatorNumericPoseChannel, eulerChannel: AnimatorNumericPoseChannel) {
+        const quaternionProperty = quaternionChannel.binding.property;
+        const eulerProperty = eulerChannel.binding.property;
+
+        if (
+            quaternionProperty.kind !== "transform" ||
+            quaternionProperty.property !== "rotation" ||
+            eulerProperty.kind !== "transform" ||
+            eulerProperty.property !== "euler" ||
+            quaternionChannel.binding.targetTransformId !== eulerChannel.binding.targetTransformId
+        )
+        {
+            throw new Error("A mixed Transform rotation pair is invalid.");
+        }
+
+        const state = this.state.requireTransform(quaternionChannel.binding.targetTransformId);
+        const currentRotation = [...state.localRotation];
+        const quaternionTarget = [...currentRotation];
+        const eulerTarget = [...currentRotation];
+
+        this.applyQuaternion(quaternionTarget, this.withFullComponentWeights(quaternionChannel));
+        this.applyEulerRotation(eulerTarget, this.withFullComponentWeights(eulerChannel));
+
+        const quaternionWeight = this.getMinimumPopulatedWeight(quaternionChannel);
+        const eulerWeight = this.getMinimumPopulatedWeight(eulerChannel);
+        const accumulatedWeight = quaternionWeight + eulerWeight;
+
+        if (accumulatedWeight <= this.EPSILON)
+            return;
+
+        const mixedTarget = this.slerpQuaternion(quaternionTarget, eulerTarget, eulerWeight / accumulatedWeight);
+
+        this.copyValues(state.localRotation, this.slerpQuaternion(currentRotation, mixedTarget, Math.min(1, accumulatedWeight)));
+    }
+
     private getScalarSample(channel: AnimatorNumericPoseChannel): Readonly<{ value: number; weight: number; }> | null {
         const value = channel.values[0];
         const weight = channel.componentWeights[0];
@@ -933,6 +1023,34 @@ export class AnimatorScenePoseApplier {
 
         for (let i = 0; i < source.length; i++)
             destination[i] = source[i];
+    }
+
+    private withFullComponentWeights(channel: AnimatorNumericPoseChannel): AnimatorNumericPoseChannel {
+        return {
+            ...channel,
+            componentWeights: channel.values.map((value, index) => {
+                const weight = channel.componentWeights[index] ?? 0;
+
+                return value !== null && weight > this.EPSILON ? 1 : 0;
+            })
+        };
+    }
+
+    private getMinimumPopulatedWeight(channel: AnimatorNumericPoseChannel): number {
+        let result = Number.POSITIVE_INFINITY;
+
+        for (let i = 0; i < channel.values.length; i++)
+        {
+            const value = channel.values[i];
+            const weight = channel.componentWeights[i] ?? 0;
+
+            if (value !== null && weight > this.EPSILON)
+                result = Math.min(result, weight);
+        }
+
+        return Number.isFinite(result)
+            ? Math.min(1, Math.max(0, result))
+            : 0;
     }
 
     private requireAdditiveReferenceTransform(id: string): AnimatorTransformState {
