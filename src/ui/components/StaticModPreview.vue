@@ -624,6 +624,16 @@ function createCroppedTexture(texture: Texture, source: StaticPreviewSpriteSourc
     const sourceHeight = texture.source.height;
     const tolerance = 0.5;
 
+    const isAlreadyCropped =
+        Math.abs(sourceWidth - source.crop.width) <= tolerance &&
+        Math.abs(sourceHeight - source.crop.height) <= tolerance;
+
+    if (isAlreadyCropped)
+    {
+        croppedTextureCache.set(cacheKey, texture);
+        return texture;
+    }
+
     const frameX = source.crop.x;
     const frameY = sourceHeight - source.crop.y - source.crop.height;
 
