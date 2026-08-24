@@ -49,14 +49,20 @@ export class StaticModPreviewService {
             {
                 if (!source)
                     continue;
+                if (source.generated === "white")
+                    continue;
 
-                const identity = this.getAssetIdentity("Texture2D", skin.staticPreview.assetBundleName, source.asset);
+                const assetName = source.asset;
+                if (!assetName)
+                    throw new Error("A static preview texture source has no asset.");
 
-                if (modAssetNames.has(StringUtils.normalize(source.asset)))
+                const identity = this.getAssetIdentity("Texture2D", skin.staticPreview.assetBundleName, assetName);
+
+                if (modAssetNames.has(StringUtils.normalize(assetName)))
                 {
                     prepared.set(identity, Object.freeze({
                         type: "Texture2D",
-                        name: source.asset,
+                        name: assetName,
                         bundleName: skin.staticPreview.assetBundleName,
                         source: "mod",
                         cacheKey: null,
@@ -67,7 +73,7 @@ export class StaticModPreviewService {
                     continue;
                 }
 
-                addGameRequest(skin.staticPreview.assetBundleName, { type: "Texture2D", name: source.asset });
+                addGameRequest(skin.staticPreview.assetBundleName, { type: "Texture2D", name: assetName });
             }
         }
 

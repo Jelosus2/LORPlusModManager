@@ -282,7 +282,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.263739,
+              "b": 0,
+              "c": 0,
+              "d": 0.263739,
+              "tx": 0.563083,
+              "ty": -0.167474
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -1510,7 +1559,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.170775,
+              "b": 0,
+              "c": 0,
+              "d": 0.170774,
+              "tx": 0.546479,
+              "ty": -0.249046
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.9,
@@ -1667,7 +1765,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.177738,
+              "b": 0,
+              "c": 0,
+              "d": 0.177738,
+              "tx": 0.257721,
+              "ty": -0.482856
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -9884,7 +10031,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.286585,
+              "b": 0,
+              "c": 0,
+              "d": 0.286585,
+              "tx": 0.775213,
+              "ty": -0.192012
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.3,
@@ -12738,7 +12934,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 12,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.132,
+              "b": 0,
+              "c": 0,
+              "d": 0.132,
+              "tx": 0.4378,
+              "ty": -0.1991
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.35,
@@ -13973,7 +14218,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.374,
+              "b": 0,
+              "c": 0,
+              "d": 0.374,
+              "tx": 0.78149,
+              "ty": 0.4607
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.8,
@@ -14752,7 +15046,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.260478,
+              "b": 0,
+              "c": 0,
+              "d": 0.260478,
+              "tx": 0.651196,
+              "ty": -0.270608
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.68,
@@ -18550,7 +18893,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 2,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.24,
+              "b": 0,
+              "c": 0,
+              "d": 0.24,
+              "tx": 0.2944,
+              "ty": -0.06276
+            },
+            "flipX": false,
+            "flipY": true,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.85,
@@ -18752,7 +19144,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.15,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": 0.495,
+              "ty": 0.2714
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.62,
@@ -20852,7 +21293,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.143984,
+              "b": 0,
+              "c": 0,
+              "d": 0.143984,
+              "tx": 0.45499,
+              "ty": -0.156943
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.9,
@@ -22568,7 +23058,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1308,
+              "b": 0,
+              "c": 0,
+              "d": 0.1308,
+              "tx": 0.476766,
+              "ty": -0.229881
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -27758,7 +28297,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 11,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.15,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": -0.115,
+              "ty": -0.375
+            },
+            "flipX": false,
+            "flipY": true,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.86,
@@ -28104,7 +28692,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 11,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1875,
+              "b": 0,
+              "c": 0,
+              "d": 0.1875,
+              "tx": 0.0275,
+              "ty": -0.34375
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.04,
@@ -29364,7 +30001,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.21,
+              "b": 0,
+              "c": 0,
+              "d": 0.21,
+              "tx": 0.659,
+              "ty": -0.251
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.2,
@@ -34325,7 +35011,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.264,
+              "b": 0,
+              "c": 0,
+              "d": 0.264,
+              "tx": 0.53664,
+              "ty": -0.26172
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.5,
@@ -37841,7 +38576,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.125,
+              "b": 0,
+              "c": 0,
+              "d": 0.125,
+              "tx": 0.0125,
+              "ty": 0.1625
+            },
+            "flipX": false,
+            "flipY": true,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.8,
@@ -40253,7 +41037,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.12,
+              "b": 0,
+              "c": 0,
+              "d": 0.12,
+              "tx": 0.559,
+              "ty": -0.386
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -40625,7 +41458,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.3,
+              "b": 0,
+              "c": 0,
+              "d": 0.3,
+              "tx": 0.442,
+              "ty": -0.347
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.3,
@@ -46061,7 +46943,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.14,
+              "b": 0,
+              "c": 0,
+              "d": 0.14,
+              "tx": 0.07,
+              "ty": -0.215
+            },
+            "flipX": false,
+            "flipY": true,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.88,
@@ -46263,7 +47194,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.156,
+              "b": 0,
+              "c": 0,
+              "d": 0.156,
+              "tx": 0.01,
+              "ty": -0.304
+            },
+            "flipX": false,
+            "flipY": true,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.88,
@@ -48704,7 +49684,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.168,
+              "b": 0,
+              "c": 0,
+              "d": 0.168,
+              "tx": 0.42,
+              "ty": -0.308
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -48877,7 +49906,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.2,
+              "b": 0,
+              "c": 0,
+              "d": 0.2,
+              "tx": 0.552,
+              "ty": -0.256
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.4,
@@ -50572,7 +51650,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.178633,
+              "b": 0,
+              "c": 0,
+              "d": 0.178633,
+              "tx": 0.480109,
+              "ty": -0.220832
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.23,
@@ -53146,7 +54273,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.144,
+              "b": 0,
+              "c": 0,
+              "d": 0.144,
+              "tx": 0.5544,
+              "ty": -0.0432
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -53258,7 +54434,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.12,
+              "b": 0,
+              "c": 0,
+              "d": 0.12,
+              "tx": 0.38,
+              "ty": -0.13
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.9,
@@ -55790,7 +57015,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.072,
+              "b": 0,
+              "c": 0,
+              "d": 0.072,
+              "tx": 0.5934,
+              "ty": -0.0174
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.75,
@@ -55947,7 +57221,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.22,
+              "b": 0,
+              "c": 0,
+              "d": 0.22,
+              "tx": 0.412,
+              "ty": -0.3727
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.3,
@@ -60287,7 +61610,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.14,
+              "b": 0,
+              "c": 0,
+              "d": 0.14,
+              "tx": 0.5607,
+              "ty": -0.09086
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.8,
@@ -60470,7 +61842,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.132,
+              "b": 0,
+              "c": 0,
+              "d": 0.132,
+              "tx": 0.41866,
+              "ty": -0.02288
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.7,
@@ -62008,7 +63429,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.22,
+              "b": 0,
+              "c": 0,
+              "d": 0.22,
+              "tx": 0.6886,
+              "ty": 0.0253
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.2,
@@ -63457,7 +64927,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.213305,
+              "b": 0,
+              "c": 0,
+              "d": 0.213305,
+              "tx": 0.579122,
+              "ty": -0.348753
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.5,
@@ -66224,7 +67743,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.18,
+              "b": 0,
+              "c": 0,
+              "d": 0.18,
+              "tx": 0.36576,
+              "ty": 0.08412
+            },
+            "flipX": false,
+            "flipY": true,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.1,
@@ -68470,7 +70038,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.264,
+              "b": 0,
+              "c": 0,
+              "d": 0.264,
+              "tx": -0.030448,
+              "ty": -0.019844
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.42,
@@ -70273,7 +71890,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.205685,
+              "b": 0,
+              "c": 0,
+              "d": 0.205685,
+              "tx": 0.239966,
+              "ty": -0.32224
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.2,
@@ -70430,7 +72096,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.25104,
+              "b": 0,
+              "c": 0,
+              "d": 0.25104,
+              "tx": 0.973783,
+              "ty": -0.056735
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.5,
@@ -71428,7 +73143,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.26,
+              "b": 0,
+              "c": 0,
+              "d": 0.26,
+              "tx": 0.39,
+              "ty": -0.0988
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.67,
@@ -73275,7 +75039,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.18,
+              "b": 0,
+              "c": 0,
+              "d": 0.18,
+              "tx": 0.69456,
+              "ty": 0.33156
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.2,
@@ -73470,7 +75283,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.155066,
+              "b": 0,
+              "c": 0,
+              "d": 0.155066,
+              "tx": 0.446591,
+              "ty": -0.190732
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.9,
@@ -75047,7 +76909,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.153,
+              "b": 0,
+              "c": 0,
+              "d": 0.153,
+              "tx": 0.405,
+              "ty": -0.234
+            },
+            "flipX": false,
+            "flipY": true,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.1,
@@ -77053,7 +78964,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.156,
+              "b": 0,
+              "c": 0,
+              "d": 0.156,
+              "tx": 0.54119,
+              "ty": -0.20553
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -77301,7 +79261,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 2,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.24,
+              "b": 0,
+              "c": 0,
+              "d": 0.24,
+              "tx": 0.0756,
+              "ty": -0.0156
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.5,
@@ -82411,7 +84420,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.156,
+              "b": 0,
+              "c": 0,
+              "d": 0.156,
+              "tx": 0.40365,
+              "ty": -0.0793
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.8,
@@ -82584,7 +84642,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.225,
+              "b": 0,
+              "c": 0,
+              "d": 0.225,
+              "tx": 0.3276,
+              "ty": -0.1035
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.9,
@@ -83310,7 +85417,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.2,
+              "b": 0,
+              "c": 0,
+              "d": 0.2,
+              "tx": 0.295,
+              "ty": -0.146
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.1,
@@ -84709,7 +86865,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 11,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.2,
+              "b": 0,
+              "c": 0,
+              "d": 0.2,
+              "tx": 0.762,
+              "ty": -0.276
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.3,
@@ -86606,7 +88811,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.125,
+              "b": 0,
+              "c": 0,
+              "d": 0.125,
+              "tx": 0.28975,
+              "ty": -0.1865
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -86718,7 +88972,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.25,
+              "b": 0,
+              "c": 0,
+              "d": 0.25,
+              "tx": 0.921,
+              "ty": 0.174
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.2,
@@ -90227,7 +92530,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 3,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.140638,
+              "b": 0,
+              "c": 0,
+              "d": 0.140638,
+              "tx": 0.164702,
+              "ty": -0.249042
+            },
+            "flipX": false,
+            "flipY": true,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.85,
@@ -90339,7 +92691,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.198,
+              "b": 0,
+              "c": 0,
+              "d": 0.198,
+              "tx": 0.1336,
+              "ty": 0.22103
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.84,
@@ -91697,7 +94098,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.144,
+              "b": 0,
+              "c": 0,
+              "d": 0.144,
+              "tx": 0.444,
+              "ty": -0.372
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -100304,7 +102754,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.156,
+              "b": 0,
+              "c": 0,
+              "d": 0.156,
+              "tx": 0.35113,
+              "ty": -0.13143
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -101284,7 +103783,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.136,
+              "b": 0,
+              "c": 0,
+              "d": 0.136,
+              "tx": 0.44863,
+              "ty": -0.33762
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.8,
@@ -101591,7 +104139,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.204,
+              "b": 0,
+              "c": 0,
+              "d": 0.204,
+              "tx": 0.84303,
+              "ty": -0.24072
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.2,
@@ -103050,7 +105647,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1425,
+              "b": 0,
+              "c": 0,
+              "d": 0.1425,
+              "tx": 0.55385,
+              "ty": -0.28975
+            },
+            "flipX": false,
+            "flipY": true,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.2,
@@ -103335,7 +105981,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.237544,
+              "b": 0,
+              "c": 0,
+              "d": 0.237544,
+              "tx": 0.009502,
+              "ty": 0.257226
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.9,
@@ -106435,7 +109130,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.108,
+              "b": 0,
+              "c": 0,
+              "d": 0.108,
+              "tx": 0.5373,
+              "ty": -0.1548
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.6,
@@ -107980,7 +110724,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.25,
+              "b": 0,
+              "c": 0,
+              "d": 0.25,
+              "tx": 0.375,
+              "ty": -0.4
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.5,
@@ -108839,7 +111632,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.18,
+              "b": 0,
+              "c": 0,
+              "d": 0.18,
+              "tx": 0.30192,
+              "ty": -0.11616
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.8,
@@ -110443,7 +113285,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.135,
+              "b": 0,
+              "c": 0,
+              "d": 0.135,
+              "tx": -0.01,
+              "ty": -0.37575
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.791415,
@@ -111283,7 +114174,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.108,
+              "b": 0,
+              "c": 0,
+              "d": 0.108,
+              "tx": 0.4959,
+              "ty": -0.2871
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -113806,7 +116746,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.106,
+              "b": 0,
+              "c": 0,
+              "d": 0.106,
+              "tx": 0.29574,
+              "ty": -0.14946
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.7,
@@ -113918,7 +116907,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.22,
+              "b": 0,
+              "c": 0,
+              "d": 0.22,
+              "tx": 0.198,
+              "ty": 0.394
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.5,
@@ -116238,7 +119276,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.26,
+              "b": 0,
+              "c": 0,
+              "d": 0.26,
+              "tx": 0.9243,
+              "ty": -0.2015
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.2,
@@ -117310,7 +120397,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1599,
+              "b": 0,
+              "c": 0,
+              "d": 0.1599,
+              "tx": 0.71586,
+              "ty": -0.08364
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 0.8,
@@ -118193,7 +121329,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.15345,
+              "b": 0,
+              "c": 0,
+              "d": 0.15345,
+              "tx": 0.52795,
+              "ty": -0.242334
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1.01,
@@ -121324,7 +124509,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 11,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.18,
+              "b": 0,
+              "c": 0,
+              "d": 0.18,
+              "tx": 0.21132,
+              "ty": -0.39348
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -121637,7 +124871,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 11,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.24,
+              "b": 0,
+              "c": 0,
+              "d": 0.24,
+              "tx": 0.1416,
+              "ty": -0.1236
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,

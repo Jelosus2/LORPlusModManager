@@ -707,12 +707,32 @@ export class CharacterCatalogService {
         if (!TypeCheck.isRecord(value.pivot))
             throw new Error(`${fieldName} has an invalid pivot.`);
 
-        const asset = this.readFileName(value.asset, `${fieldName} asset`);
+        let generated: StaticPreviewSpriteSource["generated"] = null;
 
-        if (!asset.toLocaleLowerCase("en-US").endsWith(".png"))
-            throw new Error(`${fieldName} does not reference a PNG texture.`);
-        if (!catalogAssets.has(StringUtils.normalize(asset)))
-            throw new Error(`${fieldName} references an asset outside its catalog entry.`);
+        if (value.generated !== undefined && value.generated !== null)
+        {
+            const generatedValue = this.readString(value.generated, `${fieldName} generated source`, 16);
+            if (generatedValue !== "white")
+                throw new Error(`${fieldName} has an unsupported generated source.`);
+
+            generated = generatedValue;
+        }
+
+        let asset: string | null = null;
+
+        if (generated === null)
+        {
+            asset = this.readFileName(value.asset, `${fieldName} asset`);
+
+            if (!asset.toLocaleLowerCase("en-US").endsWith(".png"))
+                throw new Error(`${fieldName} does not reference a PNG texture.`);
+            if (!catalogAssets.has(StringUtils.normalize(asset)))
+                throw new Error(`${fieldName} references an asset outside its catalog entry.`);
+        }
+        else if (value.asset !== null)
+        {
+            throw new Error(`${fieldName} has both an asset and a generated source.`);
+        }
 
         const crop = {
             x: this.readFiniteNumber(value.crop.x, `${fieldName} crop x`),
@@ -790,6 +810,7 @@ export class CharacterCatalogService {
 
         return Object.freeze({
             asset,
+            generated,
             crop: Object.freeze(crop),
             width,
             height,

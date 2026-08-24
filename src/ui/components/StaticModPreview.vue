@@ -50,7 +50,7 @@ type RuntimeLayer = Readonly<{
 
 type RuntimeMaskLayer = Readonly<{
     definition: StaticPreviewLayer;
-    instance: SpriteLayerInstance;
+    root: Container;
 }>;
 
 const props = defineProps<{
@@ -232,7 +232,7 @@ async function destroyPreview() {
         }
 
         for (const runtime of runtimeMaskLayers)
-            setContainerAttached(mosaicMaskRoot, runtime.instance.root, true);
+            setContainerAttached(mosaicMaskRoot, runtime.root, true);
 
         setContainerAttached(normalCharacterRoot, normalFace?.root ?? null, true);
         setContainerAttached(pixelatedCharacterRoot, pixelatedFace?.root ?? null, true);
@@ -283,7 +283,10 @@ function initializeControlState() {
         .filter((source): source is StaticPreviewSpriteSource => source !== null);
 
     const hasPreparedRPlusTexture = rPlusSources.length > 0 && rPlusSources.every((source) => {
-        return getPreparedAsset("Texture2D", props.skin.staticPreview.assetBundleName, source.asset) !== undefined;
+        if (source.generated === "white")
+            return true;
+
+        return source.asset !== null && getPreparedAsset("Texture2D", props.skin.staticPreview.assetBundleName, source.asset) !== undefined;
     });
 
     if (hasPreparedRPlusTexture)
@@ -334,7 +337,7 @@ function applyRenderState() {
     }
 
     for (const runtime of runtimeMaskLayers)
-        setContainerAttached(mosaicMaskRoot, runtime.instance.root, isRendererVisible(runtime.definition));
+        setContainerAttached(mosaicMaskRoot, runtime.root, isRendererVisible(runtime.definition));
 
     const face = props.skin.staticPreview.face;
 
@@ -500,6 +503,12 @@ function configureSpriteMeshMask(meshMask: Graphics, mesh: StaticPreviewSpriteMe
 }
 
 function getCroppedTexture(source: StaticPreviewSpriteSource): Texture {
+    if (source.generated === "white")
+        return Texture.WHITE;
+
+    if (!source.asset)
+        throw new Error("The static preview source has no usable texture.");
+
     const alias = getRequiredAssetAlias("Texture2D", props.skin.staticPreview.assetBundleName, source.asset);
     const texture = Assets.get<Texture>(alias);
 
@@ -600,7 +609,7 @@ function applySelectedFace() {
 
 function createCroppedTexture(texture: Texture, source: StaticPreviewSpriteSource): Texture {
     const cacheKey = JSON.stringify([
-        source.asset.toLocaleLowerCase("en-US"),
+        source.asset!.toLocaleLowerCase("en-US"),
         source.crop.x,
         source.crop.y,
         source.crop.width,
@@ -711,13 +720,22 @@ function createMosaicMasks() {
         if (!source)
             continue;
 
-        const instance = createSpriteLayer(layer, source);
+        if (source.generated !== "white" || !source.mesh)
+            throw new Error(`Static mosaic mask "${layer.name}" has no generated mesh.`)
 
-        mosaicMaskRoot.addChild(instance.root);
+        const root = new Container();
+        root.zIndex = layer.sortingOrder;
+        root.setFromMatrix(toPixiMatrix(layer.transform));
+
+        const shape = new Graphics();
+        configureSpriteMeshMask(shape, source.mesh, layer);
+
+        root.addChild(shape);
+        mosaicMaskRoot.addChild(root);
 
         runtimeMaskLayers.push({
             definition: layer,
-            instance
+            root
         });
     }
 }

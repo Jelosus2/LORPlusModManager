@@ -97,7 +97,8 @@ export type StaticPreviewSpriteMesh = Readonly<{
 }>;
 
 export type StaticPreviewSpriteSource = Readonly<{
-    asset: string;
+    asset: string | null;
+    generated: "white" | null;
     crop: PreviewRectangle;
     width: number;
     height: number;
