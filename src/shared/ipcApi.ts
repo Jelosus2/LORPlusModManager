@@ -10,7 +10,8 @@ import type {
     ModSyncRequest,
     ModSyncResult,
     ModSyncProgress,
-    ModLibraryStorageSummary
+    ModLibraryStorageSummary,
+    ModPreviewCacheStorageSummary
 } from "./mod.js";
 import type {
     AutomaticUpdatePreferenceRequest,
@@ -83,4 +84,6 @@ export type IpcApi = {
     onCatalogBackgroundRepairProgress: (callback: (progress: CatalogBackgroundRepairProgress) => void) => () => void;
     prepareStaticModPreview: (modId: string) => Promise<StaticModPreviewPreparation>;
     prepareAnimatorModPreview: (modId: string) => Promise<AnimatorModPreviewPreparation>;
+    getModPreviewCacheStorage: () => Promise<ModPreviewCacheStorageSummary>;
+    deleteModPreviewCache: () => Promise<ModPreviewCacheStorageSummary>;
 };

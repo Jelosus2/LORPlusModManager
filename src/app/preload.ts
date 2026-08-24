@@ -123,7 +123,9 @@ const modManagerApi: IpcApi = {
         };
     },
     prepareStaticModPreview: (modId) => ipcRenderer.invoke("mod:prepare-static-preview", modId),
-    prepareAnimatorModPreview: (modId) => ipcRenderer.invoke("mod:prepare-animator-preview", modId)
+    prepareAnimatorModPreview: (modId) => ipcRenderer.invoke("mod:prepare-animator-preview", modId),
+    getModPreviewCacheStorage: () => ipcRenderer.invoke("app:get-mod-preview-cache-storage"),
+    deleteModPreviewCache: () => ipcRenderer.invoke("app:delete-mod-preview-cache")
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { CatalogIconRepairProgress, CatalogBackgroundRepairProgress } from "../../shared/characters.ts";
+import type { ModLibraryStorageSummary, ModPreviewCacheStorageSummary } from "../../shared/mod.ts";
 import type { ComponentUpdateResult, UpdateComponent } from "../../shared/updates.ts";
 import type { GameLocationChangeProgress } from "../../shared/setup.ts";
-import type { ModLibraryStorageSummary } from "../../shared/mod.ts";
 import type { PluginProgress } from "../../shared/plugin.ts";
 
 import RefreshIcon from "./icons/RefreshIcon.vue";
@@ -78,6 +78,11 @@ const isRepairingCatalogBackgrounds = ref(false);
 const catalogBackgroundRepairProgress = ref<CatalogBackgroundRepairProgress | null>(null);
 const catalogBackgroundRepairMessage = ref("");
 const catalogBackgroundRepairError = ref("");
+const modPreviewCacheStorage = ref<ModPreviewCacheStorageSummary | null>(null);
+const isLoadingModPreviewCacheStorage = ref(false);
+const isDeletingModPreviewCache = ref(false);
+const modPreviewCacheStorageMessage = ref("");
+const modPreviewCacheStorageError = ref("");
 
 async function loadGameSettings() {
     gameLocationError.value = "";
@@ -390,6 +395,61 @@ async function loadModLibraryStorage() {
     }
 }
 
+async function loadModPreviewCacheStorage() {
+    if (isLoadingModPreviewCacheStorage.value || isDeletingModPreviewCache.value)
+        return;
+
+    isLoadingModPreviewCacheStorage.value = true;
+    modPreviewCacheStorageMessage.value = "";
+    modPreviewCacheStorageError.value = "";
+
+    try
+    {
+        modPreviewCacheStorage.value = await window.app.getModPreviewCacheStorage();
+    }
+    catch (error)
+    {
+        RendererLogger.error(ApplicationLogSource.maintenance, "Could not calculate the mod preview cache storage.", error);
+        modPreviewCacheStorageError.value = ErrorUtils.getUserErrorMessage(error, "The mod preview cache storage usage could not be calculated.");
+    }
+    finally
+    {
+        isLoadingModPreviewCacheStorage.value = false;
+    }
+}
+
+async function deleteModPreviewCache() {
+    if (
+        isLoadingModPreviewCacheStorage.value ||
+        isDeletingModPreviewCache.value ||
+        !modPreviewCacheStorage.value ||
+        modPreviewCacheStorage.value.fileCount === 0
+    )
+    {
+        return;
+    }
+
+    isDeletingModPreviewCache.value = true;
+    modPreviewCacheStorageMessage.value = "";
+    modPreviewCacheStorageError.value = "";
+
+    try
+    {
+        modPreviewCacheStorage.value = await window.app.deleteModPreviewCache();
+        modPreviewCacheStorageMessage.value = "The mod preview cache was deleted.";
+        modPreviewCacheDeletionPopover()?.hidePopover();
+    }
+    catch (error)
+    {
+        RendererLogger.error(ApplicationLogSource.maintenance, "Could not delete the mod preview cache.", error);
+        modPreviewCacheStorageError.value = ErrorUtils.getUserErrorMessage(error, "The mod preview cache could not be deleted.");
+    }
+    finally
+    {
+        isDeletingModPreviewCache.value = false;
+    }
+}
+
 async function openModLibraryFolder() {
     if (isOpeningModLibraryFolder.value)
         return;
@@ -550,10 +610,38 @@ function cancelGameLocationChange() {
     gameLocationProgress.value = null;
 }
 
+function modPreviewCacheDeletionPopover(): HTMLElement | null {
+    return document.getElementById("mod-preview-cache-deletion-popover");
+}
+
+function openModPreviewCacheDeletionConfirmation() {
+    if (
+        isLoadingModPreviewCacheStorage.value ||
+        isDeletingModPreviewCache.value ||
+        !modPreviewCacheStorage.value ||
+        modPreviewCacheStorage.value.fileCount === 0
+    )
+    {
+        return;
+    }
+
+    modPreviewCacheStorageMessage.value = "";
+    modPreviewCacheStorageError.value = "";
+    modPreviewCacheDeletionPopover()?.showPopover();
+}
+
+function cancelModPreviewCacheDeletion() {
+    if (isDeletingModPreviewCache.value)
+        return;
+
+    modPreviewCacheDeletionPopover()?.hidePopover();
+}
+
 onMounted(() => {
     void loadGameSettings();
     void loadUpdateSettings();
     void loadModLibraryStorage();
+    void loadModPreviewCacheStorage();
 });
 </script>
 
@@ -1154,6 +1242,85 @@ onMounted(() => {
                     </div>
                 </div>
 
+                <div
+                    class="storage-summary"
+                    aria-label="Mod preview cache storage usage"
+                    :aria-busy="isLoadingModPreviewCacheStorage || isDeletingModPreviewCache"
+                >
+                    <div class="storage-summary-copy">
+                        <span>Mod preview cache</span>
+                        <strong v-if="isLoadingModPreviewCacheStorage">
+                            Calculating storage usage…
+                        </strong>
+                        <template v-else-if="modPreviewCacheStorage">
+                            <strong>{{ formatStorageSize(modPreviewCacheStorage.sizeBytes) }}</strong>
+                            <small>
+                                {{ modPreviewCacheStorage.fileCount }}
+                                {{ modPreviewCacheStorage.fileCount === 1 ? "cached file" : "cached files" }}
+                            </small>
+                        </template>
+                        <strong v-else>Storage usage unavailable</strong>
+                        <span
+                            v-if="modPreviewCacheStorageMessage"
+                            class="storage-summary-message"
+                            role="status"
+                        >
+                            {{ modPreviewCacheStorageMessage }}
+                        </span>
+                        <span
+                            v-if="modPreviewCacheStorageError"
+                            class="storage-summary-error"
+                            role="alert"
+                        >
+                            {{ modPreviewCacheStorageError }}
+                        </span>
+                    </div>
+
+                    <div class="storage-summary-actions">
+                        <span class="storage-location-label">Cache location</span>
+                        <span
+                            class="storage-location"
+                            :title="modPreviewCacheStorage?.path"
+                        >
+                            {{ modPreviewCacheStorage?.path || "Stored in the application data folder" }}
+                        </span>
+
+                        <div class="storage-summary-button-row">
+                            <button
+                                class="storage-refresh-button"
+                                type="button"
+                                :disabled="isLoadingModPreviewCacheStorage || isDeletingModPreviewCache"
+                                @click="loadModPreviewCacheStorage"
+                            >
+                                <RefreshIcon
+                                    class="settings-button-icon"
+                                    :class="{
+                                        'settings-button-icon--spinning': isLoadingModPreviewCacheStorage
+                                    }"
+                                />
+                                <span>Refresh</span>
+                            </button>
+
+                            <button
+                                class="storage-delete-button"
+                                type="button"
+                                :disabled="
+                                    isLoadingModPreviewCacheStorage ||
+                                    isDeletingModPreviewCache ||
+                                    !modPreviewCacheStorage ||
+                                    modPreviewCacheStorage.fileCount === 0
+                                "
+                                @click="openModPreviewCacheDeletionConfirmation"
+                            >
+                                <TrashIcon class="settings-button-icon" />
+                                <span>
+                                    {{ isDeletingModPreviewCache ? "Deleting…" : "Delete cache" }}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="settings-list">
                     <div class="setting-row setting-row--icon-maintenance">
                         <div class="setting-copy">
@@ -1520,6 +1687,74 @@ onMounted(() => {
                 {{ Math.round(gameLocationProgress?.progress || 0) }}%
             </span>
         </div>
+    </section>
+
+    <section
+        id="mod-preview-cache-deletion-popover"
+        class="confirmation-popover"
+        popover="manual"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mod-preview-cache-deletion-title"
+        aria-describedby="mod-preview-cache-deletion-description"
+    >
+        <header class="confirmation-header">
+            <p class="confirmation-label confirmation-label--danger">Delete preview cache</p>
+            <h2 id="mod-preview-cache-deletion-title">Delete all cached preview files?</h2>
+        </header>
+
+        <p id="mod-preview-cache-deletion-description" class="confirmation-description">
+            This removes prepared models, textures, and other files used by mod previews.
+            Imported mods will not be affected.
+        </p>
+
+        <div v-if="modPreviewCacheStorage" class="confirmation-cache-summary">
+            <div>
+                <span>Storage to reclaim</span>
+                <strong>{{ formatStorageSize(modPreviewCacheStorage.sizeBytes) }}</strong>
+            </div>
+            <div>
+                <span>Cached files</span>
+                <strong>{{ modPreviewCacheStorage.fileCount }}</strong>
+            </div>
+        </div>
+
+        <ul class="confirmation-effects">
+            <li class="confirmation-effect--warning">
+                Cached files cannot be restored after they are deleted.
+            </li>
+            <li>
+                Required preview files will be prepared again the next time you open each preview.
+            </li>
+        </ul>
+
+        <p v-if="modPreviewCacheStorageError" class="confirmation-error" role="alert">
+            {{ modPreviewCacheStorageError }}
+        </p>
+
+        <footer class="confirmation-actions">
+            <button
+                class="settings-button settings-button--secondary"
+                type="button"
+                :disabled="isDeletingModPreviewCache"
+                @click="cancelModPreviewCacheDeletion"
+            >
+                Cancel
+            </button>
+            <button
+                class="settings-button settings-button--danger"
+                type="button"
+                :disabled="
+                    isDeletingModPreviewCache ||
+                    !modPreviewCacheStorage ||
+                    modPreviewCacheStorage.fileCount === 0
+                "
+                @click="deleteModPreviewCache"
+            >
+                <TrashIcon class="settings-button-icon" />
+                <span>{{ isDeletingModPreviewCache ? "Deleting..." : "Delete cache" }}</span>
+            </button>
+        </footer>
     </section>
 </template>
 
@@ -2120,6 +2355,10 @@ h1 {
     font-weight: 700;
 }
 
+.confirmation-label--danger {
+    color: #e59a94;
+}
+
 .confirmation-header h2 {
     color: #f2eee5;
     font-size: 23px;
@@ -2159,6 +2398,40 @@ h1 {
     font-weight: 500;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.confirmation-cache-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 18px;
+    overflow: hidden;
+    border: 1px solid #303632;
+    border-radius: 7px;
+    background: #0b0e0c;
+}
+
+.confirmation-cache-summary > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 5px;
+    padding: 12px 14px;
+}
+
+.confirmation-cache-summary > div + div {
+    border-left: 1px solid #303632;
+}
+
+.confirmation-cache-summary span {
+    color: #7f8781;
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.confirmation-cache-summary strong {
+    color: #eee9df;
+    font-size: 15px;
+    font-weight: 700;
 }
 
 .confirmation-effects {
@@ -2308,6 +2581,12 @@ h1 {
     line-height: 1.45;
 }
 
+.storage-summary .storage-summary-message {
+    margin-top: 3px;
+    color: #9bcbb8;
+    line-height: 1.45;
+}
+
 .storage-summary-actions {
     min-width: 0;
     align-items: flex-end;
@@ -2334,7 +2613,15 @@ h1 {
     white-space: nowrap;
 }
 
-.storage-refresh-button {
+.storage-summary-button-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.storage-refresh-button,
+.storage-delete-button {
     display: inline-flex;
     min-height: 30px;
     align-items: center;
@@ -2356,18 +2643,31 @@ h1 {
     background: #202823;
 }
 
-.storage-summary .storage-refresh-button span {
+.storage-delete-button {
+    color: #efb0ac;
+    background: #291b1b;
+}
+
+.storage-delete-button:hover:not(:disabled) {
+    color: #ffd0cc;
+    background: #352020;
+}
+
+.storage-summary .storage-refresh-button span,
+.storage-summary .storage-delete-button span {
     color: inherit;
 }
 
-.storage-refresh-button:focus-visible {
+.storage-refresh-button:focus-visible,
+.storage-delete-button:focus-visible {
     outline: 2px solid #9bc1d8;
     outline-offset: 2px;
 }
 
-.storage-refresh-button:disabled {
+.storage-refresh-button:disabled,
+.storage-delete-button:disabled {
     opacity: 0.55;
-    cursor: wait;
+    cursor: not-allowed;
 }
 
 @media (max-width: 820px) {
@@ -2419,6 +2719,10 @@ h1 {
     .storage-summary-actions {
         align-items: flex-start;
     }
+
+    .storage-summary-button-row {
+        justify-content: flex-start;
+    }
 }
 
 @media (max-width: 540px) {
@@ -2464,6 +2768,15 @@ h1 {
 
     .confirmation-actions .settings-button {
         width: 100%;
+    }
+
+    .confirmation-cache-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .confirmation-cache-summary > div + div {
+        border-top: 1px solid #303632;
+        border-left: 0;
     }
 }
 

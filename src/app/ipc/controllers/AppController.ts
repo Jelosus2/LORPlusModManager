@@ -1,8 +1,9 @@
 import type { ApplicationInfo, ExternalApplicationPage, ApplicationLogEntry } from "../../../shared/application.js";
+import type { ModLibraryStorageSummary, ModPreviewCacheStorageSummary } from "../../../shared/mod.js";
 import type { TemporaryFileCleanupResult } from "../../../shared/maintenance.js";
-import type { ModLibraryStorageSummary } from "../../../shared/mod.js";
 
 import { temporaryFileCleanupService } from "#maintenance/TemporaryFileCleanupService.js";
+import { modPreviewCacheStorageService } from "#mod/ModPreviewCacheStorageService.js";
 import { modLibraryStorageService } from "#mod/ModLibraryStorageService.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
 import { ApplicationLogSource } from "../../../shared/application.js";
@@ -33,6 +34,42 @@ export class AppController {
         catch (error)
         {
             throw ErrorUtils.withContext("The mod library storage usage could not be calculated.", error);
+        }
+    }
+
+    @IpcHelper.IpcHandle("app:get-mod-preview-cache-storage")
+    async getModPreviewCacheStorage(): Promise<ModPreviewCacheStorageSummary> {
+        try
+        {
+            return await modPreviewCacheStorageService.getSummary();
+        }
+        catch (error)
+        {
+            throw ErrorUtils.withContext("The mod preview cache storage usage could not be calculated.", error);
+        }
+    }
+
+    @IpcHelper.IpcHandle("app:delete-mod-preview-cache")
+    async deleteModPreviewCache(): Promise<ModPreviewCacheStorageSummary> {
+        const operation = ApplicationLogger.startOperation(ApplicationLogSource.maintenance, "Mod preview cache deletion");
+
+        try
+        {
+            const result = await modPreviewCacheStorageService.delete();
+            operation.complete();
+
+            return result;
+        }
+        catch (error)
+        {
+            const contextualError = ErrorUtils.withContext(
+                "The mod preview cache could not be deleted.",
+                error,
+                "Windows could not remove the mod preview cache."
+            );
+
+            operation.fail(contextualError);
+            throw contextualError;
         }
     }
 

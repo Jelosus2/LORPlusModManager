@@ -6,6 +6,10 @@ import path from "node:path";
 export class Paths {
     private static appBaseDir = path.dirname(path.join(fileURLToPath(import.meta.url), ".."));
 
+    static getUserDataPath(): string {
+        return app.getPath("userData");
+    }
+
     static getPreloadPath(): string {
         return path.join(Paths.appBaseDir, "preload.js");
     }
@@ -15,11 +19,11 @@ export class Paths {
     }
 
     static getDatabasePath(): string {
-        return path.join(app.getPath("userData"), "data.db");
+        return path.join(Paths.getUserDataPath(), "data.db");
     }
 
     static getPluginDownloadCachePath(): string {
-        return path.join(app.getPath("userData"), "downloads", "LOPlugin+");
+        return path.join(Paths.getUserDataPath(), "downloads", "LOPlugin+");
     }
 
     static getPluginInstallationStagingRoot(): string {
@@ -41,11 +45,11 @@ export class Paths {
     }
 
     static getCachedCharacterCatalogPath(): string {
-        return path.join(app.getPath("userData"), "catalogs", "characters.json");
+        return path.join(Paths.getUserDataPath(), "catalogs", "characters.json");
     }
 
     static getModsPath(): string {
-        return path.join(app.getPath("userData"), "mods");
+        return path.join(Paths.getUserDataPath(), "mods");
     }
 
     static getUnityWorkerPath(): string {
@@ -95,7 +99,7 @@ export class Paths {
     }
 
     static getCachedCharacterIconsPath(): string {
-        return path.join(app.getPath("userData"), "catalogs", "icons");
+        return path.join(Paths.getUserDataPath(), "catalogs", "icons");
     }
 
     static getCachedCharacterIconPath(iconFile: string): string {
@@ -129,7 +133,7 @@ export class Paths {
     }
 
     static getCachedSkinBackgroundsPath(): string {
-        return path.join(app.getPath("userData"), "catalogs", "backgrounds");
+        return path.join(Paths.getUserDataPath(), "catalogs", "backgrounds");
     }
 
     static getCachedSkinBackgroundPath(backgroundFile: string): string {
@@ -148,7 +152,7 @@ export class Paths {
     }
 
     static getUnityPreviewCachePath(): string {
-        return path.join(app.getPath("userData"), "preview-assets", "unity");
+        return path.join(Paths.getUserDataPath(), "preview-assets", "unity");
     }
 
     static getUnityPreviewBundleCachePath(bundleName: string, versionHash: string): string {

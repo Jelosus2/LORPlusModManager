@@ -161,3 +161,9 @@ export type ModLibraryStorageSummary = Readonly<{
     availableModCount: number;
     unavailableModCount: number;
 }>;
+
+export type ModPreviewCacheStorageSummary = Readonly<{
+    path: string;
+    sizeBytes: number;
+    fileCount: number;
+}>;

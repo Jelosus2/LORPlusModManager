@@ -1,5 +1,6 @@
 import type { ModLibraryStorageSummary } from "../../shared/mod.js";
 
+import { directoryStorageService, type DirectoryStorageMeasurement } from "#maintenance/DirectoryStorageService.js";
 import { ModRepository } from "#database/repositories/ModRepository.js";
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ApplicationLogSource } from "../../shared/application.js";
@@ -7,11 +8,6 @@ import { TypeCheck } from "#utils/TypeCheck.js";
 import { Paths } from "#utils/Paths.js";
 import path from "node:path";
 import fse from "fs-extra";
-
-type DirectoryMeasurement = Readonly<{
-    sizeBytes: number;
-    fileCount: number;
-}>;
 
 export class ModLibraryStorageService {
     private static readonly MAX_CONCURRENT_DIRECTORIES = 6;
@@ -49,8 +45,8 @@ export class ModLibraryStorageService {
         });
     }
 
-    private async measureDirectories(directoryNames: readonly string[]): Promise<readonly (DirectoryMeasurement | null)[]> {
-        const results = new Array<DirectoryMeasurement | null>(directoryNames.length);
+    private async measureDirectories(directoryNames: readonly string[]): Promise<readonly (DirectoryStorageMeasurement | null)[]> {
+        const results = new Array<DirectoryStorageMeasurement | null>(directoryNames.length);
         let nextIndex = 0;
 
         const worker = async () => {
@@ -70,7 +66,7 @@ export class ModLibraryStorageService {
         return results;
     }
 
-    private async tryMeasureModDirectory(directoryName: string): Promise<DirectoryMeasurement | null> {
+    private async tryMeasureModDirectory(directoryName: string): Promise<DirectoryStorageMeasurement | null> {
         if (!Paths.isSafeModDirectoryName(directoryName))
         {
             ApplicationLogger.warning(ApplicationLogSource.modLibrary, `Could not measure mod directory with invalid name: ${directoryName}`);
@@ -89,7 +85,7 @@ export class ModLibraryStorageService {
             if (!stats.isDirectory() || stats.isSymbolicLink())
                 return null;
 
-            return await this.measureDirectory(directoryPath);
+            return await directoryStorageService.measure(directoryPath);
         }
         catch (error)
         {
@@ -98,56 +94,6 @@ export class ModLibraryStorageService {
 
             return null;
         }
-    }
-
-    private async measureDirectory(rootPath: string): Promise<DirectoryMeasurement> {
-        const pendingDirectories = [rootPath];
-        let sizeBytes = 0;
-        let fileCount = 0;
-
-        while (pendingDirectories.length > 0)
-        {
-            const directoryPath = pendingDirectories.pop()!;
-            const directory = await fse.opendir(directoryPath);
-
-            for await (const entry of directory)
-            {
-                if (entry.isSymbolicLink())
-                    continue;
-
-                const entryPath = path.join(directoryPath, entry.name);
-                if (entry.isDirectory())
-                {
-                    pendingDirectories.push(entryPath);
-                    continue;
-                }
-
-                if (!entry.isFile())
-                    continue;
-
-                try
-                {
-                    const stats = await fse.lstat(entryPath);
-                    if (!stats.isFile() || stats.isSymbolicLink())
-                        continue;
-
-                    sizeBytes += stats.size;
-                    fileCount++;
-                }
-                catch (error)
-                {
-                    if (TypeCheck.isNodeError(error) && error.code === "ENOENT")
-                        continue;
-
-                    throw error;
-                }
-            }
-        }
-
-        return {
-            sizeBytes,
-            fileCount
-        };
     }
 }
 
