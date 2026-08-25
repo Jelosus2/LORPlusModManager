@@ -1,4 +1,4 @@
-export type ExternalApplicationPage = "support" | "repository";
+export type ExternalApplicationPage = "support" | "repository" | "launcher";
 
 export type ApplicationInfo = Readonly<{
     name: string;

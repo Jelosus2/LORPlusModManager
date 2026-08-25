@@ -154,6 +154,10 @@ export class AppController {
                 url = "https://github.com/Jelosus2/LORPlusModManager";
                 pageName = "GitHub";
                 break;
+            case "launcher" satisfies ExternalApplicationPage:
+                url = "https://github.com/Jelosus2/LOLauncher/releases";
+                pageName = "LOLauncher releases";
+                break;
             default:
                 throw new Error("Invalid external page request.");
         }

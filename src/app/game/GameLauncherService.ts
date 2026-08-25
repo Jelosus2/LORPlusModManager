@@ -1,5 +1,5 @@
+import type { GameLaunchRequest, GameLaunchResult, GameLauncherRequirement } from "../../shared/game.js";
 import type { IncomingMessage, Server } from "node:http";
-import type { GameLaunchRequest } from "../../shared/game.js";
 
 import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { GameInstallationService } from "./GameInstallationService.js";
@@ -55,11 +55,12 @@ export class GameLauncherService {
     private static readonly CALLBACK_PATH = "/launcher-result";
     private static readonly CALLBACK_TIMEOUT = 5 * 60 * 1000;
     private static readonly MAXIMUM_CALLBACK_BODY_SIZE = 8 * 1024;
+    private static readonly MINIMUM_LAUNCHER_VERSION = "1.0.5";
     private readonly settingsRepository = new SettingsRepository();
     private readonly installationService = new GameInstallationService();
     private isLaunchInProgress = false;
 
-    async launch(rawRequest: unknown) {
+    async launch(rawRequest: unknown): Promise<GameLaunchResult> {
         if (this.isLaunchInProgress)
             throw new UserFacingError("A game launch is already in progress.");
 
@@ -89,10 +90,14 @@ export class GameLauncherService {
             }
             catch (error)
             {
-                return await this.failAfterRollback(new UserFacingError(
-                    "LOLauncher could not be opened. Make sure it is installed and its version is 1.0.5+.",
+                const launcherError = new UserFacingError(
+                    `LOLauncher ${GameLauncherService.MINIMUM_LAUNCHER_VERSION} or later is required to start the game.`,
                     { cause: error }
-                ), rollbackLoaderState);
+                );
+
+                await this.restoreAfterFailedLaunch(launcherError, rollbackLoaderState);
+
+                return this.createLauncherRequirementResult("install");
             }
 
             let result: LauncherCallbackResult;
@@ -111,10 +116,19 @@ export class GameLauncherService {
 
             if (result.status === "failed")
             {
-                await this.failAfterRollback(new UserFacingError(
-                    this.getFailureReasonMessage(result.reason)
-                ), rollbackLoaderState);
+                const launcherError = new UserFacingError(this.getFailureReasonMessage(result.reason));
+
+                if (result.reason === "launcher_update_required")
+                {
+                    await this.restoreAfterFailedLaunch(launcherError, rollbackLoaderState);
+
+                    return this.createLauncherRequirementResult("update");
+                }
+
+                return await this.failAfterRollback(launcherError, rollbackLoaderState);
             }
+
+            return { status: "started" };
         }
         finally
         {
@@ -276,14 +290,18 @@ export class GameLauncherService {
         return true;
     }
 
-    private async failAfterRollback(error: unknown, rollback: () => Promise<void>) {
+    private async restoreAfterFailedLaunch(error: unknown, rollback: () => Promise<void>) {
         try
         {
             await rollback();
         }
         catch (rollbackError)
         {
-            ApplicationLogger.error(ApplicationLogSource.gameLauncher, "Could not restore the BepInEx loader state after a failed launch.", rollbackError);
+            ApplicationLogger.error(
+                ApplicationLogSource.gameLauncher,
+                "Could not restore the BepInEx loader state after a failed launch.",
+                rollbackError
+            );
 
             const launchMessage = ErrorUtils.getUserErrorMessage(error, "The game could not be launched.");
 
@@ -291,7 +309,10 @@ export class GameLauncherService {
                 cause: new AggregateError([error, rollbackError])
             });
         }
+    }
 
+    private async failAfterRollback(error: unknown, rollback: () => Promise<void>): Promise<never> {
+        await this.restoreAfterFailedLaunch(error, rollback);
         throw error;
     }
 
@@ -428,6 +449,14 @@ export class GameLauncherService {
             case "launch_failed":
                 return "The launcher could not start the game";
         }
+    }
+
+    private createLauncherRequirementResult(requirement: GameLauncherRequirement): GameLaunchResult {
+        return {
+            status: "launcher-required",
+            requirement,
+            minimumVersion: GameLauncherService.MINIMUM_LAUNCHER_VERSION
+        };
     }
 
     private isFailureReason(value: string): value is LauncherFailureReason {

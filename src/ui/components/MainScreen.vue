@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { ModImportMode, SelectedModSource, ModExtractionRequest, ModExtractionResult, ModImportProgress } from "../../shared/mod.ts";
+import type { GameLauncherRequirement } from "../../shared/game.ts";
 
 import VanillaLaunchIcon from "./icons/VanillaLaunchIcon.vue";
+import ExternalLinkIcon from "./icons/ExternalLinkIcon.vue";
 import ImportFilesIcon from "./icons/ImportFilesIcon.vue";
 import ModExtractionModal from "./ModExtractionModal.vue";
 import GameLaunchIcon from "./icons/GameLaunchIcon.vue";
@@ -51,6 +53,10 @@ const adminPrivilegeErrorMessage = ref("");
 const isLaunchingGame = ref(false);
 const activeGameLaunchMode = ref<GameLaunchMode | null>(null);
 const gameLaunchErrorMessage = ref("");
+const launcherRequirement = ref<GameLauncherRequirement | null>(null);
+const launcherMinimumVersion = ref("");
+const launcherPageErrorMessage = ref("");
+const isOpeningLauncherPage = ref(false);
 
 let gameLaunchErrorTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -274,7 +280,15 @@ async function launchGame(vanilla: boolean) {
 
     try
     {
-        await window.app.launchGame({ vanilla });
+        const result = await window.app.launchGame({ vanilla });
+        if (result.status !== "launcher-required")
+            return;
+
+        launcherRequirement.value = result.requirement;
+        launcherMinimumVersion.value = result.minimumVersion;
+        launcherPageErrorMessage.value = "";
+
+        showPopover("launcher-requirement-popover");
     }
     catch (error)
     {
@@ -309,6 +323,43 @@ function dismissGameLaunchError() {
     }
 }
 
+function closeLauncherRequirement() {
+    if (isOpeningLauncherPage.value)
+        return;
+
+    hidePopover("launcher-requirement-popover");
+
+    launcherRequirement.value = null;
+    launcherMinimumVersion.value = "";
+    launcherPageErrorMessage.value = "";
+}
+
+async function openLauncherDownloadPage() {
+    if (isOpeningLauncherPage.value)
+        return;
+
+    isOpeningLauncherPage.value = true;
+    launcherPageErrorMessage.value = "";
+
+    try
+    {
+        await window.app.openExternalPage("launcher");
+
+        hidePopover("launcher-requirement-popover");
+        launcherRequirement.value = null;
+        launcherMinimumVersion.value = "";
+    }
+    catch (error)
+    {
+        RendererLogger.error(ApplicationLogSource.gameLauncher, "Could not open the LOLauncher releases page.", error);
+        launcherPageErrorMessage.value = ErrorUtils.getUserErrorMessage(error, "The LOLauncher releases page could not be opened.");
+    }
+    finally
+    {
+        isOpeningLauncherPage.value = false;
+    }
+}
+
 onMounted(() => {
     void Promise.all([
         characterCatalog.load(),
@@ -321,6 +372,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
     if (gameLaunchErrorTimeout)
         window.clearTimeout(gameLaunchErrorTimeout);
+
+    hidePopover("launcher-requirement-popover");
 });
 </script>
 
@@ -495,6 +548,81 @@ onBeforeUnmount(() => {
                 </button>
             </aside>
         </Transition>
+
+        <section
+            id="launcher-requirement-popover"
+            class="launcher-requirement-popover"
+            popover="manual"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="launcher-requirement-title"
+            aria-describedby="launcher-requirement-description"
+        >
+            <div class="launcher-requirement-icon" aria-hidden="true">
+                <GameLaunchIcon />
+            </div>
+
+            <div class="launcher-requirement-copy">
+                <p class="launcher-requirement-label">
+                    {{ launcherRequirement === "update" ? "Launcher update required" : "Game launcher required" }}
+                </p>
+                <h2 id="launcher-requirement-title">
+                    {{ launcherRequirement === "update" ? "Update LOLauncher to continue" : "Install LOLauncher to start Last Origin" }}
+                </h2>
+                <p id="launcher-requirement-description" class="launcher-requirement-description">
+                    LORPlusModManager uses LOLauncher to handle game login, updates, and startup.
+                </p>
+            </div>
+
+            <div class="launcher-requirement-version">
+                <span>Required version</span>
+                <strong>LOLauncher {{ launcherMinimumVersion }} or later</strong>
+            </div>
+
+            <p class="launcher-requirement-note">
+                {{
+                    launcherRequirement === "update"
+                        ? "After updating LOLauncher, return here and click Launch Game again."
+                        : "Install LOLauncher from its official GitHub release, then return here and click Launch Game again."
+                }}
+            </p>
+
+            <p
+                v-if="launcherPageErrorMessage"
+                class="launcher-requirement-error"
+                role="alert"
+            >
+                {{ launcherPageErrorMessage }}
+            </p>
+
+            <footer class="launcher-requirement-actions">
+                <button
+                    class="launcher-requirement-button launcher-requirement-button--secondary"
+                    type="button"
+                    :disabled="isOpeningLauncherPage"
+                    @click="closeLauncherRequirement"
+                >
+                    Not now
+                </button>
+                <button
+                    class="launcher-requirement-button launcher-requirement-button--primary"
+                    type="button"
+                    :disabled="isOpeningLauncherPage"
+                    @click="openLauncherDownloadPage"
+                >
+                    <span>
+                        {{
+                            isOpeningLauncherPage
+                                ? "Opening…"
+                                : launcherRequirement === "update"
+                                    ? "Open LOLauncher releases"
+                                    : "Get LOLauncher"
+                        }}
+                    </span>
+                    <ExternalLinkIcon class="launcher-requirement-external-icon" />
+                </button>
+            </footer>
+        </section>
 
         <section
             id="add-mod-popover"
@@ -863,6 +991,172 @@ onBeforeUnmount(() => {
     padding-bottom: 24px;
 }
 
+.launcher-requirement-popover {
+    width: min(510px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    margin: auto;
+    padding: 28px;
+    overflow: auto;
+    border: 1px solid #343936;
+    border-radius: 14px;
+    color: #f2eee5;
+    background: #0c0e0d;
+    box-shadow: 0 22px 60px rgb(0 0 0 / 48%);
+}
+
+.launcher-requirement-popover:popover-open {
+    animation: add-mod-popover-in 160ms ease-out;
+}
+
+.launcher-requirement-popover::backdrop {
+    background: rgb(0 0 0 / 72%);
+}
+
+.launcher-requirement-icon {
+    display: grid;
+    width: 46px;
+    height: 46px;
+    margin-bottom: 18px;
+    place-items: center;
+    border-radius: 50%;
+    color: #9bc2d9;
+    background: #17262e;
+}
+
+.launcher-requirement-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+.launcher-requirement-copy {
+    display: flex;
+    flex-direction: column;
+}
+
+.launcher-requirement-label {
+    margin: 0 0 5px;
+    color: #9bc2d9;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.launcher-requirement-copy h2 {
+    margin: 0;
+    color: #f2eee5;
+    font-size: 25px;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+}
+
+.launcher-requirement-description {
+    margin: 12px 0 0;
+    color: #adb2ac;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.launcher-requirement-version {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 22px;
+    padding: 14px 16px;
+    border: 1px solid #2b373d;
+    border-radius: 8px;
+    background: #101719;
+}
+
+.launcher-requirement-version span {
+    color: #858c87;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.launcher-requirement-version strong {
+    color: #c6e2f0;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+}
+
+.launcher-requirement-note {
+    margin: 14px 0 0;
+    color: #90968f;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.launcher-requirement-error {
+    margin: 14px 0 0;
+    padding: 11px 13px;
+    border: 1px solid #633936;
+    border-radius: 7px;
+    color: #efaaa4;
+    background: #271716;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.launcher-requirement-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 26px;
+}
+
+.launcher-requirement-button {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 7px;
+    color: #ece8df;
+    background: #181c1a;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.launcher-requirement-button:hover:not(:disabled) {
+    background: #212622;
+}
+
+.launcher-requirement-button--primary {
+    color: #10202a;
+    background: #94bdd3;
+}
+
+.launcher-requirement-button--primary:hover:not(:disabled) {
+    color: #0b1720;
+    background: #a6c9dc;
+}
+
+.launcher-requirement-button:focus-visible {
+    outline: 2px solid #f2eee5;
+    outline-offset: 2px;
+}
+
+.launcher-requirement-button:disabled {
+    cursor: wait;
+    opacity: 0.55;
+}
+
+.launcher-requirement-external-icon {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .add-mod-popover {
     width: min(560px, calc(100vw - 32px));
     max-height: calc(100vh - 32px);
@@ -1182,6 +1476,29 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 480px) {
+    .launcher-requirement-popover {
+        padding: 23px;
+    }
+
+    .launcher-requirement-version {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .launcher-requirement-version strong {
+        text-align: left;
+    }
+
+    .launcher-requirement-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .launcher-requirement-button {
+        width: 100%;
+    }
+
     .add-mod-header {
         padding: 22px 22px 0;
     }
@@ -1214,6 +1531,10 @@ onBeforeUnmount(() => {
     }
 
     .add-mod-popover:popover-open {
+        animation: none;
+    }
+
+    .launcher-requirement-popover:popover-open {
         animation: none;
     }
 
