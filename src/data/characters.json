@@ -1,5 +1,5 @@
 {
-  "version": "1.4.3",
+  "version": "1.4.4",
   "characters": [
     {
       "skin2dId": "2DModel_BR_BloodyPanther_N",
@@ -44922,7 +44922,7 @@
       "skinName": "DEAD or ALIVE: Popular Streamer Outfit",
       "iconFile": "InvenIcon_DS_GraveSong_NS1.png",
       "backgroundPreview": null,
-      "isRPlusSkin": false,
+      "isRPlusSkin": true,
       "isSpineSkin": true,
       "isAnimatorSkin": false,
       "isStaticSkin": false,
@@ -44983,12 +44983,13 @@
       "skinName": "DEAD or ALIVE: Popular Streamer Outfit (Damaged)",
       "iconFile": "InvenIcon_DS_GraveSong_NS1.png",
       "backgroundPreview": null,
-      "isRPlusSkin": false,
+      "isRPlusSkin": true,
       "isSpineSkin": false,
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_DS_GraveSong_NS1_Dam_Part1.png",
+        "FullbodyIMG_DS_GraveSong_NS1_Dam_Part2_R+.png",
         "FullbodyIMG_DS_GraveSong_NS1_Dam_Part2.png"
       ],
       "staticPreview": {
@@ -45004,12 +45005,12 @@
             "a": 1
           },
           "transform": {
-            "a": 0.1,
+            "a": 0.095,
             "b": 0,
             "c": 0,
-            "d": 0.1,
-            "tx": -0.002,
-            "ty": 0.776
+            "d": 0.095,
+            "tx": -0.0019,
+            "ty": 0.6947
           },
           "flipX": false,
           "flipY": false,
@@ -45040,12 +45041,12 @@
               "a": 1
             },
             "transform": {
-              "a": 0.1,
+              "a": 0.095,
               "b": 0,
               "c": 0,
-              "d": 0.1,
+              "d": 0.095,
               "tx": 0,
-              "ty": 0.35
+              "ty": 0.29
             },
             "flipX": false,
             "flipY": false,
@@ -45071,7 +45072,22 @@
                 },
                 "mesh": null
               },
-              "rplus": null
+              "rplus": {
+                "asset": "FullbodyIMG_DS_GraveSong_NS1_Dam_Part2_R+.png",
+                "crop": {
+                  "x": 98.07612,
+                  "y": 136.02675,
+                  "width": 1802.8477,
+                  "height": 1794.903
+                },
+                "width": 18.028477,
+                "height": 17.94903,
+                "pivot": {
+                  "x": 0.51359,
+                  "y": 0.494719
+                },
+                "mesh": null
+              }
             }
           },
           {
@@ -45119,7 +45135,56 @@
             }
           }
         ],
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1197,
+              "b": 0,
+              "c": 0,
+              "d": 0.1197,
+              "tx": 0.00798,
+              "ty": -0.0615
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "off",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
         "hitboxes": {
           "touch": {
             "width": 1,
@@ -72882,6 +72947,248 @@
                 "d": 2.373021,
                 "tx": -0.024395,
                 "ty": 0.215292
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_PECS_Machina_NS2",
+      "variantId": null,
+      "characterName": "Machina",
+      "skinName": "Warning! Caution! Haute Couture Bikini — Outsiders Need Not Understand…?",
+      "iconFile": "InvenIcon_PECS_Machina_NS2.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": true,
+      "isAnimatorSkin": false,
+      "isStaticSkin": false,
+      "assets": [
+        "L2D_PECS_Machina_NS2.json",
+        "L2D_PECS_Machina_NS2.atlas",
+        "L2D_PECS_Machina_NS2.png"
+      ],
+      "spinePreview": {
+        "scale": 0.01,
+        "transform": {
+          "a": 0.09,
+          "b": 0,
+          "c": 0,
+          "d": 0.09,
+          "tx": 0.27,
+          "ty": -0.45
+        },
+        "baseSkin": "skin_base",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "animations": {
+          "idle": "idle",
+          "touch": "touch",
+          "specialTouch": "special",
+          "postSpecialTouch": null
+        },
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "x": 1.444444,
+            "y": 2.777778,
+            "width": 11.111111,
+            "height": 27.777778,
+            "rotation": 0
+          },
+          "specialTouch": [
+            {
+              "x": 1.14,
+              "y": 8.79,
+              "width": 6,
+              "height": 3.5,
+              "rotation": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_PECS_Machina_NS2_Dam",
+      "variantId": null,
+      "characterName": "Machina",
+      "skinName": "Warning! Caution! Haute Couture Bikini — Outsiders Need Not Understand…? (Damaged)",
+      "iconFile": "InvenIcon_PECS_Machina_NS2.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_PECS_Machina_NS2_Dam_part1.png",
+        "FullbodyIMG_PECS_Machina_NS2_Dam_part2.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_pecs_machina_ns2_dam",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": {
+          "sortingOrder": 10,
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          },
+          "transform": {
+            "a": 0.12,
+            "b": 0,
+            "c": 0,
+            "d": 0.12,
+            "tx": -0.0228,
+            "ty": 0.4704
+          },
+          "flipX": false,
+          "flipY": false,
+          "visibility": {
+            "defaultVisible": true,
+            "part1": null,
+            "part2": null
+          },
+          "expressions": [
+            {
+              "assetName": "PECS_Machina_NS2_Dam_Smile",
+              "bundleName": "face_pecs_machina_ns2_dam"
+            },
+            {
+              "assetName": "PECS_Machina_NS2_Dam_Sad",
+              "bundleName": "face_pecs_machina_ns2_dam"
+            },
+            {
+              "assetName": "PECS_Machina_NS2_Dam_Anger",
+              "bundleName": "face_pecs_machina_ns2_dam"
+            },
+            {
+              "assetName": "PECS_Machina_NS2_Dam_CloseEye",
+              "bundleName": "face_pecs_machina_ns2_dam"
+            },
+            {
+              "assetName": "PECS_Machina_NS2_Dam_Arouse",
+              "bundleName": "face_pecs_machina_ns2_dam"
+            }
+          ]
+        },
+        "layers": [
+          {
+            "name": "Part1",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.12,
+              "b": 0,
+              "c": 0,
+              "d": 0.12,
+              "tx": 0,
+              "ty": 0
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_Machina_NS2_Dam_part2.png",
+                "crop": {
+                  "x": 997.01294,
+                  "y": 808.02673,
+                  "width": 933.9109,
+                  "height": 700.8971
+                },
+                "width": 9.339109,
+                "height": 7.008971,
+                "pivot": {
+                  "x": 0.028897,
+                  "y": 0.308138
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "body",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.12,
+              "b": 0,
+              "c": 0,
+              "d": 0.12,
+              "tx": 0,
+              "ty": 0
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_Machina_NS2_Dam_part1.png",
+                "crop": {
+                  "x": 152.07613,
+                  "y": 157.02675,
+                  "width": 1787.8876,
+                  "height": 1890.9733
+                },
+                "width": 17.878876,
+                "height": 18.909733,
+                "pivot": {
+                  "x": 0.487684,
+                  "y": 0.45848
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "width": 1.5,
+            "height": 1.8,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0,
+              "ty": 0
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 5.4,
+              "height": 2.8,
+              "transform": {
+                "a": 0.119343,
+                "b": -0.012543,
+                "c": 0.012543,
+                "d": 0.119343,
+                "tx": -0.0168,
+                "ty": 0.168
               }
             }
           ]
