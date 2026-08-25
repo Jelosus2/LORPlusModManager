@@ -3,11 +3,17 @@ productName: LORPlusModManager
 directories:
   buildResources: build
   output: release
+files:
+  - dist/**/*
+extraResources:
+  - from: src/data/characters.json
+    to: data/characters.json
+  - from: build/unity-worker/win-x64/lorplus-unity-worker
+    to: unity-worker
 publish:
   provider: github
   owner: Jelosus2
   repo: LORPlusModManager
-  private: true
 releaseInfo:
   releaseNotesFile: release-notes.md
 win:
@@ -15,5 +21,8 @@ win:
   icon: build/icon.ico
   artifactName: "LORPlusModManager-Setup-${version}.${ext}"
 nsis:
+  oneClick: false
+  perMachine: true
+  allowToChangeInstallationDirectory: true
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico

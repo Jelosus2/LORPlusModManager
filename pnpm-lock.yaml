@@ -207,9 +207,6 @@ importers:
 
   .:
     dependencies:
-      '@esotericsoftware/spine-pixi-v8':
-        specifier: 4.2.119
-        version: 4.2.119(pixi.js@8.19.0)
       better-sqlite3:
         specifier: ^12.11.1
         version: 12.11.1
@@ -219,25 +216,16 @@ importers:
       fs-extra:
         specifier: ^11.3.6
         version: 11.3.6
-      pinia:
-        specifier: ^3.0.4
-        version: 3.0.4(typescript@6.0.3)(vue@3.5.39(typescript@6.0.3))
-      pixi-filters:
-        specifier: ^6.1.5
-        version: 6.1.5(pixi.js@8.19.0)
-      pixi.js:
-        specifier: ^8.19.0
-        version: 8.19.0
       unzipper:
         specifier: ^0.12.5
         version: 0.12.5
-      vue:
-        specifier: ^3.5.39
-        version: 3.5.39(typescript@6.0.3)
       winreg:
         specifier: ^1.2.5
         version: 1.2.5
     devDependencies:
+      '@esotericsoftware/spine-pixi-v8':
+        specifier: 4.2.119
+        version: 4.2.119(pixi.js@8.19.0)
       '@tsconfig/node24':
         specifier: ^24.0.4
         version: 24.0.4
@@ -277,12 +265,24 @@ importers:
       eslint-plugin-vue:
         specifier: ^10.9.2
         version: 10.9.2(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0))(vue-eslint-parser@10.4.1(eslint@10.6.0(jiti@2.7.0)))
+      pinia:
+        specifier: ^3.0.4
+        version: 3.0.4(typescript@6.0.3)(vue@3.5.39(typescript@6.0.3))
+      pixi-filters:
+        specifier: ^6.1.5
+        version: 6.1.5(pixi.js@8.19.0)
+      pixi.js:
+        specifier: ^8.19.0
+        version: 8.19.0
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
       vite:
         specifier: ^8.1.0
         version: 8.1.0(@types/node@26.0.1)(jiti@2.7.0)
+      vue:
+        specifier: ^3.5.39
+        version: 3.5.39(typescript@6.0.3)
       vue-tsc:
         specifier: ^3.3.5
         version: 3.3.5(typescript@6.0.3)
