@@ -237,6 +237,13 @@ export class ApplicationLogger {
         );
     }
 
+    static getCurrentLogFilePath(): string {
+        if (!ApplicationLogger.initialized || !ApplicationLogger.logFilePath)
+            throw new Error("Application logging is not initialized.");
+
+        return ApplicationLogger.logFilePath;
+    }
+
     private static async pruneOldLogFiles() {
         const fileNames = await fse.readdir(ApplicationLogger.logDirectory);
 

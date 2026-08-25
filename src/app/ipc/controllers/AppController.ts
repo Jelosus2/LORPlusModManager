@@ -111,6 +111,26 @@ export class AppController {
         return this.openDirectory(Paths.getLogsPath(), "The application log folder could not be opened.");
     }
 
+    @IpcHelper.IpcHandle("app:open-current-log-file-path")
+    async openCurrentLogFilePath() {
+        try
+        {
+            const logFilePath = ApplicationLogger.getCurrentLogFilePath();
+            if (!await fse.exists(logFilePath))
+                throw new Error("The current session log file does not exist.");
+
+            shell.showItemInFolder(logFilePath);
+        }
+        catch (error)
+        {
+            throw ErrorUtils.withContext(
+                "The current session log file could not be shown.",
+                error,
+                "Windows could not reveal the current session log file."
+            );
+        }
+    }
+
     @IpcHelper.IpcHandle("app:get-application-info")
     getApplicationInfo(): ApplicationInfo {
         return Object.freeze({

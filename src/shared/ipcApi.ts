@@ -86,4 +86,5 @@ export type IpcApi = {
     prepareAnimatorModPreview: (modId: string) => Promise<AnimatorModPreviewPreparation>;
     getModPreviewCacheStorage: () => Promise<ModPreviewCacheStorageSummary>;
     deleteModPreviewCache: () => Promise<ModPreviewCacheStorageSummary>;
+    openCurrentLogFilePath: () => Promise<void>;
 };

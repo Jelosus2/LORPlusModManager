@@ -23,7 +23,7 @@ const logSeverity = ref<ApplicationLogSeverity | "all">("all");
 const logSource = ref("all");
 const logError = ref("");
 const isLoadingLogs = ref(false);
-const isOpeningLogFolder = ref(false);
+const isOpeningLogFilePath = ref(false);
 
 let errorTimeout: number | null = null;
 
@@ -72,25 +72,25 @@ async function openExternalPage(page: ExternalApplicationPage) {
     }
 }
 
-async function openLogFolder() {
-    if (isOpeningLogFolder.value)
+async function openCurrentLogFilePath() {
+    if (isOpeningLogFilePath.value)
         return;
 
-    isOpeningLogFolder.value = true;
+    isOpeningLogFilePath.value = true;
     logError.value = "";
 
     try
     {
-        await window.app.openLogFolder();
+        await window.app.openCurrentLogFilePath();
     }
     catch (error)
     {
-        RendererLogger.error(ApplicationLogSource.application, "Could not open the application log folder.", error);
-        logError.value = ErrorUtils.getUserErrorMessage(error, "The application log folder could not be opened.");
+        RendererLogger.error(ApplicationLogSource.diagnostics, "Could not open the current session log file path.", error);
+        logError.value = ErrorUtils.getUserErrorMessage(error, "The current session log file could not be shown.");
     }
     finally
     {
-        isOpeningLogFolder.value = false;
+        isOpeningLogFilePath.value = false;
     }
 }
 
@@ -373,11 +373,12 @@ onBeforeUnmount(() => {
                 <button
                     class="logs-button logs-button--secondary"
                     type="button"
-                    :disabled="isOpeningLogFolder"
-                    @click="openLogFolder"
+                    title="Open the log folder and select the current session file"
+                    :disabled="isOpeningLogFilePath"
+                    @click="openCurrentLogFilePath"
                 >
                     <FolderIcon />
-                    <span>{{ isOpeningLogFolder ? "Opening…" : "Open log folder" }}</span>
+                    <span>{{ isOpeningLogFilePath ? "Opening…" : "Show current log" }}</span>
                 </button>
             </div>
 

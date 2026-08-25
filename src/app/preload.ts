@@ -125,7 +125,8 @@ const modManagerApi: IpcApi = {
     prepareStaticModPreview: (modId) => ipcRenderer.invoke("mod:prepare-static-preview", modId),
     prepareAnimatorModPreview: (modId) => ipcRenderer.invoke("mod:prepare-animator-preview", modId),
     getModPreviewCacheStorage: () => ipcRenderer.invoke("app:get-mod-preview-cache-storage"),
-    deleteModPreviewCache: () => ipcRenderer.invoke("app:delete-mod-preview-cache")
+    deleteModPreviewCache: () => ipcRenderer.invoke("app:delete-mod-preview-cache"),
+    openCurrentLogFilePath: () => ipcRenderer.invoke("app:open-current-log-file-path")
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);
