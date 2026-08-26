@@ -106,34 +106,25 @@ jobs:
               -Pattern '^path:\s*(.+?)\s*$'
           )
 
-          $checksumMatches = @(
-            Select-String `
-              -LiteralPath $metadataFile.FullName `
-              -Pattern '^sha512:\s*(.+?)\s*$'
-          )
-
           if ($pathMatches.Count -ne 1) {
             throw "Could not determine the installer path from $($metadataFile.Name)."
           }
 
-          if ($checksumMatches.Count -ne 1) {
-            throw "Could not determine the installer checksum from $($metadataFile.Name)."
-          }
-
           $artifactName = $pathMatches[0].Matches[0].Groups[1].Value.Trim()
-          $checksum = $checksumMatches[0].Matches[0].Groups[1].Value.Trim()
           $artifactPath = Join-Path "release" $artifactName
 
           if (-not (Test-Path -LiteralPath $artifactPath -PathType Leaf)) {
             throw "The installer declared by electron-builder does not exist: $artifactPath"
           }
 
+          $checksum = (Get-FileHash -LiteralPath $artifactPath -Algorithm SHA256).Hash
+
           Add-Content -LiteralPath $outputFile -Value @(
             ""
             "## Installer checksum"
             ""
             ('- File: `{0}`' -f $artifactName)
-            ('- SHA-512 (Base64): `{0}`' -f $checksum)
+            ('- SHA-256: `{0}`' -f $checksum)
           )
 
           "path=$outputFile" >> $env:GITHUB_OUTPUT
