@@ -1,5 +1,5 @@
 {
-  "version": "1.4.4",
+  "version": "1.4.5",
   "characters": [
     {
       "skin2dId": "2DModel_BR_BloodyPanther_N",
@@ -17623,6 +17623,378 @@
       }
     },
     {
+      "skin2dId": "2DModel_BR_Brunhild_NS1",
+      "variantId": null,
+      "characterName": "Brunhild",
+      "skinName": "Flame Ruler",
+      "iconFile": "InvenIcon_BR_Brunhild_NS1.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_BR_Brunhild_NS1_Part1.png",
+        "FullbodyIMG_BR_Brunhild_NS1_Part2.png",
+        "FullbodyIMG_BR_Brunhild_NS1_part3.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_br_brunhild_ns1",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": null,
+        "layers": [
+          {
+            "name": "part1",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.4,
+              "b": 0,
+              "c": 0,
+              "d": 0.4,
+              "tx": 0.2,
+              "ty": 0
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_BR_Brunhild_NS1_part3.png",
+                "crop": {
+                  "x": 33.012913,
+                  "y": 305.0429,
+                  "width": 2014.987,
+                  "height": 1354.9441
+                },
+                "width": 20.14987,
+                "height": 13.549441,
+                "pivot": {
+                  "x": 0.491808,
+                  "y": 0.530618
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "body",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.2,
+              "b": 0,
+              "c": 0,
+              "d": 0.2,
+              "tx": 0,
+              "ty": 0
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_BR_Brunhild_NS1_Part2.png",
+                "crop": {
+                  "x": 11.051316,
+                  "y": 32.026752,
+                  "width": 1884.8726,
+                  "height": 1706.8971
+                },
+                "width": 18.848726,
+                "height": 17.068971,
+                "pivot": {
+                  "x": 0.53741,
+                  "y": 0.581156
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "BG",
+            "sortingOrder": 11,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.4,
+              "b": 0,
+              "c": 0,
+              "d": 0.4,
+              "tx": 0.2,
+              "ty": 0
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_BR_Brunhild_NS1_Part1.png",
+                "crop": {
+                  "x": 0,
+                  "y": 230.07613,
+                  "width": 2048,
+                  "height": 1434.8477
+                },
+                "width": 20.48,
+                "height": 14.348477,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.553316
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "width": 0.746316,
+            "height": 1.77121,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0.056533,
+              "ty": 0.043717
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 0.31,
+              "height": 0.13,
+              "transform": {
+                "a": -2.133708,
+                "b": 0,
+                "c": 0,
+                "d": 2.268667,
+                "tx": 0.132,
+                "ty": 0.14
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_BR_Brunhild_NS1_Dam",
+      "variantId": null,
+      "characterName": "Brunhild",
+      "skinName": "Flame Ruler (Damaged)",
+      "iconFile": "InvenIcon_BR_Brunhild_NS1.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_BR_Brunhild_NS1_Dam_part1.png",
+        "FullbodyIMG_BR_Brunhild_NS1_Dam_part2.png",
+        "FullbodyIMG_BR_Brunhild_NS1_Dam_part3.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_br_brunhild_ns1_dam",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": null,
+        "layers": [
+          {
+            "name": "part2",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.15,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": -0.05,
+              "ty": 0.05
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_BR_Brunhild_NS1_Dam_part3.png",
+                "crop": {
+                  "x": 13.07612,
+                  "y": 322.05133,
+                  "width": 2034.9238,
+                  "height": 1285.9358
+                },
+                "width": 20.349238,
+                "height": 12.859358,
+                "pivot": {
+                  "x": 0.496787,
+                  "y": 0.545866
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "body",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.15,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": -0.05,
+              "ty": 0.05
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_BR_Brunhild_NS1_Dam_part2.png",
+                "crop": {
+                  "x": 58.076122,
+                  "y": 434.01468,
+                  "width": 1979.8971,
+                  "height": 1123.9092
+                },
+                "width": 19.798971,
+                "height": 11.239092,
+                "pivot": {
+                  "x": 0.487866,
+                  "y": 0.52494
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "part1",
+            "sortingOrder": 2,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.15,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": -0.05,
+              "ty": 0.05
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_BR_Brunhild_NS1_Dam_part1.png",
+                "crop": {
+                  "x": 10.026751,
+                  "y": 300.0761,
+                  "width": 1943.9169,
+                  "height": 1272.8972
+                },
+                "width": 19.439169,
+                "height": 12.728972,
+                "pivot": {
+                  "x": 0.521613,
+                  "y": 0.568721
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "width": 0.746316,
+            "height": 1.35,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0,
+              "ty": -0.08
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 3.65,
+              "height": 2.39,
+              "transform": {
+                "a": 0.15,
+                "b": 0,
+                "c": 0,
+                "d": 0.15,
+                "tx": 0.0175,
+                "ty": 0.023
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
       "skin2dId": "2DModel_BR_Scarabya_N",
       "variantId": null,
       "characterName": "C-11 Scarabya",
@@ -27326,7 +27698,7 @@
       "isAnimatorSkin": true,
       "isStaticSkin": false,
       "assets": [
-        "128_glow_texture_49.png",
+        "128_glow_texture_50.png",
         "2dModel_PECS_Rampart_NS1_parts.png",
         "Basic_Smoke_text_2x2.png",
         "BG_aura_0674.png",
@@ -66066,6 +66438,811 @@
       }
     },
     {
+      "skin2dId": "2DModel_PECS_LaylaCloudy_N",
+      "variantId": null,
+      "characterName": "Layla Cloudy",
+      "skinName": "Default",
+      "iconFile": "InvenIcon_PECS_LaylaCloudy_N.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_PECS_LaylaCloudy_N_part1.png",
+        "FullbodyIMG_PECS_LaylaCloudy_N_part2.png",
+        "FullbodyIMG_PECS_LaylaCloudy_N_part3.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_pecs_laylacloudy_n",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": {
+          "sortingOrder": 10,
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          },
+          "transform": {
+            "a": 0.1,
+            "b": 0,
+            "c": 0,
+            "d": 0.1,
+            "tx": 0.631,
+            "ty": 0.74
+          },
+          "flipX": false,
+          "flipY": false,
+          "visibility": {
+            "defaultVisible": true,
+            "part1": null,
+            "part2": null
+          },
+          "expressions": [
+            {
+              "assetName": "PECS_LaylaCloudy_N_Smile",
+              "bundleName": "face_pecs_laylacloudy_n"
+            },
+            {
+              "assetName": "PECS_LaylaCloudy_N_Sad",
+              "bundleName": "face_pecs_laylacloudy_n"
+            },
+            {
+              "assetName": "PECS_LaylaCloudy_N_Anger",
+              "bundleName": "face_pecs_laylacloudy_n"
+            },
+            {
+              "assetName": "PECS_LaylaCloudy_N_CloseEye",
+              "bundleName": "face_pecs_laylacloudy_n"
+            },
+            {
+              "assetName": "PECS_LaylaCloudy_N_Temptation",
+              "bundleName": "face_pecs_laylacloudy_n"
+            }
+          ]
+        },
+        "layers": [
+          {
+            "name": "Robe",
+            "sortingOrder": -1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.552,
+              "ty": 0.161
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_N_part2.png",
+                "crop": {
+                  "x": 0,
+                  "y": 415,
+                  "width": 1776,
+                  "height": 1450
+                },
+                "width": 17.76,
+                "height": 14.5,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "UrjuQD0Kd0B7FA5BmpmBwHsUDkFSuB5Azcx8QDMzw0C4HjVAAADoQDMz8z9SuLbA16MwvwAA6EAfheu/9ii0QB+FG8DhesTAPQqPwFyP0sBcj7rAXI/iwHsUDsEzM7NAexQOwQAA6MA=",
+                  "triangles": "DAALAAoABwAKAAsACQAKAAcACAAJAAcABQAIAAcABgAFAAcABAAFAAYAAQAFAAQAAwABAAQAAAABAAMAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "CircleB",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.57,
+              "ty": 0.139
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": "on"
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_N_part3.png",
+                "crop": {
+                  "x": 0,
+                  "y": 794,
+                  "width": 2048,
+                  "height": 1254
+                },
+                "width": 20.48,
+                "height": 12.54,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "pHBtwNejyEB7FL5A16PIwArXI0HXo8jACtcjwdejyEAK1yPBj8IlQA==",
+                  "triangles": "BAADAAEAAAABAAMAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "body",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.54,
+              "ty": 0.039
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_N_part1.png",
+                "crop": {
+                  "x": 207.07613,
+                  "y": 114.02675,
+                  "width": 1524.8477,
+                  "height": 1805.8971
+                },
+                "width": 15.248477,
+                "height": 18.058971,
+                "pivot": {
+                  "x": 0.535741,
+                  "y": 0.50389
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Fish1",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": -0.202,
+              "ty": 0.566
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": "on"
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_N_part2.png",
+                "crop": {
+                  "x": 102.07612,
+                  "y": 268.02676,
+                  "width": 146.92387,
+                  "height": 133.97325
+                },
+                "width": 1.469239,
+                "height": 1.339732,
+                "pivot": {
+                  "x": 0.452097,
+                  "y": 0.451383
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Card",
+            "sortingOrder": 2,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 1.186,
+              "ty": 0.255
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": "on"
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_N_part3.png",
+                "crop": {
+                  "x": 1368.0762,
+                  "y": 1382.0676,
+                  "width": 652.8478,
+                  "height": 622.8562
+                },
+                "width": 6.528478,
+                "height": 6.228562,
+                "pivot": {
+                  "x": 0.514552,
+                  "y": 0.491979
+                },
+                "mesh": {
+                  "vertices": "mpkZPmZmpj64HoW+hetRPo/CdT2F61E+exSuPlyPSkAK12M/UriuPwrXYz+kcEVAj8J1v1yPSkA9Cre/hetRPilcz78AALA/KVzPv0jhuj7sUUhA4XoUvkjhSkBcj5K/SOFKQK5Hob7NzAxAmpnpv+F61D8pXM8+w/XIP0jh6r9I4Zo/KVwnwHE9Cj/2KETAhevRPilczz72KDzA7FEYv4/CRcDNzGy/pHBNwPYoRMA9ClfAFK4PwD0KV8CamTHAH4XLP5qZEcA=",
+                  "triangles": "EAAPABgAFwAWABUAFAAVABYAEQAVABQAEwARABQAAQARABMAAgARAAEAAAARAAIAEgARAAAADgARABIAEAARAA4ADwAQAA4ADQAPAA4ACgANAA4ACwANAAoADAALAAoACQAIAAcABgAHAAgAAQAHAAYAAwABAAYAAAABAAMABAAAAAMABQAEAAMAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "CircleF",
+            "sortingOrder": 2,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.54,
+              "ty": -0.216
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": "on"
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_N_part3.png",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 2048,
+                  "height": 1596
+                },
+                "width": 20.48,
+                "height": 15.96,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "16MIwSlc/0AK1yNBKVz/wArXI0GPwjXACtcjwSlc/0AK1yPBKVz/wA==",
+                  "triangles": "BAADAAEAAAABAAMAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "CrystalBall",
+            "sortingOrder": 2,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.121,
+              "ty": 0.699
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": "on"
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_N_part2.png",
+                "crop": {
+                  "x": 1417,
+                  "y": 53,
+                  "width": 605.97327,
+                  "height": 596.9239
+                },
+                "width": 6.059733,
+                "height": 5.969239,
+                "pivot": {
+                  "x": 0.52065,
+                  "y": 0.50844
+                },
+                "mesh": {
+                  "vertices": "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",
+                  "triangles": "WQNtAGcAZQBnAG0AbABtAFkDPABsAFkDIgAgAOQCHgDkAiAA4wLkAh4AHADjAh4AGgDjAhwA4gIaAN0CBgPdAhoA6QLdAgYD5gLdAukC7gLdAuYC5wLuAuYC4gLjAhoAWAPgAt4C6AIFA+UCBAPlAgUDAwPlAgQD6gLlAgMDAgPqAgMD9gLqAgIDVwPeAt8CVgPtAusCVQPrAuwCVAP1AgED9gIBA/UCAgMBA/YCFQMAA/8CswGWAVMDOANTA5YBlwE4A5YBmQE4A5cBmgE4A5kBUgM4A5oBUQM4A1IDUAM4A1EDTwM4A1ADTgM4A08DTQM4A04DTAM4A00DSwM4A0wDSgM4A0sDSQM4A0oDSAM4A0kDRwM4A0gDRgM4A0cDnAE4A0YDtAE4A5wBnQE4A7QBmwE4A50BRQM4A5sBRAM4A0UDQwM4A0QDQgM4A0MDQQM4A0IDQAM4A0EDPwM4A0ADPgM4Az8DPQM4Az4DPAM4Az0DOwM4AzwDOgM4AzsDOQM4AzoDNwM4AzkDGgM4AzcDNgMaAzcDNQMaAzYDoQEaAzUDzQEaA6EBMwPNAaEBPgEzA6EBWAE+AaEBnwFYAaEBWwE+AVgBXAE+AVsBPwEzAz4BNAMzAz8BRAEzAzQDQgEzA0QBMgPNATMDzgHNATIDxQIaA80BxgLFAs0BxAIaA8UCBQIaA8QCBAIFAsQCxwIaAwUCFALHAgUCCwIaA8cCCgIaAwsCkAIaAwoCMQMaA5ACMAMaAzEDLwMaAzADLgMaAy8DLQMaAy4DLAMaAy0DKwMaAywDKgMaAysDKQMaAyoDKAMaAykDJwMaAygDJgMaAycDJQMaAyYDJAMaAyUDIwMaAyQDIgMaAyMDIQMaAyIDIAMaAyEDBwMaAyADOAAaAwcDegI4AAcDeAI4AHoCOQA4AHgCHwMaAzgAHgMaAx8DHQMaAx4DHAMaAx0DGwMaAxwDGQMaAxsDFQAaAxkDaAAaAxUA9AIVABkDFgBoABUAGABoABYAFwNoABgAFgNoABcDGAMWAxcDFQNoABYDAAMVAxYD/wJoABUD/ALjAZ8BVAGfAeMBWAGfAVQBEwNUAeMBUwFUARMDEgMTA+MBFAMTAxIDEAMSA+MBEQMSAxADvgERAxADMgEQA+MBNgEQAzIBLwEyAeMBtQEvAeMBMQEvAbUBSgExAbUBtwG1AeMB9QG3AeMB9AH1AeMB6AH0AeMB5QHoAeMB5AHlAeMBDwPjAfwCDgMPA/wCoAIOA/wCnwKgAvwCDwGfAvwCEQEPAfwCDQMRAfwCDAMNA/wC2wIMA/wC2gLbAvwCgwLaAvwCggKDAvwCCwOCAvwCfwILA/wCdQJ/AvwCeQJ/AnUCgAJ/AnkCawKAAnkCcgJrAnkCaAJrAnICcAJyAnkCfgJwAnkCCgN+AnkCCQMKA3kCfAIJA3kCewJ8AnkCCAN7AnkCBwMIA3kCegIHA3kCdgJ5AnUCdwJ5AnYCEwB3AnYCEgATAHYCdAJ1AvwCcwJ0AvwCCQBzAvwCNgAJAPwCCAAJADYANQA2APwCNAA1APwCAgA0APwCJQACAPwCAQACACUAIQABACUAJAAlAPwCIwAkAPwCGwAjAPwCBAMbAPwCBQMbAAQDBgMbAAUDGgAbAAYD6QIGAwUD6ALpAgUDAwMEA/wCAgMDA/wCZwACA/wCAQMCA2cAAAMBA2cA/wIAA2cAaAD/AmcA/gJnAPwC/QL+AvwCgwH9AvwC+AKDAfwC+wKDAfgC+gL7AvgCbAH6AvgCaAFsAfgC+QJoAfgC9wLsAvUC6gL1AuwC9gL1AuoC9ALfAhUA8wIVAN8C8gLzAt8C8QLyAt8C8ALxAt8C7wLwAt8C3QLvAt8C7gLvAt0C7QLvAu4C5wLtAu4C5QLtAucC6gLtAuUC6wLtAuoC7ALrAuoC6QLoAuYC5QLmAugC5wLmAuUCAQAhAOECIgDhAiEA5ALhAiIA4wLhAuQC4gLhAuMC3QLhAuIC4ALhAt0C3gLgAt0C3wLeAt0ChQI/AmQCPQJkAj8CVwJkAj0CVwLZAl4C3ALbAtoC2QLYAl4CYAJeAtgCVwJWAtkC2ALZAlYCUwLYAlYCYALYAlMCUQJgAlMCQAJZAj0CTAJKAkkC+gH3Ab0CuwK9AvcB+AG7AvcBrgKtAr8CqwK/Aq0CywLRAsoCIQLKAtEC4AHhAdcC1gLXAuEBywLXAtYC1QLLAtYC1ALLAtUC0QLLAtQC0wLRAtQC0gLRAtMC0ALRAtICIQLRAtACzwIhAtACIAIhAs8CzgLkAc0CzALNAuQByQLNAswCywLJAswCygLJAssCIQLJAsoCyALJAiECpgLIAiECpwLIAqYCtAK2AiEBHgEhAbYCxwINAgsCHgIdAqUCGgKlAh0CGwIaAh0CxwIUAg0CxgLDAsUCxALFAsMCBALEAsMCwgIEAsMCwAIEAsICwQLAAsICrgLAAsECEwLAAq4CvwITAq4CIgETAr8CqwIiAb8CrAIiAasC0QHYAb4C2wG+AtgB+gG+AtsBvQK+AvoBAgK+Ar0CAQICAr0CvAIBAr0CuwK8Ar0C/wG8ArsC+AH/AbsCugL/AfgB/gH/AboCtAL+AboCowK0AroCuAK0AqMCuQK4AqMCpAK5AqMCtAK4ArYCtwK2ArgCtQK2ArcCHgG2ArUCqQIeAbUCqgK0AqwCIQGsArQCIgGsAiEBswKyArECAgKxArICAAKxAgICsAKxAgACrwKwAgACrgKwAq8CqgKuAq8CrQKuAqoCqwKtAqoCrAKrAqoCpAKiAqkCqAKpAqICHgGpAqgCHQEeAagCpwKmAqMCHgKjAqYCpQKjAh4CGgKjAqUCogKjAhoCpAKjAqICGQKiAhoCGgEbARkBoQKgAp8CIAEfARUCFwEVAh8BFwIVAhcBmAIXAhcBngKYAhcBnAKYAp4CKwGYApwCnQIrAZwClgKaAiwBmQIsAZoCKwEsAZkCGAKWAi0BLAEtAZYCCAIOApICEQKSAg4CGAKSAhECLQGSAhgCjwKSAi0BmwKPAi0BFwKYApcClgKXApgCmgKWApgCmQKaApgCKwGZApgCGAIWApYCFwKWAhYClwKWAhcClQKUApMCkgKTApQCkQKTApICjwKRApICkAKRAo8CjQKQAo8CjgKNAo8CJQKNAo4CiwKNAiUCJAKLAiUCjAKLAiQCAQEjAv4ANwI0AjUCOQI6AooCOwKKAjoCPAKKAjsCQgKKAjwCQQKKAkIChgKKAkECiAKKAoYCiQKIAoYCQQKFAoYChwKGAoUChAKBAoICgwKCAoECbgKAAm0CawJtAoACYAJRAl8CYgJfAlECUgJiAlECfwJiAlICbgJiAn8CgAJuAn8CagJxAn4CcAJ+AnECfQJ8AnsCegJ5AngCdwJ4AnkCOQB4AncCEwA5AHcCNwA5ABMAEQA3ABMAEgB2Ag4AdQIOAHYCdAIOAHUCcwIOAHQCDAAOAHMCCQAMAHMCCgAMAAkAaAJyAmoCcAJqAnICcQJqAnACbwJuAmwCbQJsAm4CawJsAm0CaQJsAmsCaAJpAmsCagJpAmgCZwJmAmMCZQJjAmYCZAJjAmUCVwJjAmQCXgJjAlcCYQJjAl4CXwJhAl4CYgJhAl8CYAJfAl4CXQJcAlsCTQJbAlwCWgJbAk0CTAJaAk0CQAJaAkwCSQJAAkwCRwJAAkkCWQJAAkcCPQJZAkcCSAI9AkcCWAI9AkgCVQI9AlgCVwI9AlUCVgJXAlUCUwJWAlUCVAJTAlUCUAJTAlQCUQJTAlACUgJRAlACTwJOAk0CSwJNAk4CTAJNAksCSgJMAksCRgJKAksCSQJKAkYCRwJJAkYCSAJHAkYCRQJEAkMCKQJDAkQCMgJDAikCQgJDAjICKAJCAjICQQJCAigCJgJBAigCQAJBAiYCPgJBAkACPQI+AkACPwI+Aj0COgI4AjsCPAI7AjgCNwI1AjkCMwI5AjUCOAI5AjMCOgI5AjgCBQExAgQBNwIEATECNAI3AjECMwI0AjECNgIzAjECNQI0AjMCLgItAioCKwIqAi0CLgIqAikCKQInAjICKAIyAicCBQEwAjECLgIxAjACLwIuAjACLAIuAi8CLQIuAiwCKwItAiwCJgIrAiwCKgIrAiYCKQIqAiYCJwIpAiYCKAInAiYCAAH/APoA/AD6AP8A/gAjAv0AJQIkASQCAgEkAiQBIgICASQBAQECASICIwIBASICIQIgAh8CHAIfAiACHgIfAhwCHQIeAhwCGwIdAhwCGAEbAhwCGgIbAhgBGQIaAhgBGwEZAhgBGQEbARgBIAEVAhECGAIRAhUCFgIYAhUCFwIWAhUCFAITAgwCEgIMAhMCEAIMAhICDwIQAhICIAEPAhICEQIPAiABDgIPAhECDAIQAgYCDwIGAhACDgIGAg8CCAIGAg4CDQIMAgsCBgILAgwCCgILAgYCCQIKAgYCBwIJAgYCCAIHAgYCBQIEAgMCAgIBAgAC/QEAAgEC/gEAAv0B/wH+Af0B8gH8AdoB+wHaAfwB+QHaAfsB+gHaAfkB9wH6AfkB9gH3AfkB+AH3AfYB9QH0AfMB8AHzAfQB8QHzAfAB8gHxAfABwgHDAesBxAHCAewB6wHsAcIBwwHBAesB3QHrAcEBXAE4AT4B7wE+ATgBOwHvATgBPAHvATsB7gHvATwBuAHuATwBYwHuAbgB7QFjAbgBZAHuAWMBYgFjAe0BYQFiAe0B3AFhAe0BxAHcAe0B7AHcAcQB6wHcAewB3QHcAesBQAFeAekBXQHpAV4BXwHpAV0B6gHpAV8B3AHpAeoB1AHpAdwB2QHUAdwB1wHZAdwB6AHlAeYB5wHmAeUB5AHjAeAB4gHgAeMB3wHgAeIB4QHgAd8BwQHeAd0B2gHdAd4B3AHdAdoB1wHcAdoB2AHXAdoB2wHYAdoB1AHZAc8B1wHPAdkB0QHPAdcB2AHRAdcB1gHVAdMB1AHTAdUBzwHTAdQB0gHTAc8B0AHSAc8B0QHQAc8BzgHJAc0BzAHNAckBygHMAckBywHKAckBTAG2AccBtwHHAbYByAHHAbcBxgHHAcgBxAHHAcYBxQHEAcYBwQHEAcUBwgHEAcEBwwHCAcEBVgFXAb8BWQG/AVcBwAG/AVkBRwG/AcABNwG/AUcBOQE3AUcBPAE5AUcBSAE8AUcBuQE8AUgBvgG8Ab0BuwG9AbwBugG7AbwBuQG7AboBuAG5AboBPAG5AbgBSgG1AUwBtgFMAbUBtwG2AbUBtAGcAZ0BswGfAZYBsgGWAZ8BsQGyAZ8BsAGxAZ8BrwGwAZ8BrgGvAZ8BrQGuAZ8BrAGtAZ8BqwGsAZ8BqgGrAZ8BqQGqAZ8BqAGpAZ8BpwGoAZ8BpgGnAZ8BpQGmAZ8BpAGlAZ8BowGkAZ8BogGjAZ8BoAGiAZ8BoQGgAZ8BngGbAZwBnQGcAZsBmgGZAZgBlwGWAZUBUgGOAFEBsQBRAY4AUAFRAbEATgFQAbEATwFOAbEAwgCdAO4ApQDuAJ0A8ADuAKUAUgGRAI4AlAGTAZEBkgGRAZMBcwGRAZIBcgGRAXMBcAGRAXIBjwGRAXABkAGPAXABRwBGAI0BXACNAUYAWwCNAVwAWgCNAVsAhQCNAVoAQgCFAFoAQQCFAEIAjACFAEEAPgCFAIwAUgCFAD4AVgCFAFIAVACFAFYAhwCNAYUAiACNAYcAgwCNAYgAggCDAIgAiwCNAYMAigCNAYsAiQCNAYoAfgCNAYkAdwCNAX4AeQCNAXcAeACNAXkAhgCNAXgAfQCNAYYAewCNAX0ALgGNAXsAfACNAS4BmgCNAXwArwCaAHwAegCvAHwAlwCNAZoAmACNAZcApACNAZgA7wCNAaQA8ACNAe8AjgGNAfAATQGNAY4BuACNAU0BegGNAbgAtQB6AbgAtgB6AbUAdwF6AbYAjAF3AbYA0gCMAbYAiwF3AYwBigF3AYsBiQF3AYoBiAF3AYkBdgF3AYgBhwF6AXcBhgF6AYcBhQF6AYYBhAF6AYUBeQF6AYQBgwHzAHoAlAB6APMArwB6AJQAlQCvAJQAkgCUAPMAqQCSAPMA8gDzAIMB8QDyAIMBsgDxAIMBsQCyAIMBTwGxAIMBgQFPAYMB1wBPAYEBzADXAIEBggHMAIEBxwCCAYEBZgHHAIEBxgDHAGYBxQDGAGYByQDFAGYBcwHJAGYBbwFzAWYBZwFvAWYBZQFvAWcBeAFvAWUBcQFvAXgBdAFxAXgBgAF0AXgBfwGAAXgBfgF/AXgBfQF+AXgBfAF9AXgBewF8AXgBeQF7AXgBegF5AXgBdwF2AXUBcAFxAXQBcwFvAXIBcAFyAW8BcQFwAW8BbgFtAWYBbAFmAW0BaAFmAWwBZQFmAWgBawFlAWgBaQFrAWgBagFpAWgBZwFmAWUBYAFjAWIBZAFjAWEBYAFhAWMBYgFhAWABXQFFAV8BQQFDAUABRQFAAUMBXQFAAUUBXgFAAV0BWwFYAVYBXAFbAVoBVQFTAVcBWQFXAVMBWAFUAVYBVQFWAVQBVwFWAVUBVQFUAVMBrwCVAK0AkwCtAJUAkQCtAJMAUgGtAJEAUQGtAFIBUAGtAFEB2QCtAFABqgCtANkA0ACqANkA2ADZAFAB1wDYAFABTgHXAFABTwHXAE4BuABNAbkAMQFKAUsBTAFLAUoBSQFGAUcBSAFHAUYBRQFDAUQBQgFEAUMBQQFCAUMBQgFBAUABPwE+AT0BOAE5ATsBPAE7ATkBOgE3ATgBOQE4ATcBNgEyATUBMAE1ATIBMQE1ATABMwE1ATEBNAEzATEBMgEvATABMQEwAS8BLgF7AHwA/QAHAfkALQEsASoBKwEqASwBKQEqASsBJgEqASkBKAEmASkBJwEmASgBFgEmAScBJQEmARYBFAElARYBCQElARQBJAElAQkB9gAkAQkB/QAkAfYA+AD9APYABwH9APgA9wAHAfgAIwEiASABIQEgASIBHgEgASEBHwEgAR4BFwEfAR4BHQEXAR4BHAEXAR0BGwEXARwBGgEXARsBGQEXARoBGAEXARkBFAEXARgBEgEUARgBFQEXARQBFgEVARQBEwEUARIBEAETARIBDwEQARIBEQEQAQ8BAAH6APsADgENAQoBDAEKAQ0BCwEKAQwB+wAKAQsBBAEKAfsA+QAEAfsACQEIAfYA9QD2AAgB9wD1AAgBBgH3AAgBBwH3AAYB+QAHAQYBAwH5AAYBBAH5AAMBBQEEAQMBAgEBAQAB/gAAAQEB/wAAAf4A/AD/AP4A/QD8AP4A+QD8AP0A+gD8APkA+wD6APkA+AD0APcA9AD1APcA9gD1APQAlgCZAMIAqQDzAKcA8gCnAPMAqACnAPIA8QCoAPIAsACoAPEAsgCwAPEApACjAO8AowDuAO8A8ADvAO4AtwC5ANQAzQDXAMwA3gDfAOUA2gDcAL4AvQC+ANwA3gC9ANwA5QC9AN4A5AC9AOUAugDDALwAxAC8AMMA7QC8AMQA7ADtAMQAvADtAOsA7ADrAO0AxADiAOwA6wDsAOIA6gDrAOIA4ADqAOIA6QDqAOAA5wDqAOkA5gDnAOkA6ADnAOYA3wDjAOUA5ADlAOMA4QDkAOMA4ADhAOMA4gDhAOAArADdAMAA2wDAAN0A3ADbAN0A3gDcAN0A3wDeAN0AwADbANoA3ADaANsAvwDAANoA0ADZAM8A2ADPANkA1wDPANgAzQDPANcArADOANUA1gDVAM4AtwDUALQA0wC0ANQA0QC0ANMAtgC0ANEA0gC2ANEAqgDQAKwAzwCsANAAzQCsAM8AzgCsAM0AywDOAM0AzADLAM0AxwDLAMwAygDLAMcAxQDKAMcAyADKAMUAyQDIAMUAxwDGAMUAxADDAL0AugC9AMMArwCuAJoAmQCaAK4AogCZAK4AwgCZAKIAnQDCAKIAnACdAKIAngCiAK4AqwCeAK4AoACeAKsAnwCgAKsAswCfAKsAwQCzAKsArADBAKsAwADBAKwAuwDBAMAAvwC7AMAAvgC7AL8AvQC7AL4AugC7AL0AvAC7ALoAuQC3ALgAtQC4ALcAtAC1ALcAtgC1ALQApQCmALMAnwCzAKYAjgCPALEAjQCxAI8AqACxAI0AsACxAKgAsgCxALAArwCtAK4AqwCuAK0AqgCrAK0ArACrAKoAkgCpAJAApwCQAKkAjQCQAKcAqACNAKcAmwChAKYAnwCmAKEAnQCbAKUApgClAJsApACYAKMAnACiAJsAngCbAKIAoQCbAJ4AnwChAJ4AoACfAJ4AnQCcAJsAmgCZAJcAlgCXAJkAmACXAJYAlQCUAJMAkgCTAJQAkQCTAJIAkACRAJIAjgCRAJAAjQCOAJAAjwCOAI0AQQBAAIwAPgCMAEAAgwCBAIsAgACLAIEAigCLAIAAiQCKAIAAfgCJAIAAhQCEAIcAggCHAIQAiACHAIIAdwB1AHkAhgB4AH0AVABVAIUAhACFAFUAggCEAFUAUwCCAFUAbgCCAFMAcACCAG4AfwCCAHAAgQCCAH8AgwCCAIEAgACBAH8AfgCAAH8AdgB+AH8AegB2AH8AdwB+AHYAeAB2AHoAfQB4AHoAewB9AHoAfAB7AHoAeQB1AHgAdwB2AHUAUAB0AHAAcwBwAHQAcQBwAHMAcgBwAHEAPwA9AFcAUABXAD0AcABXAFAAbgBXAHAAbwBZAFQAVwBUAFkAbgBUAFcAUwBUAG4ATgBMAGEAXQBhAEwAYABhAF0AZABrAGMATQBjAGsAYgBjAE0AZQBtAGYAbABmAG0AagBmAGwAPABqAGwAOgBqADwAaQBqADoATwBpADoAZgBqAGQAawBkAGoATQBrAGoAaQBNAGoATwBNAGkAZwBkAGgAYQBoAGQAXwBoAGEAZQBkAGcAZgBkAGUAYwBhAGQATgBhAGMAYgBOAGMATQBOAGIAYABfAGEAXQBfAGAAXgBfAF0ATABLAF0ASgBdAEsAXgBdAEoARgBFAFwARABcAEUAWwBcAEQAQwBbAEQAWgBbAEMAQgBaAEMAUgBRAFYAPgA/AFgAVwBYAD8AWQBYAFcAVgBRAFQAVQBUAFMAUgA+AFEAOgBQAE8APQBPAFAATQBPAD0ATABNAD0ATgBNAEwASwBMAD0ASgBLAD0ASQBKAD0ASABJAD0ARwBIAD0ARgBHAD0ARQBGAD0ARABFAD0AQwBEAD0AQgBDAD0AQQBCAD0AQABBAD0APgBAAD0APwA+AD0APAA7ADoAOQA3ADgAEAA4ADcAEQAQADcACAA2AAUANQAFADYABAAFADUANAAEADUAAAAEADQAAgAAADQAMwAyAC8AMQAvADIALgAvADEAMAAvAC4ALQAsACoAKwAqACwAKQAqACsAJwAqACkAJgAnACkAKAAnACYAIQAlAB8AJAAfACUAHQAfACQAIwAdACQAGQAdACMAGwAZACMAHwAgACEAIgAhACAAHgAgAB8AHQAeAB8AHAAeAB0AGQAcAB0AGgAcABkAGwAaABkAGAAWABcAFgAVABQAEwASABEADgARABIAEAARAA4ADwAQAA4ADQAPAA4ADAANAA4ACwANAAwACgALAAwABwALAAoACQAHAAoACAAHAAkABQAHAAgABgAHAAUAAwAGAAUABAADAAUAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Fish2",
+            "sortingOrder": 3,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.882,
+              "ty": -0.653
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": "on"
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_N_part2.png",
+                "crop": {
+                  "x": 417,
+                  "y": 60,
+                  "width": 1068,
+                  "height": 505
+                },
+                "width": 10.68,
+                "height": 5.05,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "pHBdQHsUrr1I4apAmpkhwEjhqkCkcP2+XI8SwJqZIUDNzBxAuB71P0jhqsCamSFASOGqwJqZIcA=",
+                  "triangles": "BgAFAAEAAwABAAUAAAABAAMABAAAAAMAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Veil",
+            "sortingOrder": 11,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.6735,
+              "ty": 0.7874
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_N_part2.png",
+                "crop": {
+                  "x": 16,
+                  "y": 1698,
+                  "width": 739,
+                  "height": 350
+                },
+                "width": 7.39,
+                "height": 3.5,
+                "pivot": {
+                  "x": 0.506766,
+                  "y": 0.46
+                },
+                "mesh": {
+                  "vertices": "cT1qP4Xr8T97FEZAPQq3v65HaUBmZma/Urg2wIXr8T8Urm/AexTOvw==",
+                  "triangles": "BAADAAEAAAABAAMAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "width": 1,
+            "height": 1.8,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0.6,
+              "ty": 0.03
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 3.1,
+              "height": 1.8,
+              "transform": {
+                "a": 0.099756,
+                "b": -0.006976,
+                "c": 0.006976,
+                "d": 0.099756,
+                "tx": 0.665,
+                "ty": 0.4602
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_PECS_LaylaCloudy_NS1",
+      "variantId": null,
+      "characterName": "Layla Cloudy",
+      "skinName": "Shall I Read Your Fortune? : Dancer's Garb That Changes Fate",
+      "iconFile": "InvenIcon_PECS_LaylaCloudy_NS1.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": true,
+      "isAnimatorSkin": false,
+      "isStaticSkin": false,
+      "assets": [
+        "L2D_PECS_LaylaCloudy_NS1.json",
+        "L2D_PECS_LaylaCloudy_NS1.atlas",
+        "L2D_PECS_LaylaCloudy_NS1.png"
+      ],
+      "spinePreview": {
+        "scale": 0.01,
+        "transform": {
+          "a": 0.056,
+          "b": 0,
+          "c": 0,
+          "d": 0.056,
+          "tx": 0.68,
+          "ty": -0.16
+        },
+        "baseSkin": "skin_base",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "animations": {
+          "idle": "idle",
+          "touch": "touch",
+          "specialTouch": "temptation",
+          "postSpecialTouch": {
+            "idle": "idle2",
+            "touch": "touch2",
+            "specialTouch": "temptation2"
+          }
+        },
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "x": -2.321429,
+            "y": 1.071429,
+            "width": 14.285714,
+            "height": 35.714286,
+            "rotation": 0
+          },
+          "specialTouch": [
+            {
+              "x": -3.01,
+              "y": 10.21,
+              "width": 6.3625,
+              "height": 3.4,
+              "rotation": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_PECS_LaylaCloudy_NS1_Dam",
+      "variantId": null,
+      "characterName": "Layla Cloudy",
+      "skinName": "Shall I Read Your Fortune? : Dancer's Garb That Changes Fate (Damaged)",
+      "iconFile": "InvenIcon_PECS_LaylaCloudy_NS1.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_PECS_LaylaCloudy_NS1_part1.png",
+        "FullbodyIMG_PECS_LaylaCloudy_NS1_part2.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_pecs_laylacloudy_ns1_dam",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": null,
+        "layers": [
+          {
+            "name": "clothF",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 1.253,
+              "ty": -0.501
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_NS1_part2.png",
+                "crop": {
+                  "x": 1369.0762,
+                  "y": 986.0761,
+                  "width": 414.84778,
+                  "height": 371.84778
+                },
+                "width": 4.148478,
+                "height": 3.718478,
+                "pivot": {
+                  "x": 0.514463,
+                  "y": 0.510757
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "body",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.493,
+              "ty": 0.159
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_NS1_part1.png",
+                "crop": {
+                  "x": 165.07613,
+                  "y": 102.07612,
+                  "width": 1750.8477,
+                  "height": 1574.8477
+                },
+                "width": 17.508477,
+                "height": 15.748477,
+                "pivot": {
+                  "x": 0.490576,
+                  "y": 0.585405
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Card",
+            "sortingOrder": 2,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.6826,
+              "ty": 0.4417
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_NS1_part2.png",
+                "crop": {
+                  "x": 194.07613,
+                  "y": 1767.0267,
+                  "width": 174.84775,
+                  "height": 159.93034
+                },
+                "width": 1.748477,
+                "height": 1.599303,
+                "pivot": {
+                  "x": 0.594368,
+                  "y": 0.531314
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "clothB",
+            "sortingOrder": 2,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.387,
+              "ty": -0.241
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_PECS_LaylaCloudy_NS1_part2.png",
+                "crop": {
+                  "x": 175.02675,
+                  "y": 1239.0762,
+                  "width": 1150.8971,
+                  "height": 385.84778
+                },
+                "width": 11.508971,
+                "height": 3.858478,
+                "pivot": {
+                  "x": 0.473955,
+                  "y": 0.507775
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "width": 1,
+            "height": 1.3,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0.55,
+              "ty": 0.15
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 2.5,
+              "height": 2,
+              "transform": {
+                "a": 0.098481,
+                "b": -0.017365,
+                "c": 0.017365,
+                "d": 0.098481,
+                "tx": 0.708,
+                "ty": 0.2
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
       "skin2dId": "2DModel_LC_Nabi_N",
       "variantId": null,
       "characterName": "Lee Nabi",
@@ -90146,6 +91323,192 @@
       }
     },
     {
+      "skin2dId": "2DModel_BR_PA00EL_NS3",
+      "variantId": null,
+      "characterName": "P/A-00 Griffon",
+      "skinName": "Already 5 Years",
+      "iconFile": "InvenIcon_BR_PA00EL_NS3.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_BR_PA00EL_NS3_part1.png",
+        "FullbodyIMG_BR_PA00EL_NS3_part2.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_br_pa00el_ns3",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": {
+          "sortingOrder": 10,
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          },
+          "transform": {
+            "a": 0.152,
+            "b": 0,
+            "c": 0,
+            "d": 0.152,
+            "tx": 0.0408,
+            "ty": 0.945936
+          },
+          "flipX": false,
+          "flipY": false,
+          "visibility": {
+            "defaultVisible": true,
+            "part1": null,
+            "part2": null
+          },
+          "expressions": [
+            {
+              "assetName": "BR_PA00EL_NS3_Smile",
+              "bundleName": "face_br_pa00el_ns3"
+            },
+            {
+              "assetName": "BR_PA00EL_NS3_CloseEye",
+              "bundleName": "face_br_pa00el_ns3"
+            },
+            {
+              "assetName": "BR_PA00EL_NS3_Shy",
+              "bundleName": "face_br_pa00el_ns3"
+            },
+            {
+              "assetName": "BR_PA00EL_NS3_Anger",
+              "bundleName": "face_br_pa00el_ns3"
+            },
+            {
+              "assetName": "BR_PA00EL_NS3_Sad",
+              "bundleName": "face_br_pa00el_ns3"
+            }
+          ]
+        },
+        "layers": [
+          {
+            "name": "Part1",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.247961,
+              "b": 0,
+              "c": 0,
+              "d": 0.247961,
+              "tx": 0.754878,
+              "ty": -0.065269
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_BR_PA00EL_NS3_part2.png",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 2250,
+                  "height": 1440
+                },
+                "width": 22.5,
+                "height": 14.4,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "body",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.152,
+              "b": 0,
+              "c": 0,
+              "d": 0.152,
+              "tx": -0.02,
+              "ty": -0.25
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_BR_PA00EL_NS3_part1.png",
+                "crop": {
+                  "x": 264.0761,
+                  "y": 19.07612,
+                  "width": 1200.8477,
+                  "height": 2009.8477
+                },
+                "width": 12.008477,
+                "height": 20.098477,
+                "pivot": {
+                  "x": 0.632823,
+                  "y": 0.5
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "width": 0.66,
+            "height": 2.65,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": -0.09,
+              "ty": -0.31
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 2.53,
+              "height": 1.39,
+              "transform": {
+                "a": 0.145124,
+                "b": -0.045201,
+                "c": 0.045201,
+                "d": 0.145124,
+                "tx": 0.075726,
+                "ty": 0.548036
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
       "skin2dId": "2DModel_BR_Blackhound_N",
       "variantId": null,
       "characterName": "P/A-8 Black Hound",
@@ -95284,7 +96647,7 @@
       "isAnimatorSkin": true,
       "isStaticSkin": false,
       "assets": [
-        "128_glow_texture_48.png",
+        "128_glow_texture_49.png",
         "2DModel_AGS_Roc_N.png",
         "Audrey_NS1_Silk_2x2_sqns_01_0.png",
         "BS_skill2_aura_round_ring.png",
@@ -108293,7 +109656,7 @@
       "skinName": "Angel On The Tightrope",
       "iconFile": "InvenIcon_PECS_Sunny_NS2.png",
       "backgroundPreview": null,
-      "isRPlusSkin": false,
+      "isRPlusSkin": true,
       "isSpineSkin": true,
       "isAnimatorSkin": false,
       "isStaticSkin": false,
@@ -108321,7 +109684,28 @@
           "specialTouch": "SpecialTouch",
           "postSpecialTouch": null
         },
-        "mosaicMasks": [],
+        "mosaicMasks": [
+          {
+            "boneName": "comb",
+            "width": 1,
+            "height": 1,
+            "pivot": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "transform": {
+              "a": 1.27,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0,
+              "ty": 0
+            },
+            "referenceScreenSize": 300,
+            "minMultiplier": 0.25,
+            "maxMultiplier": 4
+          }
+        ],
         "hitboxes": {
           "touch": {
             "x": -0.666667,
@@ -108349,11 +109733,12 @@
       "skinName": "Angel On The Tightrope (Damaged)",
       "iconFile": "InvenIcon_PECS_Sunny_NS2.png",
       "backgroundPreview": null,
-      "isRPlusSkin": false,
+      "isRPlusSkin": true,
       "isSpineSkin": false,
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
+        "FullbodyIMG_PECS_Sunny_NS2_Dam_R+.png",
         "FullbodyIMG_PECS_Sunny_NS2_Dam.png"
       ],
       "staticPreview": {
@@ -108376,7 +109761,7 @@
               "b": 0,
               "c": 0,
               "d": 0.09,
-              "tx": 0.6975,
+              "tx": 0.6795,
               "ty": 1.2564
             },
             "flipX": false,
@@ -108406,7 +109791,25 @@
                   "triangles": "EgARAAEADQABABEADAANABEAEAABAA0ACQABABAACgABAAkADwABAAoADgABAA8AAwABAA4AAAAFAAwACwAMAAUADQAMAAsABwALAAUACQALAAcACgAJAAcACAAHAAUABAAFAAAABgAFAAQAAwAEAAAAAQADAAAAAgABAAAA"
                 }
               },
-              "rplus": null
+              "rplus": {
+                "asset": "FullbodyIMG_PECS_Sunny_NS2_Dam_R+.png",
+                "crop": {
+                  "x": 1821.0267,
+                  "y": 1132.0762,
+                  "width": 127.897125,
+                  "height": 791.89716
+                },
+                "width": 1.278971,
+                "height": 7.918972,
+                "pivot": {
+                  "x": 0.500193,
+                  "y": 0.506914
+                },
+                "mesh": {
+                  "vertices": "CtcjP4XreUCF69E+4XqAwArXIz97FBbAj8J1vVyPYj8pXI+9uB5lPwrXo70AAGA/KVyPvVyPYj/sUbi9H4VLPwrXo717FE4/7FG4vexR+D7sUbi99ig8PylcD74K1wM/XI/CvoXreUApXA++MzPzPo/Cdb1SuD4/KVyPvfYoPD+PwvW97FH4PgrXI7+F60lACtcjv+F6gMA=",
+                  "triangles": "EgARAAEADQABABEADAANABEAEAABAA0ACQABABAACgABAAkADwABAAoADgABAA8AAwABAA4AAAAFAAwACwAMAAUADQAMAAsABwALAAUACQALAAcACgAJAAcACAAHAAUABAAFAAAABgAFAAQAAwAEAAAAAQADAAAAAgABAAAA"
+                }
+              }
             }
           },
           {
@@ -108423,7 +109826,7 @@
               "b": 0,
               "c": 0,
               "d": 0.09,
-              "tx": 0.468,
+              "tx": 0.45,
               "ty": 0.072
             },
             "flipX": false,
@@ -108453,11 +109856,78 @@
                   "triangles": "BQADAAQAAQAEAAMAAAABAAMAAgABAAAA"
                 }
               },
+              "rplus": {
+                "asset": "FullbodyIMG_PECS_Sunny_NS2_Dam_R+.png",
+                "crop": {
+                  "x": 5,
+                  "y": 20,
+                  "width": 2038,
+                  "height": 2001
+                },
+                "width": 20.38,
+                "height": 20.01,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "PQojQXsUIMFSuMZAmpnZPj0KI0FxPco+PQojwXsUIMFI4bpAexQgQT0KI8F7FCBB",
+                  "triangles": "BQADAAQAAQAEAAMAAAABAAMAAgABAAAA"
+                }
+              }
+            }
+          }
+        ],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 11,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.234,
+              "b": 0,
+              "c": 0,
+              "d": 0.234,
+              "tx": 0.15003,
+              "ty": -0.2763
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
               "rplus": null
             }
           }
         ],
-        "mosaicMasks": [],
         "hitboxes": {
           "touch": {
             "width": 1.4,
@@ -108480,7 +109950,7 @@
                 "b": 0,
                 "c": 0,
                 "d": 0.108281,
-                "tx": 0.423433,
+                "tx": 0.405433,
                 "ty": 0.179775
               }
             }
