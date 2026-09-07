@@ -93,7 +93,7 @@ def skip_header_string(stream: Any):
     raise ValueError("The UnityFS header contains an invalid string.")
 
 
-def get_unityfs_declared_size(bundle_path: Path) -> int:
+def get_unityfs_readable_size(bundle_path: Path) -> int:
     physical_size = bundle_path.stat().st_size
 
     with bundle_path.open("rb") as bundle:
@@ -106,7 +106,10 @@ def get_unityfs_declared_size(bundle_path: Path) -> int:
         skip_header_string(bundle)
 
         declared_size = struct.unpack(">Q", read_exact(bundle, 8))[0]
-        minimum_size = bundle.tell() + 12
+        read_exact(bundle, 8)
+
+        flags = struct.unpack(">I", read_exact(bundle, 4))[0]
+        minimum_size = bundle.tell()
 
     if declared_size < minimum_size:
         raise ValueError("The UnityFS bundle declares an invalid size.")
@@ -114,17 +117,17 @@ def get_unityfs_declared_size(bundle_path: Path) -> int:
     if declared_size > physical_size:
         raise ValueError("The UnityFS bundle is truncated.")
 
-    return declared_size
+    return declared_size if flags & 0x80 else physical_size
 
 
 def load_unity_environment(bundle_path: Path):
     physical_size = bundle_path.stat().st_size
-    declared_size = get_unityfs_declared_size(bundle_path)
+    readable_size = get_unityfs_readable_size(bundle_path)
 
-    if declared_size == physical_size:
+    if readable_size == physical_size:
         return UnityPy.load(str(bundle_path))
 
-    bounded_stream = BoundedFile(bundle_path, declared_size)
+    bounded_stream = BoundedFile(bundle_path, readable_size)
 
     try:
         return UnityPy.load(bounded_stream)

@@ -1,6 +1,7 @@
 import type { CatalogIconRepairProgress, CatalogBackgroundRepairProgress } from "../shared/characters.js";
 import type { ApplicationUpdateDownloadProgress } from "../shared/updates.js";
 import type { ModImportProgress, ModSyncProgress } from "../shared/mod.js";
+import type { ModLibraryLocationProgress } from "../shared/application.js";
 import type { GameLocationChangeProgress } from "../shared/setup.js";
 import type { PluginProgress } from "../shared/plugin.js";
 import type { IpcApi } from "../shared/ipcApi.js";
@@ -126,7 +127,19 @@ const modManagerApi: IpcApi = {
     prepareAnimatorModPreview: (modId) => ipcRenderer.invoke("mod:prepare-animator-preview", modId),
     getModPreviewCacheStorage: () => ipcRenderer.invoke("app:get-mod-preview-cache-storage"),
     deleteModPreviewCache: () => ipcRenderer.invoke("app:delete-mod-preview-cache"),
-    openCurrentLogFilePath: () => ipcRenderer.invoke("app:open-current-log-file-path")
+    openCurrentLogFilePath: () => ipcRenderer.invoke("app:open-current-log-file-path"),
+    changeModLibraryLocation: () => ipcRenderer.invoke("app:change-mod-library-location"),
+    onModLibraryLocationProgress: (callback) => {
+        const listener = (_event: IpcRendererEvent, progress: ModLibraryLocationProgress) => {
+            callback(progress);
+        }
+
+        ipcRenderer.on("app:mod-library-location-progress", listener);
+
+        return () => {
+            ipcRenderer.removeListener("app:mod-library-location-progress", listener);
+        };
+    }
 } as const;
 
 contextBridge.exposeInMainWorld("app", modManagerApi);

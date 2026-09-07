@@ -5,9 +5,14 @@ import path from "node:path";
 
 export class Paths {
     private static appBaseDir = path.dirname(path.join(fileURLToPath(import.meta.url), ".."));
+    private static modsPath: string | null = null;
 
     static getUserDataPath(): string {
         return app.getPath("userData");
+    }
+
+    static getAppPath(): string {
+        return app.getAppPath();
     }
 
     static getPreloadPath(): string {
@@ -48,8 +53,21 @@ export class Paths {
         return path.join(Paths.getUserDataPath(), "catalogs", "characters.json");
     }
 
-    static getModsPath(): string {
+    static getDefaultModsPath(): string {
         return path.join(Paths.getUserDataPath(), "mods");
+    }
+
+    static getModsPath(): string {
+        return Paths.modsPath ?? Paths.getDefaultModsPath();
+    }
+
+    static setModsPath(value: string | null) {
+        if (value !== null && !path.isAbsolute(value))
+            throw new Error("The mod library location must be an absolute path.");
+
+        Paths.modsPath = value === null
+            ? null
+            : path.resolve(value);
     }
 
     static getUnityWorkerPath(): string {
@@ -167,6 +185,24 @@ export class Paths {
     static isSubpath(parentPath: string, childPath: string): boolean {
         const relative = path.relative(parentPath, childPath);
         return Boolean(relative && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+    }
+
+    static isSamePath(left: string, right: string): boolean {
+        return path.relative(left, right) === "";
+    }
+
+    static overlaps(left: string, right: string): boolean {
+        const inside = (root: string, target: string) => {
+            const relative = path.relative(root, target);
+
+            return relative === "" || (
+                !path.isAbsolute(relative) &&
+                relative !== ".." &&
+                !relative.startsWith(`..${path.sep}`)
+            );
+        };
+
+        return inside(left, right) || inside(right, left);
     }
 
     static sanitizeDirectoryName(name: string, defaultName: string, maxLength: number): string {

@@ -2,6 +2,7 @@
 import type { CatalogIconRepairProgress, CatalogBackgroundRepairProgress } from "../../shared/characters.ts";
 import type { ModLibraryStorageSummary, ModPreviewCacheStorageSummary } from "../../shared/mod.ts";
 import type { ComponentUpdateResult, UpdateComponent } from "../../shared/updates.ts";
+import type { ModLibraryLocationProgress } from "../../shared/application.ts";
 import type { GameLocationChangeProgress } from "../../shared/setup.ts";
 import type { PluginProgress } from "../../shared/plugin.ts";
 
@@ -83,6 +84,14 @@ const isLoadingModPreviewCacheStorage = ref(false);
 const isDeletingModPreviewCache = ref(false);
 const modPreviewCacheStorageMessage = ref("");
 const modPreviewCacheStorageError = ref("");
+const isChangingModLibraryLocation = ref(false);
+const modLibraryLocationMessage = ref("");
+const modLibraryLocationError = ref("");
+const modLibraryLocationProgress = ref<ModLibraryLocationProgress>({
+    progress: null,
+    status: "Choose the new folder",
+    detail: ""
+});
 
 async function loadGameSettings() {
     gameLocationError.value = "";
@@ -541,6 +550,46 @@ async function openLogFolder() {
     }
 }
 
+async function changeModLibraryLocation() {
+    if (isChangingModLibraryLocation.value)
+        return;
+
+    isChangingModLibraryLocation.value = true;
+    modLibraryLocationMessage.value = "";
+    modLibraryLocationError.value = "";
+    modLibraryLocationProgress.value = {
+        progress: null,
+        status: "Choose the new folder",
+        detail: ""
+    };
+
+    const removeProgressListener = window.app.onModLibraryLocationProgress((progress) => {
+        modLibraryLocationProgress.value = progress;
+    });
+
+    try
+    {
+        const result = await window.app.changeModLibraryLocation();
+
+        if (result.changed)
+            modLibraryLocationMessage.value = result.warning || "Mod library moved and synced mods have been unsynced.";
+    }
+    catch (error)
+    {
+        RendererLogger.error(ApplicationLogSource.modLibrary, "Could not change the mod library location.", error);
+        modLibraryLocationError.value = ErrorUtils.getUserErrorMessage(error, "The mod library location could not be changed.");
+    }
+    finally
+    {
+        removeProgressListener();
+        modLibraryLocationDialog()?.close();
+
+        isChangingModLibraryLocation.value = false;
+
+        await Promise.allSettled([loadModLibraryStorage(), modStore.load(true)]);
+    }
+}
+
 function getUpdateResult(component: UpdateComponent): ComponentUpdateResult | undefined {
     return updateResults.value[component];
 }
@@ -635,6 +684,18 @@ function cancelModPreviewCacheDeletion() {
         return;
 
     modPreviewCacheDeletionPopover()?.hidePopover();
+}
+
+function modLibraryLocationDialog(): HTMLDialogElement | null {
+    const element = document.getElementById("mod-library-location-confirmation-dialog");
+    return element instanceof HTMLDialogElement ? element : null;
+}
+
+function openModLibraryLocationConfirmation() {
+    if (isChangingModLibraryLocation.value || isLoadingModLibraryStorage.value)
+        return;
+
+    modLibraryLocationDialog()?.showModal();
 }
 
 onMounted(() => {
@@ -1181,7 +1242,7 @@ onMounted(() => {
                 <div
                     class="storage-summary"
                     aria-label="Mod storage usage"
-                    :aria-busy="isLoadingModLibraryStorage"
+                    :aria-busy="isLoadingModLibraryStorage || isChangingModLibraryLocation"
                 >
                     <div class="storage-summary-copy">
                         <span>Imported mod library</span>
@@ -1214,6 +1275,20 @@ onMounted(() => {
                         >
                             {{ modLibraryStorageError }}
                         </span>
+                        <span
+                            v-if="modLibraryLocationMessage"
+                            class="storage-summary-message"
+                            role="status"
+                        >
+                            {{ modLibraryLocationMessage }}
+                        </span>
+                        <span
+                            v-if="modLibraryLocationError"
+                            class="storage-summary-error"
+                            role="alert"
+                        >
+                            {{ modLibraryLocationError }}
+                        </span>
                     </div>
 
                     <div class="storage-summary-actions">
@@ -1225,20 +1300,31 @@ onMounted(() => {
                             {{ modLibraryStorage?.path || "Stored in the application data folder" }}
                         </span>
 
-                        <button
-                            class="storage-refresh-button"
-                            type="button"
-                            :disabled="isLoadingModLibraryStorage"
-                            @click="loadModLibraryStorage"
-                        >
-                            <RefreshIcon
-                                class="settings-button-icon"
-                                :class="{
-                                    'settings-button-icon--spinning': isLoadingModLibraryStorage
-                                }"
-                            />
-                            <span>Refresh</span>
-                        </button>
+                        <div class="storage-summary-button-row">
+                            <button
+                                class="storage-refresh-button"
+                                type="button"
+                                :disabled="isLoadingModLibraryStorage || isChangingModLibraryLocation"
+                                @click="loadModLibraryStorage"
+                            >
+                                <RefreshIcon
+                                    class="settings-button-icon"
+                                    :class="{
+                                        'settings-button-icon--spinning': isLoadingModLibraryStorage
+                                    }"
+                                />
+                                <span>Refresh</span>
+                            </button>
+                            <button
+                                class="storage-location-button"
+                                type="button"
+                                :disabled="isLoadingModLibraryStorage || isChangingModLibraryLocation"
+                                @click="openModLibraryLocationConfirmation"
+                            >
+                                <FolderIcon class="settings-button-icon" />
+                                <span>{{ isChangingModLibraryLocation ? "Changing location..." : "Change folder" }}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1688,6 +1774,87 @@ onMounted(() => {
             </span>
         </div>
     </section>
+
+    <dialog
+        id="mod-library-location-confirmation-dialog"
+        class="confirmation-popover"
+        aria-labelledby="mod-library-location-confirmation-title"
+        aria-describedby="mod-library-location-confirmation-description"
+        :aria-busy="isChangingModLibraryLocation"
+        @cancel="isChangingModLibraryLocation && $event.preventDefault()"
+    >
+        <header class="confirmation-header">
+            <p class="confirmation-label">Mod library location</p>
+            <h2 id="mod-library-location-confirmation-title">
+                {{ isChangingModLibraryLocation ? "Changing library location" : "Move your mod library?" }}
+            </h2>
+        </header>
+
+        <template v-if="!isChangingModLibraryLocation">
+            <p id="mod-library-location-confirmation-description" class="confirmation-description">
+                Any imported mods will be moved to the new location. Synced mods will be unsynced.
+            </p>
+
+            <div v-if="modLibraryStorage?.path" class="confirmation-path">
+                <span>Current location</span>
+                <strong :title="modLibraryStorage.path">{{ modLibraryStorage.path }}</strong>
+            </div>
+
+            <p class="confirmation-description">
+                Choose an empty folder in the next step. Canceling the folder selection keeps your current location.
+            </p>
+
+            <form method="dialog" class="confirmation-actions">
+                <button
+                    class="settings-button settings-button--secondary"
+                    type="submit"
+                    autofocus
+                >
+                    Cancel
+                </button>
+                <button
+                    class="settings-button settings-button--primary"
+                    type="button"
+                    @click="changeModLibraryLocation"
+                >
+                    Continue and choose folder
+                </button>
+            </form>
+        </template>
+
+        <div v-else class="location-progress">
+            <p
+                id="mod-library-location-confirmation-description"
+                class="confirmation-description"
+                role="status"
+                aria-live="polite"
+            >
+                {{ modLibraryLocationProgress.status }}
+            </p>
+            <div v-if="modLibraryLocationProgress.detail" class="location-progress-copy">
+                <span :title="modLibraryLocationProgress.detail">{{ modLibraryLocationProgress.detail }}</span>
+            </div>
+            <div
+                class="location-progress-track"
+                role="progressbar"
+                aria-label="Changing mod library location"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                :aria-valuenow="modLibraryLocationProgress.progress ?? undefined"
+            >
+                <span
+                    class="location-progress-fill"
+                    :class="{ 'location-progress-fill--indeterminate': modLibraryLocationProgress.progress === null }"
+                    :style="modLibraryLocationProgress.progress === null
+                        ? undefined
+                        : { width: `${modLibraryLocationProgress.progress}%` }"
+                ></span>
+            </div>
+            <span v-if="modLibraryLocationProgress.progress !== null" class="location-progress-percent">
+                {{ Math.floor(modLibraryLocationProgress.progress) }}%
+            </span>
+        </div>
+    </dialog>
 
     <section
         id="mod-preview-cache-deletion-popover"
@@ -2521,6 +2688,28 @@ h1 {
     text-align: right;
 }
 
+.location-progress-fill--indeterminate {
+    width: 35%;
+    animation: library-location-progress 1.4s ease-in-out infinite;
+}
+
+@keyframes library-location-progress {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(286%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .location-progress-fill--indeterminate {
+        width: 100%;
+        animation: none;
+        opacity: 0.65;
+    }
+}
+
 .storage-summary {
     display: flex;
     align-items: center;
@@ -2621,6 +2810,7 @@ h1 {
 }
 
 .storage-refresh-button,
+.storage-location-button,
 .storage-delete-button {
     display: inline-flex;
     min-height: 30px;
@@ -2638,7 +2828,8 @@ h1 {
     cursor: pointer;
 }
 
-.storage-refresh-button:hover:not(:disabled) {
+.storage-refresh-button:hover:not(:disabled),
+.storage-location-button:hover:not(:disabled) {
     color: #f6f2e9;
     background: #202823;
 }
@@ -2654,17 +2845,20 @@ h1 {
 }
 
 .storage-summary .storage-refresh-button span,
+.storage-summary .storage-location-button span,
 .storage-summary .storage-delete-button span {
     color: inherit;
 }
 
 .storage-refresh-button:focus-visible,
+.storage-location-button:focus-visible,
 .storage-delete-button:focus-visible {
     outline: 2px solid #9bc1d8;
     outline-offset: 2px;
 }
 
 .storage-refresh-button:disabled,
+.storage-location-button:disabled,
 .storage-delete-button:disabled {
     opacity: 0.55;
     cursor: not-allowed;

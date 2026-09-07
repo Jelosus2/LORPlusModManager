@@ -15,6 +15,7 @@ export class SettingsRepository {
         catalog: "check_catalog_update"
     };
     private static readonly LAST_UPDATE_CHECK_KEY = "last_update_check";
+    private static readonly MODS_LOCATION_KEY = "mods_location";
 
     getGameLocation(): string | null {
         return this.getSetting(SettingsRepository.GAME_LOCATION_KEY);
@@ -46,6 +47,10 @@ export class SettingsRepository {
             return null;
 
         return new Date(timestamp).toISOString();
+    }
+
+    getModLibraryLocation(): string | null {
+        return this.getSetting(SettingsRepository.MODS_LOCATION_KEY);
     }
 
     private getBoolean(key: string, defaultValue: boolean): boolean {
@@ -105,6 +110,10 @@ export class SettingsRepository {
         });
 
         save();
+    }
+
+    setModLibraryLocation(value: string) {
+        this.setSetting(SettingsRepository.MODS_LOCATION_KEY, value);
     }
 
     private setSetting(key: string, value: string) {

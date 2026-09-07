@@ -1,14 +1,15 @@
-import type { ApplicationInfo, ExternalApplicationPage, ApplicationLogEntry } from "../../../shared/application.js";
+import type { ApplicationInfo, ExternalApplicationPage, ApplicationLogEntry, ModLibraryLocationChangeResult } from "../../../shared/application.js";
 import type { ModLibraryStorageSummary, ModPreviewCacheStorageSummary } from "../../../shared/mod.js";
 import type { TemporaryFileCleanupResult } from "../../../shared/maintenance.js";
 
 import { temporaryFileCleanupService } from "#maintenance/TemporaryFileCleanupService.js";
 import { modPreviewCacheStorageService } from "#mod/ModPreviewCacheStorageService.js";
+import { app, shell, BrowserWindow, dialog, type IpcMainInvokeEvent } from "electron";
+import { ModLibraryLocationService } from "#mod/ModLibraryLocationService.js";
 import { modLibraryStorageService } from "#mod/ModLibraryStorageService.js";
 import { AdminPrivilegeService } from "#utils/AdminPrivilegeService.js";
 import { ApplicationLogSource } from "../../../shared/application.js";
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
-import { app, shell, type IpcMainInvokeEvent } from "electron";
 import { ErrorUtils } from "#utils/ErrorUtils.js";
 import { IpcHelper } from "#ipc/IpcHelper.js";
 import { Paths } from "#utils/Paths.js";
@@ -183,6 +184,35 @@ export class AppController {
             throw new Error("Invalid application log request.");
 
         ApplicationLogger.write(value.severity, `Renderer · ${value.source}`, value.message, value.details);
+    }
+
+    @IpcHelper.IpcHandle("app:change-mod-library-location")
+    async changeModLibraryLocation(event: IpcMainInvokeEvent): Promise<ModLibraryLocationChangeResult> {
+        const window = BrowserWindow.fromWebContents(event.sender) ?? BrowserWindow.getAllWindows()[0];
+        const result = await dialog.showOpenDialog(window, {
+            title: "Select the mod library folder",
+            defaultPath: Paths.getModsPath(),
+            properties: ["openDirectory"]
+        });
+
+        if (result.canceled)
+            return { changed: false, warning: "" };
+
+        const service = new ModLibraryLocationService();
+        const destination = await service.validateDestination(result.filePaths[0]);
+
+        if (Paths.isSamePath(Paths.getModsPath(), destination))
+            return { changed: false, warning: "" };
+
+        const warning = await service.move(destination, (progress) => {
+            if (!event.sender.isDestroyed())
+                event.sender.send("app:mod-library-location-progress", progress);
+        });
+
+        return {
+            changed: true,
+            warning
+        };
     }
 
     private openModsFolder(errorMessage: string) {

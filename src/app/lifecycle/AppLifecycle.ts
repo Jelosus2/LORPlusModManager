@@ -1,7 +1,9 @@
+import { SettingsRepository } from "#database/repositories/SettingsRepository.js";
 import { ApplicationLogger } from "#maintenance/ApplicationLogger.js";
 import { ApplicationLogSource } from "../../shared/application.js";
 import { AppDatabase } from "#database/AppDatabase.js";
 import { app, BrowserWindow, Menu } from "electron";
+import { Paths } from "#utils/Paths.js";
 import os from "node:os";
 
 export type WindowFactory = () => Promise<BrowserWindow>;
@@ -39,6 +41,8 @@ export class AppLifecycle {
             });
 
             AppDatabase.initialize();
+            Paths.setModsPath(new SettingsRepository().getModLibraryLocation());
+
             AppLifecycle.mainWindow = await createMainWindow();
 
             app.on("activate", async () => {

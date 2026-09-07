@@ -23,6 +23,17 @@ export type ApplicationLogWriteRequest = Readonly<{
     details?: string;
 }>;
 
+export type ModLibraryLocationChangeResult = {
+    changed: boolean;
+    warning: string;
+}
+
+export type ModLibraryLocationProgress = {
+    progress: number | null;
+    status: string;
+    detail: string;
+};
+
 export const ApplicationLogSource = {
     application: "Application",
     environment: "Environment",

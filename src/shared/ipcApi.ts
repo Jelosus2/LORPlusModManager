@@ -31,8 +31,15 @@ import type {
     StaticModPreviewPreparation,
     AnimatorModPreviewPreparation
 } from "./characters.js";
+import type {
+    ApplicationInfo,
+    ExternalApplicationPage,
+    ApplicationLogEntry,
+    ApplicationLogWriteRequest,
+    ModLibraryLocationChangeResult,
+    ModLibraryLocationProgress
+} from "./application.js";
 import type { GameLocationResult, SetupState, GameLocationChangeProgress, GameLocationChangeResult, GameLocationSelectionResult } from "./setup.js";
-import type { ApplicationInfo, ExternalApplicationPage, ApplicationLogEntry, ApplicationLogWriteRequest } from "./application.js";
 import type { PluginInstallResult, PluginProgress, PluginConfiguration, PluginConfigurationSaveRequest } from "./plugin.js";
 import type { GameLaunchRequest, GameLaunchResult } from "./game.js";
 import type { TemporaryFileCleanupResult } from "./maintenance.js";
@@ -87,4 +94,6 @@ export type IpcApi = {
     getModPreviewCacheStorage: () => Promise<ModPreviewCacheStorageSummary>;
     deleteModPreviewCache: () => Promise<ModPreviewCacheStorageSummary>;
     openCurrentLogFilePath: () => Promise<void>;
+    changeModLibraryLocation: () => Promise<ModLibraryLocationChangeResult>;
+    onModLibraryLocationProgress: (callback: (progress: ModLibraryLocationProgress) => void) => () => void;
 };
