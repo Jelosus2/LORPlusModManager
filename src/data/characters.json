@@ -1,5 +1,5 @@
 {
-  "version": "1.4.5",
+  "version": "1.4.5.1",
   "characters": [
     {
       "skin2dId": "2DModel_BR_BloodyPanther_N",
@@ -26108,7 +26108,7 @@
       "isAnimatorSkin": true,
       "isStaticSkin": false,
       "assets": [
-        "3P_BConstantiaS2_N_parts_0.png"
+        "3P_BConstantiaS2_N_parts.png"
       ],
       "animatorPreview": {
         "faces": [
@@ -27698,11 +27698,11 @@
       "isAnimatorSkin": true,
       "isStaticSkin": false,
       "assets": [
-        "128_glow_texture_50.png",
+        "128_glow_texture.png",
         "2dModel_PECS_Rampart_NS1_parts.png",
         "Basic_Smoke_text_2x2.png",
         "BG_aura_0674.png",
-        "BS_skill2_aura_round_ring_0.png",
+        "BS_skill2_aura_round_ring.png",
         "Fenrir_Wolf_Aura_2x2.png",
         "Fire_TrailParticle_Sprite_2x2.png",
         "FullbodyIMG_AGS_Rampart_NS1_fx.png",
@@ -38486,7 +38486,7 @@
       "assets": [
         "FullbodyIMG_3P_Eternity_NS3_part1.png",
         "FullbodyIMG_3P_Eternity_NS3_part2.png",
-        "FullbodyIMG_BR_May_NS4_part2_1.png"
+        "FullbodyIMG_BR_May_NS4_part2.png"
       ],
       "staticPreview": {
         "assetBundleName": "2dmodel_3p_eternity_ns3",
@@ -38573,7 +38573,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_1.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 1653,
                   "y": 1853,
@@ -46991,7 +46991,6 @@
       "isAnimatorSkin": true,
       "isStaticSkin": false,
       "assets": [
-        "BoneJoint_7.png",
         "FullbodyIMG_BR_Phoenix_NS1_part1.png",
         "FullbodyIMG_BR_Phoenix_NS1_part2.png"
       ],
@@ -49026,8 +49025,8 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "FullbodyIMG_LC_Haru_NS1_Dam_part1_0.png",
-        "FullbodyIMG_LC_Haru_NS1_Dam_part2_0.png"
+        "FullbodyIMG_LC_Haru_NS1_Dam_part1.png",
+        "FullbodyIMG_LC_Haru_NS1_Dam_part2.png"
       ],
       "staticPreview": {
         "assetBundleName": "2dmodel_lc_haru_ns1_dam",
@@ -49061,7 +49060,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_LC_Haru_NS1_Dam_part1_0.png",
+                "asset": "FullbodyIMG_LC_Haru_NS1_Dam_part1.png",
                 "crop": {
                   "x": 0,
                   "y": 0,
@@ -49108,7 +49107,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_LC_Haru_NS1_Dam_part2_0.png",
+                "asset": "FullbodyIMG_LC_Haru_NS1_Dam_part2.png",
                 "crop": {
                   "x": 6.026751,
                   "y": 6.036285,
@@ -49152,7 +49151,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_LC_Haru_NS1_Dam_part1_0.png",
+                "asset": "FullbodyIMG_LC_Haru_NS1_Dam_part1.png",
                 "crop": {
                   "x": 1162,
                   "y": 1306,
@@ -51994,8 +51993,8 @@
         "BR_HongRyun_NS1_Part1.png",
         "BR_HongRyun_NS1_Part2.png",
         "BR_HongRyun_NS1_Part3.png",
-        "flower_particle_0.png",
-        "flower_particle_Blur_0.png"
+        "flower_particle.png",
+        "flower_particle_Blur.png"
       ],
       "animatorPreview": {
         "faces": [
@@ -52714,7 +52713,7 @@
       "isStaticSkin": true,
       "assets": [
         "FullbodyIMG_BR_HongRyun_NS3_Dam_part1.png",
-        "FullbodyIMG_BR_Janghwa_NS2_Dam_all_0.png"
+        "FullbodyIMG_BR_Janghwa_NS2_Dam_all.png"
       ],
       "staticPreview": {
         "assetBundleName": "2dmodel_br_hongryun_ns3_dam",
@@ -52792,7 +52791,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_Janghwa_NS2_Dam_all_0.png",
+                "asset": "FullbodyIMG_BR_Janghwa_NS2_Dam_all.png",
                 "crop": {
                   "x": 52.076122,
                   "y": 246.07613,
@@ -54117,7 +54116,7 @@
       "isAnimatorSkin": true,
       "isStaticSkin": false,
       "assets": [
-        "128_glow_texture_11.png",
+        "128_glow_texture.png",
         "2x2_Smoke_Sprite_0243.png",
         "Alice_Explosion_Smoke_sqns.png",
         "Audrey_NS1_Silk_2x2_sqns_01.png",
@@ -77028,7 +77027,7 @@
       "assets": [
         "FullbodyIMG_BR_May_NS4_BG.png",
         "FullbodyIMG_BR_May_NS4_part1.png",
-        "FullbodyIMG_BR_May_NS4_part2_0.png"
+        "FullbodyIMG_BR_May_NS4_part2.png"
       ],
       "staticPreview": {
         "assetBundleName": "2dmodel_br_may_ns4",
@@ -77167,7 +77166,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_0.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 838.0477,
                   "y": 1431.0267,
@@ -77211,7 +77210,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_0.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 37.054127,
                   "y": 1307,
@@ -77255,7 +77254,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_0.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 1441.0762,
                   "y": 132.07613,
@@ -77343,7 +77342,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_0.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 1036.0762,
                   "y": 879.0761,
@@ -77387,7 +77386,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_0.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 1653,
                   "y": 1853,
@@ -77431,7 +77430,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_0.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 1653,
                   "y": 1853,
@@ -77475,7 +77474,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_0.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 1797,
                   "y": 1853,
@@ -77519,7 +77518,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_0.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 1797,
                   "y": 1853,
@@ -77563,7 +77562,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_0.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 532.02673,
                   "y": 1664.0513,
@@ -77607,7 +77606,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_May_NS4_part2_0.png",
+                "asset": "FullbodyIMG_BR_May_NS4_part2.png",
                 "crop": {
                   "x": 974.02673,
                   "y": 1670.0762,
@@ -90579,9 +90578,6 @@
       "isAnimatorSkin": true,
       "isStaticSkin": false,
       "assets": [
-        "BoneJoint_5.png",
-        "BoneNoJoint_5.png",
-        "BoneScaled_4.png",
         "Char_BR_Sleipnir_NS1_parts_01.png",
         "Char_BR_Sleipnir_NS1_parts_02.png",
         "Char_BR_Sleipnir_NS1_parts_03.png",
@@ -96647,14 +96643,14 @@
       "isAnimatorSkin": true,
       "isStaticSkin": false,
       "assets": [
-        "128_glow_texture_49.png",
+        "128_glow_texture.png",
         "2DModel_AGS_Roc_N.png",
-        "Audrey_NS1_Silk_2x2_sqns_01_0.png",
+        "Audrey_NS1_Silk_2x2_sqns_01.png",
         "BS_skill2_aura_round_ring.png",
         "FIre_RIng_2x2_sprite_0220.png",
         "Lighting_sprite_2x2_294.png",
         "Line_glow_9149.png",
-        "particle_texture_00034_1.png",
+        "particle_texture_00034.png",
         "Roc_skill1_lighting_text.png"
       ],
       "animatorPreview": {
@@ -116895,11 +116891,11 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "128_glow_texture_26.png",
+        "128_glow_texture.png",
         "FullbodyIMG_BR_Valkyrie_NS3_Part1.png",
         "FullbodyIMG_BR_Valkyrie_NS3_Part2.png",
         "FullbodyIMG_BR_Valkyrie_NS3.png",
-        "particle_texture_00034_0.png"
+        "particle_texture_00034.png"
       ],
       "staticPreview": {
         "assetBundleName": "2dmodel_br_valkyrie_ns3",
@@ -116933,7 +116929,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "128_glow_texture_26.png",
+                "asset": "128_glow_texture.png",
                 "crop": {
                   "x": 2,
                   "y": 4.07612,
@@ -123198,8 +123194,8 @@
       "isAnimatorSkin": false,
       "isStaticSkin": true,
       "assets": [
-        "FullbodyIMG_BR_Vargr_N_part1_0.png",
-        "FullbodyIMG_BR_Vargr_N_part2_0.png"
+        "FullbodyIMG_BR_Vargr_N_part1.png",
+        "FullbodyIMG_BR_Vargr_N_part2.png"
       ],
       "staticPreview": {
         "assetBundleName": "2dmodel_br_vargr_n",
@@ -123290,7 +123286,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_Vargr_N_part2_0.png",
+                "asset": "FullbodyIMG_BR_Vargr_N_part2.png",
                 "crop": {
                   "x": 1052,
                   "y": 0,
@@ -123337,7 +123333,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_Vargr_N_part2_0.png",
+                "asset": "FullbodyIMG_BR_Vargr_N_part2.png",
                 "crop": {
                   "x": 0,
                   "y": 0,
@@ -123384,7 +123380,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_Vargr_N_part2_0.png",
+                "asset": "FullbodyIMG_BR_Vargr_N_part2.png",
                 "crop": {
                   "x": 0,
                   "y": 0,
@@ -123431,7 +123427,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_Vargr_N_part2_0.png",
+                "asset": "FullbodyIMG_BR_Vargr_N_part2.png",
                 "crop": {
                   "x": 1426,
                   "y": 0,
@@ -123478,7 +123474,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_Vargr_N_part1_0.png",
+                "asset": "FullbodyIMG_BR_Vargr_N_part1.png",
                 "crop": {
                   "x": 1373,
                   "y": 275,
@@ -123525,7 +123521,7 @@
             },
             "sources": {
               "unedited": {
-                "asset": "FullbodyIMG_BR_Vargr_N_part1_0.png",
+                "asset": "FullbodyIMG_BR_Vargr_N_part1.png",
                 "crop": {
                   "x": 23,
                   "y": 26,
