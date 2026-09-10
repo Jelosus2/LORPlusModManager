@@ -1,5 +1,5 @@
 {
-  "version": "1.4.5.1",
+  "version": "1.4.5.2",
   "characters": [
     {
       "skin2dId": "2DModel_BR_BloodyPanther_N",
@@ -21037,7 +21037,7 @@
       "skinName": "The Cardinal Wants to Lead",
       "iconFile": "InvenIcon_DS_Arman_NS1.png",
       "backgroundPreview": null,
-      "isRPlusSkin": false,
+      "isRPlusSkin": true,
       "isSpineSkin": false,
       "isAnimatorSkin": true,
       "isStaticSkin": false,
@@ -21046,6 +21046,257 @@
       ],
       "animatorPreview": {
         "faces": []
+      }
+    },
+    {
+      "skin2dId": "2DModel_DS_Arman_NS1_Dam",
+      "variantId": null,
+      "characterName": "Cardinal Armand",
+      "skinName": "The Cardinal Wants to Lead (Damaged)",
+      "iconFile": "InvenIcon_DS_Arman_NS1.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": true,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullBodyIMG_DS_Arman_NS1_Dam_Part1_R+.png",
+        "FullBodyIMG_DS_Arman_NS1_Dam_Part1.png",
+        "FullbodyIMG_DS_Arman_NS1_glasses.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_ds_arman_ns1_dam",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": {
+          "sortingOrder": 10,
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          },
+          "transform": {
+            "a": 0.14,
+            "b": 0,
+            "c": 0,
+            "d": 0.14,
+            "tx": -0.3563,
+            "ty": 0.2856
+          },
+          "flipX": false,
+          "flipY": false,
+          "visibility": {
+            "defaultVisible": true,
+            "part1": null,
+            "part2": null
+          },
+          "expressions": [
+            {
+              "assetName": "DS_Arman_NS1_Dam_CloseEye_0",
+              "bundleName": "face_ds_arman_ns1_dam"
+            },
+            {
+              "assetName": "DS_Arman_NS1_Dam_Temptation_0",
+              "bundleName": "face_ds_arman_ns1_dam"
+            }
+          ]
+        },
+        "layers": [
+          {
+            "name": "body",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.14,
+              "b": 0,
+              "c": 0,
+              "d": 0.14,
+              "tx": 0,
+              "ty": -0.14
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullBodyIMG_DS_Arman_NS1_Dam_Part1.png",
+                "crop": {
+                  "x": 143,
+                  "y": 158,
+                  "width": 1831,
+                  "height": 1890
+                },
+                "width": 18.31,
+                "height": 18.9,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": null
+              },
+              "rplus": {
+                "asset": "FullBodyIMG_DS_Arman_NS1_Dam_Part1_R+.png",
+                "crop": {
+                  "x": 143,
+                  "y": 158,
+                  "width": 1831,
+                  "height": 1890
+                },
+                "width": 18.31,
+                "height": 18.9,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": null
+              }
+            }
+          },
+          {
+            "name": "glasses",
+            "sortingOrder": 11,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.052502,
+              "b": -0.129783,
+              "c": -0.129783,
+              "d": -0.052502,
+              "tx": -0.3444,
+              "ty": 0.2814
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_DS_Arman_NS1_glasses.png",
+                "crop": {
+                  "x": 0,
+                  "y": 33.076122,
+                  "width": 163,
+                  "height": 96.88097
+                },
+                "width": 1.63,
+                "height": 0.96881,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.499829
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [
+          {
+            "name": "MosaicSpriteRenderer",
+            "sortingOrder": 10,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.336023,
+              "b": 0,
+              "c": 0,
+              "d": 0.312489,
+              "tx": 0.22974,
+              "ty": 0.4669
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": null,
+                "generated": "white",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 256,
+                  "height": 256
+                },
+                "width": 1,
+                "height": 1,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CAC+PggAvj4AAAA/7/8DvgAAAD/v/wM+CAC+PggAvr7v/wM+AAAAP+//Az4AAAC/7/8DvgAAAD/v/wO+AAAAvwgAvr4IAL4+CAC+vggAvr4AAAC/7/8DPgAAAL/v/wO+",
+                  "triangles": "CwAKAAkACAAJAAoABwAJAAgABgAHAAgABQAHAAYABAAFAAYAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "hitboxes": {
+          "touch": {
+            "width": 1,
+            "height": 1,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": -0.1,
+              "ty": 0.5
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 2.5,
+              "height": 0.8,
+              "transform": {
+                "a": -0.047883,
+                "b": 0.131557,
+                "c": -0.131557,
+                "d": -0.047883,
+                "tx": -0.10466,
+                "ty": 0.270351
+              }
+            },
+            {
+              "width": 0.5,
+              "height": 2,
+              "transform": {
+                "a": 0.07,
+                "b": -0.121244,
+                "c": 0.121244,
+                "d": 0.07,
+                "tx": 0.234502,
+                "ty": 0.467431
+              }
+            }
+          ]
+        }
       }
     },
     {
@@ -85604,6 +85855,205 @@
       }
     },
     {
+      "skin2dId": "2DModel_DS_BunnySlayer_NS2",
+      "variantId": null,
+      "characterName": "NiBA",
+      "skinName": "The Bunny Slayer's Grim(?) Past: Pretend Mode (Bunny Girl)",
+      "iconFile": "InvenIcon_DS_BunnySlayer_NS2.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": true,
+      "isAnimatorSkin": false,
+      "isStaticSkin": false,
+      "assets": [
+        "L2D_DS_BunnySlayer_NS2.json",
+        "L2D_DS_BunnySlayer_NS2.atlas",
+        "L2D_DS_BunnySlayer_NS2_2.png",
+        "L2D_DS_BunnySlayer_NS2_3.png",
+        "L2D_DS_BunnySlayer_NS2.png"
+      ],
+      "spinePreview": {
+        "scale": 0.01,
+        "transform": {
+          "a": 0.1,
+          "b": 0,
+          "c": 0,
+          "d": 0.1,
+          "tx": 0.2,
+          "ty": -0.7
+        },
+        "baseSkin": "skin_base",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "animations": {
+          "idle": "idle",
+          "touch": "touch",
+          "specialTouch": "S_touch",
+          "postSpecialTouch": null
+        },
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "x": 1,
+            "y": 8,
+            "width": 15,
+            "height": 15,
+            "rotation": 0
+          },
+          "specialTouch": [
+            {
+              "x": 1.714413,
+              "y": 9.337623,
+              "width": 6.961903,
+              "height": 3.630135,
+              "rotation": -0.000007
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_DS_BunnySlayer_NS2_Dam",
+      "variantId": null,
+      "characterName": "NiBA",
+      "skinName": "The Bunny Slayer's Grim(?) Past: Pretend Mode (Bunny Girl) (Damaged)",
+      "iconFile": "InvenIcon_DS_BunnySlayer_NS2.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_DS_BunnySlayer_NS2_Dam_part1.png",
+        "FullbodyIMG_DS_BunnySlayer_NS2_Dam_part2.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_ds_bunnyslayer_ns2_dam",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": null,
+        "layers": [
+          {
+            "name": "basic",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.2,
+              "ty": 0.1
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_DS_BunnySlayer_NS2_Dam_part2.png",
+                "crop": {
+                  "x": 212.07613,
+                  "y": 20.02675,
+                  "width": 1637.8971,
+                  "height": 2015.9136
+                },
+                "width": 16.378971,
+                "height": 20.159136,
+                "pivot": {
+                  "x": 0.495711,
+                  "y": 0.498024
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "change",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.1,
+              "b": 0,
+              "c": 0,
+              "d": 0.1,
+              "tx": 0.2,
+              "ty": 0.1
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "off",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_DS_BunnySlayer_NS2_Dam_part1.png",
+                "crop": {
+                  "x": 212.07613,
+                  "y": 243.07613,
+                  "width": 1637.8971,
+                  "height": 1792.8641
+                },
+                "width": 16.378971,
+                "height": 17.928641,
+                "pivot": {
+                  "x": 0.495711,
+                  "y": 0.435573
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "width": 1.1,
+            "height": 1.2,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0.2,
+              "ty": 0.15
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 5.2,
+              "height": 3.5,
+              "transform": {
+                "a": 0.1,
+                "b": 0,
+                "c": 0,
+                "d": 0.1,
+                "tx": 0.202,
+                "ty": 0.28
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
       "skin2dId": "2DModel_BR_NickyTracy_N",
       "variantId": null,
       "characterName": "Nicky Tracy",
@@ -122754,6 +123204,266 @@
       }
     },
     {
+      "skin2dId": "2DModel_BR_Uroborus_NS1",
+      "variantId": null,
+      "characterName": "Uroboros",
+      "skinName": "Black Viper of the Battlefield: Instructor’s Formal Uniform",
+      "iconFile": "InvenIcon_BR_Uroborus_NS1.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": true,
+      "isAnimatorSkin": false,
+      "isStaticSkin": false,
+      "assets": [
+        "L2D_BR_Uroborus_NS1.json",
+        "L2D_BR_Uroborus_NS1.atlas",
+        "L2D_BR_Uroborus_NS1_2.png",
+        "L2D_BR_Uroborus_NS1.png"
+      ],
+      "spinePreview": {
+        "scale": 0.01,
+        "transform": {
+          "a": 0.11,
+          "b": 0,
+          "c": 0,
+          "d": 0.11,
+          "tx": 0.22,
+          "ty": -0.22
+        },
+        "baseSkin": "skin_base",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "animations": {
+          "idle": "idle",
+          "touch": "touch",
+          "specialTouch": "temptation",
+          "postSpecialTouch": {
+            "idle": "idle",
+            "touch": "touch",
+            "specialTouch": "temptation"
+          }
+        },
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "x": -1.090909,
+            "y": 5.181818,
+            "width": 9.090909,
+            "height": 9.090909,
+            "rotation": 0
+          },
+          "specialTouch": [
+            {
+              "x": 0.755259,
+              "y": 5.147671,
+              "width": 3.04,
+              "height": 1.65,
+              "rotation": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_BR_Uroborus_NS1_Dam",
+      "variantId": null,
+      "characterName": "Uroboros",
+      "skinName": "Black Viper of the Battlefield: Instructor’s Formal Uniform (Damaged)",
+      "iconFile": "InvenIcon_BR_Uroborus_NS1.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_BR_Uroborus_NS1_Dam.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_br_uroborus_ns1_dam",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": {
+          "sortingOrder": 10,
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          },
+          "transform": {
+            "a": 0.09,
+            "b": 0,
+            "c": 0,
+            "d": 0.09,
+            "tx": 0.2853,
+            "ty": 0.64755
+          },
+          "flipX": false,
+          "flipY": false,
+          "visibility": {
+            "defaultVisible": true,
+            "part1": null,
+            "part2": null
+          },
+          "expressions": [
+            {
+              "assetName": "BR_Uroborus_NS1_Dam_Disappoint",
+              "bundleName": "face_br_uroborus_ns1_dam"
+            },
+            {
+              "assetName": "BR_Uroborus_NS1_Dam_Surprised",
+              "bundleName": "face_br_uroborus_ns1_dam"
+            },
+            {
+              "assetName": "BR_Uroborus_NS1_Dam_Exiting",
+              "bundleName": "face_br_uroborus_ns1_dam"
+            },
+            {
+              "assetName": "BR_Uroborus_NS1_Dam_Annoyance",
+              "bundleName": "face_br_uroborus_ns1_dam"
+            },
+            {
+              "assetName": "BR_Uroborus_NS1_Dam_Embarrass",
+              "bundleName": "face_br_uroborus_ns1_dam"
+            },
+            {
+              "assetName": "BR_Uroborus_NS1_Dam_Arouse",
+              "bundleName": "face_br_uroborus_ns1_dam"
+            },
+            {
+              "assetName": "BR_Uroborus_NS1_Dam_Orgasm",
+              "bundleName": "face_br_uroborus_ns1_dam"
+            }
+          ]
+        },
+        "layers": [
+          {
+            "name": "body",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.09,
+              "b": 0,
+              "c": 0,
+              "d": 0.09,
+              "tx": 0.27,
+              "ty": 0.09
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_BR_Uroborus_NS1_Dam.png",
+                "crop": {
+                  "x": 0,
+                  "y": 49,
+                  "width": 2048,
+                  "height": 1999
+                },
+                "width": 20.48,
+                "height": 19.99,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "H4UbQIXrH8EK1yNBhesfQQrXI0GF6x/B16OQPwrXBcHhehTAAAAGwQrXI8GF6x/BCtcjwYXrH0E=",
+                  "triangles": "BgAFAAEABAABAAUAAwABAAQAAAABAAMAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part1",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.09,
+              "b": 0,
+              "c": 0,
+              "d": 0.09,
+              "tx": 0.225,
+              "ty": -0.18
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_BR_Uroborus_NS1_Dam.png",
+                "crop": {
+                  "x": 921.0761,
+                  "y": 29.07612,
+                  "width": 123.92388,
+                  "height": 144.88097
+                },
+                "width": 1.239239,
+                "height": 1.44881,
+                "pivot": {
+                  "x": 0.455311,
+                  "y": 0.399803
+                },
+                "mesh": {
+                  "vertices": "zcwsPx+Faz7sUfg+4XoUv83MLD8AAIC+uB7FPsP1KD8fhes9UrheP65HYb3hehS/16NwvlK4Xj8K1wO/XI9CP9ejEL97FC4/16MQv83MTD0=",
+                  "triangles": "CQAIAAUABwAFAAgABgAFAAcABAAFAAYAAQAFAAQAAwABAAQAAAABAAMAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "width": 1.3,
+            "height": 1.3,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0.2,
+              "ty": 0.2
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 5,
+              "height": 2.1,
+              "transform": {
+                "a": 0.088346,
+                "b": 0.017173,
+                "c": -0.017173,
+                "d": 0.088346,
+                "tx": 0.3105,
+                "ty": 0.3285
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
       "skin2dId": "2DModel_3P_Vanilla_N",
       "variantId": null,
       "characterName": "Vanilla A1",
@@ -123176,6 +123886,1034 @@
                 "d": 0.125932,
                 "tx": 0.419256,
                 "ty": 0.284894
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_3P_Vanilla_NS2",
+      "variantId": null,
+      "characterName": "Vanilla A1",
+      "skinName": "Was My Cake Really That Bad? : Day",
+      "iconFile": "InvenIcon_3P_Vanilla_NS2.png",
+      "backgroundPreview": {
+        "layers": [
+          {
+            "file": "FullbodyIMG_3P_Vanilla_NS2_part2_0.webp",
+            "width": 21.186207,
+            "height": 14.4,
+            "pivot": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "transform": {
+              "a": 0.19,
+              "b": 0,
+              "c": 0,
+              "d": 0.19,
+              "tx": 0.395,
+              "ty": 0.094999
+            },
+            "sortingOrder": -1
+          }
+        ],
+        "camera": {
+          "width": 21.186207,
+          "height": 14.4,
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "transform": {
+            "a": 0.19,
+            "b": 0,
+            "c": 0,
+            "d": 0.19,
+            "tx": 0.395,
+            "ty": 0.094999
+          },
+          "zoom": 0.82
+        }
+      },
+      "isRPlusSkin": false,
+      "isSpineSkin": true,
+      "isAnimatorSkin": false,
+      "isStaticSkin": false,
+      "assets": [
+        "L2D_3P_Vanilla_NS2.json",
+        "L2D_3P_Vanilla_NS2.atlas",
+        "L2D_3P_Vanilla_NS2.png"
+      ],
+      "spinePreview": {
+        "scale": 0.01,
+        "transform": {
+          "a": 0.197,
+          "b": 0,
+          "c": 0,
+          "d": 0.197,
+          "tx": 0.49556,
+          "ty": -0.11963
+        },
+        "baseSkin": "Skin_base",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "animations": {
+          "idle": "idle",
+          "touch": "t_tep",
+          "specialTouch": "temptation",
+          "postSpecialTouch": {
+            "idle": "idle2",
+            "touch": "t_tep2",
+            "specialTouch": "temptation2"
+          }
+        },
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "x": -0.738883,
+            "y": 1.114873,
+            "width": 5.583756,
+            "height": 9.137056,
+            "rotation": 0
+          },
+          "specialTouch": [
+            {
+              "x": 0.612379,
+              "y": 0.696872,
+              "width": 2.727273,
+              "height": 1.767677,
+              "rotation": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_3P_Vanilla_NS2_Dam",
+      "variantId": null,
+      "characterName": "Vanilla A1",
+      "skinName": "Was My Cake Really That Bad? : Day (Damaged)",
+      "iconFile": "InvenIcon_3P_Vanilla_NS2.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_3P_Vanilla_NS2_Dam_part1.png",
+        "FullbodyIMG_3P_Vanilla_NS2_Dam_part3.png",
+        "FullbodyIMG_3P_Vanilla_NS2_part2.png",
+        "FullbodyIMG_3P_Vanilla_NS2_part4.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_3p_vanilla_ns2_dam",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": null,
+        "layers": [
+          {
+            "name": "BG",
+            "sortingOrder": -1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.19,
+              "b": 0,
+              "c": 0,
+              "d": 0.19,
+              "tx": 0.395,
+              "ty": 0.095
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS2_part2.png",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 2048,
+                  "height": 1392
+                },
+                "width": 21.186207,
+                "height": 14.4,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part5",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.146,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": 0.388,
+              "ty": 0.61
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS2_part4.png",
+                "crop": {
+                  "x": 3.07612,
+                  "y": 771.0761,
+                  "width": 1844.8477,
+                  "height": 1263.8477
+                },
+                "width": 18.448477,
+                "height": 12.638477,
+                "pivot": {
+                  "x": 0.553392,
+                  "y": 0.503561
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part1",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.146,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": 0.47,
+              "ty": -0.688
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS2_Dam_part3.png",
+                "crop": {
+                  "x": 91,
+                  "y": 0,
+                  "width": 1957,
+                  "height": 1099
+                },
+                "width": 19.57,
+                "height": 10.99,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "XI8cQQrXr8B7FJpACtevQFyPHEFI4VJAH4W7PwrXr0DNzIw+exSiQJqZOb+amVFAXI8cwQrXr8BcjxzBw/VQQA==",
+                  "triangles": "BwAGAAUAAAAFAAYABAAFAAAAAwAEAAAAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part6",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.146,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": 0.211,
+              "ty": 1.005
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS2_part4.png",
+                "crop": {
+                  "x": 228.02675,
+                  "y": 156.07613,
+                  "width": 1590.8971,
+                  "height": 349.89713
+                },
+                "width": 15.908971,
+                "height": 3.498971,
+                "pivot": {
+                  "x": 0.50033,
+                  "y": 0.659976
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "body",
+            "sortingOrder": 2,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.135,
+              "b": 0,
+              "c": 0,
+              "d": 0.14,
+              "tx": 0.447,
+              "ty": -0.276
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS2_Dam_part1.png",
+                "crop": {
+                  "x": 477.0761,
+                  "y": 460.02676,
+                  "width": 985.8477,
+                  "height": 1337.8971
+                },
+                "width": 9.858477,
+                "height": 13.378971,
+                "pivot": {
+                  "x": 0.554775,
+                  "y": 0.421537
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part2",
+            "sortingOrder": 3,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.146,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": -0.332,
+              "ty": -0.179
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS2_Dam_part3.png",
+                "crop": {
+                  "x": 18.07612,
+                  "y": 1049.0564,
+                  "width": 556.88763,
+                  "height": 961.93066
+                },
+                "width": 5.568876,
+                "height": 9.619307,
+                "pivot": {
+                  "x": 0.512534,
+                  "y": 0.503616
+                },
+                "mesh": {
+                  "vertices": "j8JVv9ejhMDD9Ui/pHCRwArXQ7+PwpHA7FFYv9ejhMBI4Vq/pHCRwHE9ar89CoPASOFav1K4ksDNzIw+w/VwQOxROD3NzCTAmpmZPQAAKMDNzMw8AAAYwI/CdTwpXBfACtejOz0KD8AK16O7FK4PwHsUrr3D9RDApHA9vjMzS0AUrke+FK5fQGZmHkCF62nAcT0iQHE9csBxPSJAhetpwPYoFEDNzHTA9igUQAAAeMBxPSJAH4W7v/Yo7D97FILAZmbWPylcg8BSuI4/PQp/QOxRiD+amYXApHAdP83MRMCamdk+7FFAwI/CtT6kcEXA7FE4PSlcJ8AK16O7AAAowLgehb3XoyjAcT0Kvq5HKcAzMzO+hespwMP1CL+Pwi3AXI8ivz0KL8DhejS/FK4vwArXQ7/sUTDAZmZGv8P1MMDsUVi/cT0ywOxRWL9xPTLASOFav3E9MsDhenS/16NYwHE9ar/NzARA16OAvxSuX8DhenS/7FFgwOF6hL/sUWDAw/WYv2ZmgsDheoS/SOFiwHE9mr97FILAzcycv3sUgsCF66G/pHCBwOxRqL8Urn/AAACwv4/CfcBmZra/het5wHsUvr+uR3nAKVy/v3E9+j8pXL+/16N4wDMzw7/Xo3jA4XrEv65HecDhesS/9iiAwOF6xL8Urn/AUrjOv8P1lMAUrte/PQp/wB+F279SuHbA16Pgv1K4dsA9Cue/exR2wPYo7L/NzHTAAADwvx+Fc8B7FP6/uB5twEjhAsCPwm3A9igkwHE9hsA9Ci/A7FFwwBSuL8DhenzAPQovwHE9csCamTHAZmZ+wHE9MsBSuEbAcT0ywGZmfsCkcDXAj8J9wFK4NsAUrl/AUrg2wAAAeMC4Hi1AhetpwI/CLUApXIPAj8ItQOF6bMCuRylAFK6DwNejGEAUroPA9igUQOF6gMBSuB4+hetJwBSuR77NzFTAheuRvhSub8DNzMw8w/UgwArXozvNzBTAFK5HvnE9EsDNzIy+SOESwFK43r6amYVAMzMTv0jhEsCPwhW/heuhP65HQb/NzJhAH4VLvzMz4z+4HmW/zcyYQIXrcb9cj5ZA4XqEv9ejhEBxPcq+w/WUwGZmpr49CpvAZmamvuF6mMAK1+O+PQqbwFK4Pr/D9ZTAexROv8P1lMAzM1O/16OUwHE9AsCPwm3AcT0CwGZmbsBSuO6/zcx0wPYo7L9SuHbAH4Xbv2ZmfsDheuS/4Xp8wB+F278K13vAPQovwClcd8AUrme/XI9qwClcb7/D9WDAmpl5v4XracDXo8C/j8J9wIXrwb89Cn/AKVy/v4/CfcCF68G/4XqAwHsUvr8K13vAexS+v7gefcDXo8C/het5wDMzo79mZoLAj8Klvx+Fh8AzM6O/UriCwOxRqL97FILAmpmpv0jhhsD2KKy/heuFwFK4rr9xPYbAUriuv83MgMCuR7G/4XqAwK5Hsb+amYXAw/W4v4/CfcBxPbq/j8J9wB+Fu79mZn7A16PAv7gegcAzM8O/pHCBwHsUnr/heojAzcycv6RwicDXo6C/exSCwFK4rr9xPYbACtezv3E9hsDD9Ui/KVxnwFyPYr8zM2vAw/VIvzMza8DsUVi/pHCBwAAAYL/2KIDAFK5nv/YogMBxPWq/4XqAwNejUL9SuILA16NQv+xRhMCamam/MzOHwBSuJ79xPRLAhesxv5qZEcDhejS/7FGoP+F6NL9I4RLA4Xo0v5qZIcCamTm/exQmwFK4Pr+F6ynAZmZGv4/CLcA=",
+                  "triangles": "KQAqACgALACgACoAKAAqAKAApQAoAKAApAClAKAAowCkAKAAogCjAKAAoQCiAKAAnwChAKAAYQCfAKAAngCfAGEAYACeAGEAdgCaAHgABQB4AJoAmQCaAHYAmACZAHYAlwCYAHYAPQCOAD8AkwA/AI4AbQA/AJMAbAA/AG0AkgBtAJMAhgBtAJIAnQBtAIYAgQBtAJ0AkABtAIEAMwBtAJAAMABtADMABgBtADAAMQAGADAAeAAGADEABQAGAHgAlwCbAAAAnAAAAJsABQCaAAMAmQADAJoAmAADAJkAlwADAJgAAAADAJcAdwCUAHYAlQB2AJQAlgCVAJQAjgCNAJMAiQCTAI0AkgCTAIkAhgCSAIkAgQCPAJAAMwAyADAALgArAHcAgQCCAI8AkQCPAIIAMwCPAJEAkACPADMAPQB8AI4AjQCOAHwAegCNAHwAewCNAHoAiQCNAHsAjACJAHsAiwCJAIwAigCJAIsAiACJAIoAhgCJAIgAhwCGAIgAgwCGAIcAhQCGAIMAhACFAIMAgQCEAIMAgACBAIMAggCBAIAAPgA8AHkAfwB5ADwAewB5AH8AfQB7AH8AfgB7AH0APQA+AHwAegB8AD4AeQB6AD4AewB6AHkAMQAvAHgALQB4AC8ALgB4AC0AdgB4AC4AdwB2AC4AdQBLAEgASQBIAEsAcABFAEQAdABBAEAASABHAD8AbwA/AEcARgA/AG8ARQA/AEYAcAA/AEUAcQA/AHAAcwA/AHEAcgA/AHMAQAA/AHIAcQBwAEQAbwBHAG4ABgAEAG0AAQBtAAQAbABtAAEAawBsAAEAAgBrAAEAbABrAGoAAgBnAGsAagBrAGcAaABqAGcAaQBoAGcAZgBlAGMAZABjAGUAYgBjAGQAYQBjAGIAXwBhAGIAYABhAF8AXgBgAF8ADwBeAF8AXQBeAA8ADgBdAA8AXAAMAAsAWwAKAAgAWgBZABoAWAAaAFkAGwAaAFgAVwAVAFYAEgBWABUAVQBWABIAEwBVABIAUgBVABMAUwBVAFIAVABTAFIAUQBQAE8ATQBPAFAATgBPAE0ATABOAE0ASQBMAE0AOQBJAE0ASgBMAEkASwBKAEkASABJADkARwBIADkARgBHADkARQBGADkARABFADkAQwBEADkAQgBDADkAQQBCADkAQABBADkAPwBAADkAPAA/ADkAPQA/ADwAPgA9ADwAOwA8ADkAOgA7ADkAOAA6ADkALAA4ADkANwA4ACwANgA3ACwANQA2ACwANAA1ACwAMwA0ACwAMgAzACwAMAAyACwALwAwACwAMQAwAC8ALQAvACwAKwAtACwALgAtACsAKgArACwAHQArACoAKQAdACoAKAAdACkAJwAdACgAJgAdACcAJQAdACYAJAAdACUAIwAdACQAIgAdACMAIQAdACIAIAAdACEAHwAdACAAHgAdAB8ACQAdAB4ABwAdAAkAGQAdAAcAHAAdABkAGwAcABkAGgAbABkAGAAaABkAFgAYABkAFwAYABYAFAAXABYAFQAXABQAEQAUABYAEwARABYAFQAUABIAEQASABQAEwASABEAEAAHAA8ADgAPAAcADQAOAAcADAANAAcACwAMAAcACgALAAcACAAKAAcACQAIAAcAAwAEAAUABgAFAAQAAQAEAAMAAAABAAMAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part3",
+            "sortingOrder": 4,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.14,
+              "b": 0,
+              "c": 0,
+              "d": 0.14,
+              "tx": 0.577,
+              "ty": -0.609
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS2_Dam_part3.png",
+                "crop": {
+                  "x": 687.0761,
+                  "y": 1041.0267,
+                  "width": 535.8478,
+                  "height": 381.94647
+                },
+                "width": 5.358478,
+                "height": 3.819465,
+                "pivot": {
+                  "x": 0.495335,
+                  "y": 0.532727
+                },
+                "mesh": {
+                  "vertices": "uB4tQArX0z/NzARAAACQv7geLUBxPQLASOECQFK4jr/sUQBA4XrkP3E92j9SuI6/mpnJPxSul78zM6M/uB6FPZqZyT8fhbu/16OgP3sUrj3NzJw/mpmZPQAAID+uR2E9zcycP+xROD1I4Ro/uB6FPY/CFT+4HoU916MQPylcDz0fhQs/w/XYv9ejED8K16M7ZmYGP7ge1b+uRwE/uB7Vv+xR+D5mZta/pHD9vo/C5b/sUfg+cT3av65HAb8zM+O/16MQvzMz478pXC+/CtejO9ejEL9I4eq/4Xo0v4/CdTxmZka/j8J1POxRWL+PwnW8ZmZGv8P1KL4AAGC/XI/CPXE92r9cj4I+KVz/v4/CtT6uRwnA4XrkP6RwFcCkcP0+7FEgwOxRqD97FCbAUrg+P83MBEApXL+/uB7VPylcv78zM6M/KVwPPSlcnz/NzMw8AAAgP4/CdTykcB0/Cteju4/CFT8K16O7H4ULPx+F279mZgY/zczcv6Rw/T7NzNy/pHD9vkjh6r+uRwG/9ijsv8P1CL/2KOy/KVwvvz0K172F6zG/w/UovqRwjb8AAAA+rkexvzMzMz57FN6/cT0CwIXrGcAUroc+exQmwNejcD6F6ynAuB6FPYXrKcAzM/O+",
+                  "triangles": "HgAcADQAGwA0ABwAGQA0ABsAMwA0ABkACAAGACcABQAnAAYAJgAnAAUAAwAmAAUAAQAmAAMAGgAYADIAFwAyABgAMQAyABcAMAAxABcAFQAwABcAFgAUAC8AEwAvABQALgAvABMAEgAuABMALQAuABIAEAAtABIAEQAPACwADgAsAA8AKwAsAA4ADQArAA4ACwArAA0AKgArAAsADAAKACkACQApAAoAKAApAAkABwAoAAkAOwA6ADcAOQA3ADoAOAA3ADkANgA3ADgAGgA3ADYAMgA3ABoAAgA3ADIANQAaADYAHQAaADUAHgAaAB0ANAAaAB4AMwAaADQAGQAaADMAMQACADIAMAACADEAFQACADAALwACABUAFgAvABUALgACAC8ALQACAC4AEAACAC0ACAACABAAEQAIABAALAAIABEAKwAIACwAKgAIACsACwAIACoADAAIAAsAKQAIAAwAKAAIACkABwAIACgAJwACAAgAJgACACcAAQACACYAJQAkACMAIgAjACQAIQAjACIABAAhACIAIAAhAAQAHwAgAAQAHQAfAAQAHAAdAAQAHgAdABwAGwAcAAQAGQAbAAQADgAZAAQADwAZAA4AGAAZAA8AGgAZABgAFwAYAA8AFQAXAA8AFAAVAA8AFgAVABQAEwAUAA8AEgATAA8AEAASAA8AEQAQAA8ADQAOAAQACwANAAQACgALAAQADAALAAoACQAKAAQABwAJAAQABgAHAAQACAAHAAYABQAGAAQAAwAFAAQAAAADAAQAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part4",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.146,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": 1.425,
+              "ty": -0.566
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS2_Dam_part3.png",
+                "crop": {
+                  "x": 1331.0659,
+                  "y": 1111.0363,
+                  "width": 350.85803,
+                  "height": 252.88759
+                },
+                "width": 3.50858,
+                "height": 2.528876,
+                "pivot": {
+                  "x": 0.519965,
+                  "y": 0.670115
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "width": 1.2,
+            "height": 1.7,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0.5,
+              "ty": -0.1
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 4.5,
+              "height": 3,
+              "transform": {
+                "a": 0.135,
+                "b": 0,
+                "c": 0,
+                "d": 0.14,
+                "tx": 0.6522,
+                "ty": 0.158
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_3P_Vanilla_NS3",
+      "variantId": null,
+      "characterName": "Vanilla A1",
+      "skinName": "Was My Cake Really That Bad? : Night",
+      "iconFile": "InvenIcon_3P_Vanilla_NS3.png",
+      "backgroundPreview": {
+        "layers": [
+          {
+            "file": "FullbodyIMG_3P_Vanilla_NS3_part2_0.webp",
+            "width": 21.186207,
+            "height": 14.4,
+            "pivot": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "transform": {
+              "a": 0.19,
+              "b": 0,
+              "c": 0,
+              "d": 0.19,
+              "tx": 0.395,
+              "ty": 0.017999
+            },
+            "sortingOrder": -1
+          }
+        ],
+        "camera": {
+          "width": 21.186207,
+          "height": 14.4,
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "transform": {
+            "a": 0.19,
+            "b": 0,
+            "c": 0,
+            "d": 0.19,
+            "tx": 0.395,
+            "ty": 0.017999
+          },
+          "zoom": 0.82
+        }
+      },
+      "isRPlusSkin": false,
+      "isSpineSkin": true,
+      "isAnimatorSkin": false,
+      "isStaticSkin": false,
+      "assets": [
+        "L2D_3P_Vanilla_NS3.json",
+        "L2D_3P_Vanilla_NS3.atlas",
+        "L2D_3P_Vanilla_NS3.png"
+      ],
+      "spinePreview": {
+        "scale": 0.01,
+        "transform": {
+          "a": 0.197,
+          "b": 0,
+          "c": 0,
+          "d": 0.197,
+          "tx": 0.49556,
+          "ty": -0.11963
+        },
+        "baseSkin": "Skin_base",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "animations": {
+          "idle": "idle",
+          "touch": "t_tep",
+          "specialTouch": "temptation",
+          "postSpecialTouch": {
+            "idle": "idle2",
+            "touch": "t_tep2",
+            "specialTouch": "temptation2"
+          }
+        },
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "x": -0.738883,
+            "y": 1.114873,
+            "width": 5.583756,
+            "height": 9.137056,
+            "rotation": 0
+          },
+          "specialTouch": [
+            {
+              "x": 0.648178,
+              "y": 0.776805,
+              "width": 2.741117,
+              "height": 1.77665,
+              "rotation": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "skin2dId": "2DModel_3P_Vanilla_NS3_Dam",
+      "variantId": null,
+      "characterName": "Vanilla A1",
+      "skinName": "Was My Cake Really That Bad? : Night (Damaged)",
+      "iconFile": "InvenIcon_3P_Vanilla_NS3.png",
+      "backgroundPreview": null,
+      "isRPlusSkin": false,
+      "isSpineSkin": false,
+      "isAnimatorSkin": false,
+      "isStaticSkin": true,
+      "assets": [
+        "FullbodyIMG_3P_Vanilla_NS3_Dam_part1.png",
+        "FullbodyIMG_3P_Vanilla_NS3_Dam_part3.png",
+        "FullbodyIMG_3P_Vanilla_NS3_part2.png",
+        "FullbodyIMG_3P_Vanilla_NS3_part4.png"
+      ],
+      "staticPreview": {
+        "assetBundleName": "2dmodel_3p_vanilla_ns3_dam",
+        "defaultParts": true,
+        "defaultParts2": true,
+        "face": null,
+        "layers": [
+          {
+            "name": "BG",
+            "sortingOrder": -1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.19,
+              "b": 0,
+              "c": 0,
+              "d": 0.19,
+              "tx": 0.395,
+              "ty": 0.095
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS3_part2.png",
+                "crop": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 2048,
+                  "height": 1392
+                },
+                "width": 21.186207,
+                "height": 14.4,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part5",
+            "sortingOrder": 0,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.146,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": 0.388,
+              "ty": 0.61
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS3_part4.png",
+                "crop": {
+                  "x": 3.07612,
+                  "y": 757.0761,
+                  "width": 1844.8477,
+                  "height": 1277.8477
+                },
+                "width": 18.448477,
+                "height": 12.778477,
+                "pivot": {
+                  "x": 0.553392,
+                  "y": 0.494131
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part1",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.146,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": 0.418,
+              "ty": -0.675
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS3_Dam_part3.png",
+                "crop": {
+                  "x": 99,
+                  "y": 0,
+                  "width": 1949,
+                  "height": 1102
+                },
+                "width": 19.49,
+                "height": 11.02,
+                "pivot": {
+                  "x": 0.47999,
+                  "y": 0.501361
+                },
+                "mesh": {
+                  "vertices": "9igiQc3MsMBI4fZA4XqQQPYoIkFI4Y5ApHCRQArXr0BI4SJAMzOvQMP1CD9xPZZAhesJwGZmTkCF693AmplRQEjhCMGamak/KVwVwc3MsMAUrhXB16PAvw==",
+                  "triangles": "CgAJAAgAAAAIAAkABwAIAAAABgAHAAAABQAGAAAABAAFAAAAAwAEAAAAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part6",
+            "sortingOrder": 1,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.146,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": 0.211,
+              "ty": 1.005
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS3_part4.png",
+                "crop": {
+                  "x": 228.02675,
+                  "y": 156.07611,
+                  "width": 1590.8971,
+                  "height": 349.89713
+                },
+                "width": 15.908971,
+                "height": 3.498971,
+                "pivot": {
+                  "x": 0.50033,
+                  "y": 0.608533
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "body",
+            "sortingOrder": 2,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.135,
+              "b": 0,
+              "c": 0,
+              "d": 0.14,
+              "tx": 0.452,
+              "ty": -0.272
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": null,
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS3_Dam_part1.png",
+                "crop": {
+                  "x": 477.0761,
+                  "y": 460.02676,
+                  "width": 985.8477,
+                  "height": 1337.8971
+                },
+                "width": 9.858477,
+                "height": 13.378971,
+                "pivot": {
+                  "x": 0.554775,
+                  "y": 0.421537
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part2",
+            "sortingOrder": 3,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.146,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": -0.366,
+              "ty": -0.082
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS3_Dam_part3.png",
+                "crop": {
+                  "x": 0,
+                  "y": 852,
+                  "width": 584,
+                  "height": 1106
+                },
+                "width": 5.84,
+                "height": 11.06,
+                "pivot": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "mesh": {
+                  "vertices": "CtcjvB+Fm8BI4TpAw/WwQEjhOkApXJfASOE6wMP1sMApXA++ZmauwEjhOsDD9bBA",
+                  "triangles": "BQADAAEAAAABAAMABAAAAAMAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part3",
+            "sortingOrder": 4,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.14,
+              "b": 0,
+              "c": 0,
+              "d": 0.14,
+              "tx": 0.586,
+              "ty": -0.604
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS3_Dam_part3.png",
+                "crop": {
+                  "x": 689.0761,
+                  "y": 1047,
+                  "width": 533.8478,
+                  "height": 375.97324
+                },
+                "width": 5.338478,
+                "height": 3.759732,
+                "pivot": {
+                  "x": 0.499063,
+                  "y": 0.529293
+                },
+                "mesh": {
+                  "vertices": "MzMrQFyP4j9I4QJA16OQvzMzK0BSuP6/AADQP9ejkL+PwsU/4XqUvylcnz/NzEw9j8LFP6Rwvb/NzJw/KVyPPcP1mD+PwnU97FEYPwrXIz3D9Zg/j8L1PDMzEz/NzEw9exQOP83MTD3D9Qg/CtejPArXAz9I4dq/w/UIPwrXI7ykcP0+PQrXvzMz8z49Cte/w/XoPuxR2L9mZga/FK7nv8P16D5SuN6/w/UIv7ge5b/sURi/uB7lvz0KN78K1yO87FEYv83M7L/2KDy/AAAAAHsUTr8AAAAAAABgv4/C9bx7FE6/7FE4vhSuZ78K16M9exSev7geBT4pXJ+/uB4FPtejoL+4HgU+H4UDwI/CdT7NzATAXI/iP1yPKsDNzMw/XI8qwI/CNT9I4QJAUri+v3E9+j+uR8G/AADQP65Hwb8pXJ8/CtejPB+Fmz8K1yM87FEYPwAAAACPwhU/CtejvHsUDj8K16O8CtcDP1K43r9mZga/zczsv8P1CL97FO6/16MQv3sU7r89Cje/j8L1vZqZOb/sUTi+cT2av1K4/r8pXL+/7FG4PYXrGcC4HoU+XI8qwK5H4T1cjyrAuB6lvw==",
+                  "triangles": "CgAIACkABwApAAgAKAApAAcABQAoAAcAHAAaADIAGQAyABoAFwAyABkAMQAyABcABgAEACcAAwAnAAQAJgAnAAMAAQAmAAMAJQAmAAEAFAASAC0AEQAtABIAEAAtABEADgAtABAAGAAWADAAFQAwABYALwAwABUALgAvABUAEwAuABUAIAAfAB4ADwANACwADAAsAA0AKwAsAAwACwArAAwACQArAAsAKgArAAkANwA2ADMANQAzADYANAAzADUAIAAzADQAHgAzACAAGwAzAB4AGAAzABsAMAAzABgAAgAzADAAHAAYABsAMgAYABwAMQAYADIAFwAYADEALwACADAALgACAC8AEwACAC4AFAACABMALQACABQADgACAC0ABgACAA4ADwAGAA4ALAAGAA8AKwAGACwAKgAGACsACQAGACoACgAGAAkAKQAGAAoAKAAGACkABQAGACgAJwACAAYAJgACACcAJQACACYAAQACACUAJAAjACEAIgAhACMAAAAhACIAIAAhAAAAHwAgAAAAHgAfAAAAHQAeAAAAGwAdAAAAGgAbAAAAHAAbABoAGQAaAAAAFwAZAAAADAAXAAAADQAXAAwAFgAXAA0AGAAXABYAFQAWAA0AEwAVAA0AEgATAA0AFAATABIAEQASAA0AEAARAA0ADgAQAA0ADwAOAA0ACwAMAAAACQALAAAACAAJAAAACgAJAAgABwAIAAAABQAHAAAABAAFAAAABgAFAAQAAwAEAAAAAQADAAAAAgABAAAA"
+                }
+              },
+              "rplus": null
+            }
+          },
+          {
+            "name": "Part4",
+            "sortingOrder": 5,
+            "color": {
+              "r": 1,
+              "g": 1,
+              "b": 1,
+              "a": 1
+            },
+            "transform": {
+              "a": 0.146,
+              "b": 0,
+              "c": 0,
+              "d": 0.15,
+              "tx": 1.405,
+              "ty": -0.595
+            },
+            "flipX": false,
+            "flipY": false,
+            "visibility": {
+              "defaultVisible": true,
+              "part1": "on",
+              "part2": null
+            },
+            "sources": {
+              "unedited": {
+                "asset": "FullbodyIMG_3P_Vanilla_NS3_Dam_part3.png",
+                "crop": {
+                  "x": 1331.0659,
+                  "y": 1111.0363,
+                  "width": 350.85803,
+                  "height": 252.88759
+                },
+                "width": 3.50858,
+                "height": 2.528876,
+                "pivot": {
+                  "x": 0.492889,
+                  "y": 0.543577
+                },
+                "mesh": null
+              },
+              "rplus": null
+            }
+          }
+        ],
+        "mosaicMasks": [],
+        "hitboxes": {
+          "touch": {
+            "width": 1.2,
+            "height": 1.7,
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": 0.5,
+              "ty": -0.1
+            }
+          },
+          "specialTouch": [
+            {
+              "width": 4.5,
+              "height": 3,
+              "transform": {
+                "a": 0.135,
+                "b": 0,
+                "c": 0,
+                "d": 0.14,
+                "tx": 0.6572,
+                "ty": 0.162
               }
             }
           ]
